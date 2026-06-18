@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma';
 import HomeClient from './HomeClient';
 import { withProductDiscounts } from '@/lib/discounts';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const featuredProducts = await prisma.product.findMany({
     where: { featured: true, isVisible: true, stock: { gt: 0 } },
