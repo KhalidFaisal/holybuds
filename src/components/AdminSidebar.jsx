@@ -83,7 +83,6 @@ export default function AdminSidebar({ onNavClick }) {
         <Link href="/" className="flex items-center justify-center py-2 group">
           <img src="/logo.png" alt="Perspective Collective" className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105" />
         </Link>
-        <p className="text-pc-muted text-xs mt-1">Admin Dashboard</p>
       </div>
 
       {/* Nav items */}
