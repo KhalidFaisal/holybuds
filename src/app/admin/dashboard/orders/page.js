@@ -115,7 +115,7 @@ export default function AdminOrdersPage() {
               onClick={() => setStatusFilter(status)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 statusFilter === status
-                  ? 'bg-pc-green text-white'
+                  ? 'bg-pc-green text-pc-purple'
                   : 'text-pc-muted hover:text-white hover:bg-pc-card border border-pc-border'
               }`}
             >
