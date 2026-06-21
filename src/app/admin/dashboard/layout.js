@@ -33,7 +33,10 @@ export default function AdminDashboardLayout({ children }) {
     <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-pc-black">
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-pc-dark border-b border-pc-border shrink-0">
-        <span className="text-lg font-black tracking-tight text-gradient">ELEVATED ADMIN</span>
+        <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="Perspective Collective" className="h-6 w-auto object-contain" />
+          <span className="text-sm font-black tracking-tight text-gradient uppercase">Admin</span>
+        </div>
         <button 
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="p-2 text-pc-muted hover:text-white"

@@ -49,10 +49,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md animate-fade-in-up">
         {/* Logo */}
         <div className="text-center mb-8">
-          <svg className="w-16 h-16 mx-auto text-pc-green mb-4 animate-float" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z" />
-          </svg>
-          <h1 className="text-3xl font-black text-gradient mb-1">ELEVATED</h1>
+          <img src="/logo.png" alt="Perspective Collective" className="h-20 w-auto mx-auto mb-4 animate-float object-contain" />
           <p className="text-pc-muted text-sm tracking-widest uppercase">Admin Dashboard</p>
         </div>
 
@@ -93,7 +90,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="text-center text-pc-muted/40 text-xs mt-6">
-          ELEVATED Admin Panel — Authorized personnel only
+          Perspective Collective Admin Panel — Authorized personnel only
         </p>
       </div>
     </div>

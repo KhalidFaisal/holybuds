@@ -80,15 +80,8 @@ export default function AdminSidebar({ onNavClick }) {
     <aside className="w-64 bg-pc-dark border-r border-pc-border h-full overflow-y-auto flex flex-col">
       {/* Logo */}
       <div className="p-6 border-b border-pc-border">
-        <Link href="/" className="flex items-center gap-2 group">
-          <svg
-            className="w-7 h-7 text-pc-green transition-transform duration-300 group-hover:rotate-12"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-          >
-            <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z" />
-          </svg>
-          <span className="text-lg font-black tracking-tight text-gradient">ELEVATED</span>
+        <Link href="/" className="flex items-center justify-center py-2 group">
+          <img src="/logo.png" alt="Perspective Collective" className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105" />
         </Link>
         <p className="text-pc-muted text-xs mt-1">Admin Dashboard</p>
       </div>
