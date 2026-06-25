@@ -145,7 +145,7 @@ export default function AdminOrdersPage() {
                       <p className="text-white font-bold">{order.orderNumber}</p>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                         order.deliveryMethod === 'DELIVERY' 
-                          ? 'bg-pc-purple/20 text-pc-purple border border-pc-purple/30'
+                          ? 'bg-pc-gold/20 text-pc-gold border border-pc-gold/30'
                           : 'bg-pc-green/20 text-pc-green border border-pc-green/30'
                       }`}>
                         {order.deliveryMethod === 'DELIVERY' ? 'Delivery' : 'Pickup'}
