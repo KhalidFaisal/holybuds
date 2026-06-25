@@ -81,7 +81,7 @@ export default function AdminSidebar({ onNavClick }) {
       {/* Logo */}
       <div className="p-6 border-b border-pc-border">
         <Link href="/" className="flex items-center justify-center py-2 group">
-          <img src="/logo.png" alt="Perspective Collective" className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105" />
+          <img src="/logo.png" alt="Holybuds" className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105" />
         </Link>
       </div>
 

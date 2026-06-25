@@ -34,7 +34,7 @@ export default function AdminDashboardLayout({ children }) {
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-pc-dark border-b border-pc-border shrink-0">
         <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="Perspective Collective" className="h-6 w-auto object-contain" />
+          <img src="/logo.png" alt="Holybuds" className="h-6 w-auto object-contain" />
           <span className="text-sm font-black tracking-tight text-gradient uppercase">Admin</span>
         </div>
         <button 

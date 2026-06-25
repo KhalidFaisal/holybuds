@@ -37,7 +37,7 @@ export default function PasswordPage() {
         <div className="mb-8">
           <img 
             src="/logo.png" 
-            alt="Perspective Collective" 
+            alt="Holybuds" 
             className="w-64 mx-auto animate-float object-contain"
           />
         </div>

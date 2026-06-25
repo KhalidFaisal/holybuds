@@ -157,7 +157,7 @@ export default function MenuClient({ products, initialCategory, initialSearch })
           <p className="mb-4">
             Our products are not FDA approved to diagnose, treat, cure, or prevent any disease. All items comply with the U.S. Farm Bill and contain less than 0.3% THC. Intended for adult use only. THCa and other hemp-derived THC products are not shipped to states where restricted by law. Full disclaimer in <Link href="/terms" className="underline hover:text-white transition-colors">Terms of Service</Link>.
           </p>
-          <p>© {new Date().getFullYear()} Perspective Collective. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Holybuds. All rights reserved.</p>
         </div>
       </footer>
     </CartProvider>

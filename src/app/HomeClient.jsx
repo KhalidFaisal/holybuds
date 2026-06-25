@@ -82,7 +82,7 @@ function HeroSection() {
         <div className="mb-8">
           <img 
             src="/logo.png" 
-            alt="Perspective Collective" 
+            alt="Holybuds" 
             className="w-[80%] max-w-3xl mx-auto drop-shadow-[0_0_30px_rgba(152,227,44,0.3)] animate-float"
           />
         </div>
@@ -92,7 +92,7 @@ function HeroSection() {
         </p>
 
         <p className="text-lg text-pc-muted/80 max-w-xl mx-auto mb-10">
-          Perspective Collective is more than weed, it's a way of life.<br/>
+          Holybuds is more than weed, it's a way of life.<br/>
           Different minds.<br/>
           One collective vision.
         </p>
@@ -152,10 +152,10 @@ function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <img src="/logo.png" alt="Perspective Collective" className="h-10 w-auto object-contain" />
+              <img src="/logo.png" alt="Holybuds" className="h-10 w-auto object-contain" />
             </div>
             <p className="text-pc-muted text-sm">
-              Perspective Collective is more than weed, it's a way of life. Different minds. One collective vision.
+              Holybuds is more than weed, it's a way of life. Different minds. One collective vision.
             </p>
           </div>
 
@@ -188,7 +188,7 @@ function Footer() {
               Our products are not FDA approved to diagnose, treat, cure, or prevent any disease. All items comply with the U.S. Farm Bill and contain less than 0.3% THC. Intended for adult use only. THCa and other hemp-derived THC products are not shipped to states where restricted by law. Full disclaimer in <Link href="/terms" className="underline hover:text-white transition-colors">Terms of Service</Link>.
             </p>
           </div>
-          <p>© {new Date().getFullYear()} Perspective Collective. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Holybuds. All rights reserved.</p>
         </div>
       </div>
     </footer>

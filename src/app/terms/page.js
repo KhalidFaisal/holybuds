@@ -51,7 +51,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-xl font-bold text-white mb-3">5. Liability</h2>
-            <p className="leading-relaxed">Perspective Collective and its affiliates are not responsible for any legal action, confiscation, or health issues resulting from the use or purchase of our products. Use at your own risk. By purchasing from our store, you agree to assume full responsibility for all parts pertaining to your purchase.</p>
+            <p className="leading-relaxed">Holybuds and its affiliates are not responsible for any legal action, confiscation, or health issues resulting from the use or purchase of our products. Use at your own risk. By purchasing from our store, you agree to assume full responsibility for all parts pertaining to your purchase.</p>
           </section>
         </div>
       </div>

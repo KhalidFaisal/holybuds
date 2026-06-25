@@ -65,7 +65,7 @@ export default function AdminDashboardPage() {
     <div className="animate-fade-in">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-white">Dashboard</h1>
-        <p className="text-pc-muted">Welcome back to Perspective Collective admin</p>
+        <p className="text-pc-muted">Welcome back to Holybuds admin</p>
       </div>
 
       {/* Stats */}

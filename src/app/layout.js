@@ -8,9 +8,9 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: 'Perspective Collective | Premium Cannabis Dispensary',
-  description: 'SEE IT. FEEL IT. LIVE IT. — Premium flower and edibles from Perspective Collective. Browse our curated selection and order for pickup.',
-  keywords: 'cannabis, dispensary, flower, edibles, THC, CBD, premium, Perspective Collective',
+  title: 'Holybuds | Premium Cannabis Dispensary',
+  description: 'SEE IT. FEEL IT. LIVE IT. — Premium flower and edibles from Holybuds. Browse our curated selection and order for pickup.',
+  keywords: 'cannabis, dispensary, flower, edibles, THC, CBD, premium, Holybuds',
   icons: {
     icon: '/icon.png',
   },

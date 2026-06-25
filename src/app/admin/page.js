@@ -49,7 +49,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md animate-fade-in-up">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img src="/logo.png" alt="Perspective Collective" className="h-20 w-auto mx-auto animate-float object-contain" />
+          <img src="/logo.png" alt="Holybuds" className="h-20 w-auto mx-auto animate-float object-contain" />
         </div>
 
         {/* Login form */}
@@ -89,7 +89,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="text-center text-pc-muted/40 text-xs mt-6">
-          Perspective Collective Admin Panel — Authorized personnel only
+          Holybuds Admin Panel — Authorized personnel only
         </p>
       </div>
     </div>

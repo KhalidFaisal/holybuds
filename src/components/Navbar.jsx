@@ -104,7 +104,7 @@ export default function Navbar() {
             <Link href="/" className="flex items-center gap-2 group">
               <img 
                 src="/logo.png" 
-                alt="Perspective Collective" 
+                alt="Holybuds" 
                 className="h-10 w-auto transition-transform duration-300 group-hover:scale-105" 
               />
             </Link>
