@@ -9,7 +9,7 @@ const inter = Inter({
 
 export const metadata = {
   title: 'Holybuds | Premium Cannabis Dispensary',
-  description: 'SEE IT. FEEL IT. LIVE IT. — Premium flower and edibles from Holybuds. Browse our curated selection and order for pickup.',
+  description: 'Premium flower and edibles from Holybuds. Browse our curated selection and order for pickup.',
   keywords: 'cannabis, dispensary, flower, edibles, THC, CBD, premium, Holybuds',
   icons: {
     icon: '/icon.png',

@@ -88,21 +88,17 @@ function HeroSection() {
         </div>
 
         <p className="text-xl md:text-2xl text-pc-green font-bold tracking-widest uppercase mb-8 text-gradient">
-          SEE IT. FEEL IT. LIVE IT.
+          PREMIUM CANNABIS DISPENSARY
         </p>
 
         <p className="text-lg text-pc-muted/80 max-w-xl mx-auto mb-10">
-          Holybuds is more than weed, it's a way of life.<br/>
-          Different minds.<br/>
-          One collective vision.
+          Holybuds is your ultimate destination for premium cannabis.<br/>
+          Elevate your experience with our carefully curated selection.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/menu" className="btn-primary text-lg px-10 py-4" id="shop-now-btn">
             Shop Now
-          </Link>
-          <Link href="/menu?category=FLOWER" className="btn-secondary text-lg px-10 py-4" id="browse-flower-btn">
-            Browse Flowers
           </Link>
         </div>
       </div>
@@ -155,7 +151,7 @@ function Footer() {
               <img src="/logo.png" alt="Holybuds" className="h-10 w-auto object-contain" />
             </div>
             <p className="text-pc-muted text-sm">
-              Holybuds is more than weed, it's a way of life. Different minds. One collective vision.
+              Holybuds is your ultimate destination for premium cannabis. Elevate your experience with our carefully curated selection.
             </p>
           </div>
 
@@ -240,7 +236,7 @@ export default function HomeClient({ featuredProducts, flowerProducts, ediblePro
         <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center glass-card p-10 md:p-16 glow-emerald">
             <h2 className="text-3xl md:text-5xl font-black mb-4 text-gradient">
-              Ready to shift your Perspective?
+              Ready to elevate your experience?
             </h2>
             <p className="text-pc-muted text-lg mb-8">
               Browse our full menu and place your order for pickup.
