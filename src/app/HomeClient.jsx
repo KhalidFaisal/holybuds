@@ -35,10 +35,10 @@ function BannerCarousel({ banners }) {
           >
             <Link href={banner.link || '#'} className="block w-full h-full cursor-pointer">
               <div className="md:hidden block w-full h-full">
-                 <Image src={banner.mobileImage || banner.desktopImage} alt={banner.title} width={800} height={800} className="w-full h-auto object-contain" priority={i === 0} />
+                 <Image src={banner.mobileImage || banner.desktopImage} alt={banner.title} width={800} height={800} className="w-full h-auto object-contain" priority={index === 0} />
                </div>
                <div className="hidden md:block w-full h-full">
-                 <Image src={banner.desktopImage || banner.mobileImage} alt={banner.title} width={1600} height={600} className="w-full h-auto object-contain" priority={i === 0} />
+                 <Image src={banner.desktopImage || banner.mobileImage} alt={banner.title} width={1600} height={600} className="w-full h-auto object-contain" priority={index === 0} />
                </div>
             </Link>
           </div>
