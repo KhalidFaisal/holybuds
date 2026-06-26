@@ -16,6 +16,8 @@ function CheckoutContent() {
     customerPhone: '',
     deliveryMethod: 'PICKUP',
     deliveryAddress: '',
+    town: '',
+    zipCode: '',
     notes: '',
   });
   const [submitting, setSubmitting] = useState(false);
@@ -46,6 +48,7 @@ function CheckoutContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          deliveryAddress: isDelivery ? `${form.deliveryAddress}, ${form.town}, ${form.zipCode}` : '',
           items: items.map((item) => ({
             productId: item.id,
             quantity: item.quantity,
@@ -184,9 +187,21 @@ function CheckoutContent() {
                 </div>
 
                 {isDelivery && (
-                  <div>
-                    <label className="block text-sm font-medium text-pc-muted mb-1">Delivery Address *</label>
-                    <input name="deliveryAddress" value={form.deliveryAddress} onChange={handleChange} required className="input-field" placeholder="123 Main St, Apt 4" />
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-pc-muted mb-1">Street Address *</label>
+                      <input name="deliveryAddress" value={form.deliveryAddress} onChange={handleChange} required className="input-field" placeholder="123 Main St, Apt 4" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-pc-muted mb-1">Town / City *</label>
+                        <input name="town" value={form.town} onChange={handleChange} required className="input-field" placeholder="New York" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-pc-muted mb-1">Zip Code *</label>
+                        <input name="zipCode" value={form.zipCode} onChange={handleChange} required className="input-field" placeholder="10001" />
+                      </div>
+                    </div>
                   </div>
                 )}
 
