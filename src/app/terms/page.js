@@ -27,8 +27,7 @@ export default function TermsPage() {
             <ul className="list-disc pl-5 space-y-2 leading-relaxed">
               <li><strong>Operating Hours:</strong> Our shop is open Sun-Thu from 10 AM to 10 PM, and Fri-Sat from 10 AM to 12 AM. Please submit orders as soon as possible to ensure timely processing.</li>
               <li><strong>Order Minimums:</strong> Delivery services require a minimum order of $100. Orders below $100 are eligible for pickup only.</li>
-              <li><strong>Payment Methods:</strong> We accept cash and debit card payments only.</li>
-              <li><strong>Debit Card Fees:</strong> Debit card transactions are subject to an additional 9% fee plus a $4 terminal charge, regardless of order size. If paying by debit card, kindly inform us before the driver departs so they can bring the card reader.</li>
+              <li><strong>Payment Methods:</strong> We accept cash and Zelle payments only.</li>
               <li><strong>Exact Change:</strong> If you require change for a cash payment, please let us know when placing your order, as our drivers do not carry extra change.</li>
               <li><strong>Driver Wait Time:</strong> Please be prepared at your scheduled delivery time. Our drivers will wait no longer than 10 minutes before departing.</li>
             </ul>

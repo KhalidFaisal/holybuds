@@ -307,7 +307,7 @@ function CheckoutContent() {
 
               <p className="flex items-center gap-2 text-pc-muted/60 text-xs mt-4">
                 <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V4.22c0-.756-.728-1.296-1.453-1.096a59.769 59.769 0 01-15.797 2.101c-.727.198-1.453-.342-1.453-1.096v13.43c0 .756.728 1.296 1.453 1.096z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                <span>{isDelivery ? "Pay on delivery. Cash and card accepted." : "Pay at pickup. Cash and card accepted."}</span>
+                <span>{isDelivery ? "Pay on delivery. Cash and Zelle accepted." : "Pay at pickup. Cash and Zelle accepted."}</span>
               </p>
             </div>
           </div>
