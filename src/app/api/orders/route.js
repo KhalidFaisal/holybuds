@@ -163,6 +163,49 @@ export async function POST(request) {
       return newOrder;
     });
 
+    // Send WhatsApp Webhook
+    if (process.env.WHATSAPP_WEBHOOK_URL) {
+      try {
+        let itemsList = order.items.map(i => `${i.quantity}x ${i.product.name} ($${i.price})`).join('\n');
+        
+        let message = `🌿 *New Order Received!*\n\n` +
+                      `*Customer:* ${order.customerName}\n` +
+                      `*Method:* ${order.deliveryMethod}\n`;
+        
+        if (order.deliveryMethod === 'DELIVERY') {
+          message += `*Address:* ${order.deliveryAddress}\n`;
+        }
+        
+        if (order.notes) {
+          message += `*Notes:* ${order.notes}\n`;
+        }
+        
+        message += `\n*Items:*\n${itemsList}\n\n`;
+        
+        if (order.discountAmount > 0) {
+          message += `*Discount:* -$${order.discountAmount.toFixed(2)} (${order.discountName})\n`;
+        }
+        message += `*Total:* $${order.total.toFixed(2)}`;
+
+        // Send POST request
+        await fetch(process.env.WHATSAPP_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.WHATSAPP_WEBHOOK_SECRET || ''}`,
+            'x-webhook-secret': process.env.WHATSAPP_WEBHOOK_SECRET || ''
+          },
+          body: JSON.stringify({ 
+            message,
+            secret: process.env.WHATSAPP_WEBHOOK_SECRET || ''
+          })
+        }).catch(err => console.error('Failed to send WhatsApp webhook:', err));
+        
+      } catch (webhookErr) {
+        console.error('Webhook error:', webhookErr);
+      }
+    }
+
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
     console.error('Error creating order:', error);
