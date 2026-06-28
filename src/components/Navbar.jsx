@@ -136,35 +136,14 @@ export default function Navbar() {
           {/* Right side icons & Desktop Search */}
           <div className="flex items-center gap-1 sm:gap-4 ml-auto" ref={searchContainerRef}>
             
-            {/* Desktop Search */}
-            <form 
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (searchQuery) window.location.href = `/menu?search=${encodeURIComponent(searchQuery)}`;
-              }}
-              className="hidden sm:flex relative items-center"
-            >
-              <input 
-                type="text" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search..." 
-                className="bg-pc-smoke/50 text-white text-sm rounded-full pl-9 pr-4 py-1.5 focus:outline-none focus:ring-1 focus:ring-pc-green w-40 md:w-56 transition-all"
-              />
-              <svg className="w-4 h-4 text-pc-muted absolute left-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-              </svg>
-              <SearchDropdown query={searchQuery} onSelect={() => setSearchQuery('')} />
-            </form>
-
-            {/* Mobile Search Input (expands to take up space) */}
-            {mobileSearchOpen && (
+            {/* Search */}
+            {mobileSearchOpen ? (
               <form 
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (searchQuery) window.location.href = `/menu?search=${encodeURIComponent(searchQuery)}`;
                 }}
-                className="flex sm:hidden relative items-center flex-1 mr-2 animate-fade-in"
+                className="flex relative items-center flex-1 mr-2 sm:mr-0 animate-fade-in"
               >
                 <input 
                   type="text" 
@@ -172,23 +151,21 @@ export default function Navbar() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search..." 
-                  className="bg-pc-smoke/50 text-white text-sm rounded-full pl-9 pr-8 py-2 w-full focus:outline-none focus:ring-1 focus:ring-pc-green transition-all"
+                  className="bg-pc-smoke/50 text-white text-sm rounded-full pl-9 pr-8 py-2 w-full sm:w-56 focus:outline-none focus:ring-1 focus:ring-pc-green transition-all"
                 />
                 <svg className="w-4 h-4 text-pc-muted absolute left-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                 </svg>
-                <button type="button" onClick={() => { setMobileSearchOpen(false); setSearchQuery(''); }} className="absolute right-3 text-pc-muted">
+                <button type="button" onClick={() => { setMobileSearchOpen(false); setSearchQuery(''); }} className="absolute right-3 text-pc-muted hover:text-white transition-colors">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
                 <SearchDropdown query={searchQuery} onSelect={() => { setSearchQuery(''); setMobileSearchOpen(false); }} />
               </form>
-            )}
-
-            {/* Mobile Search Icon Toggle */}
-            {!mobileSearchOpen && (
+            ) : (
               <button
                 onClick={() => setMobileSearchOpen(true)}
-                className="sm:hidden p-2 text-pc-muted hover:text-white transition-colors"
+                className="p-2 text-pc-muted hover:text-white transition-colors"
+                title="Search"
               >
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />

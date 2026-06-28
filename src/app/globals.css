@@ -46,6 +46,21 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #3a3a4e;
   }
+
+  /* Custom horizontal scrollbar for product rows */
+  .hide-scrollbar::-webkit-scrollbar {
+    height: 6px;
+  }
+  .hide-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .hide-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(34, 199, 44, 0.2);
+    border-radius: 3px;
+  }
+  .hide-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(34, 199, 44, 0.5);
+  }
 }
 
 @layer components {
