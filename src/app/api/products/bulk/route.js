@@ -109,14 +109,22 @@ export async function PUT(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { ids, isVisible } = await request.json();
-    if (!Array.isArray(ids) || ids.length === 0 || isVisible === undefined) {
+    const { ids, isVisible, featured } = await request.json();
+    if (!Array.isArray(ids) || ids.length === 0) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    }
+
+    const data = {};
+    if (isVisible !== undefined) data.isVisible = isVisible;
+    if (featured !== undefined) data.featured = featured;
+
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
     }
 
     const result = await prisma.product.updateMany({
       where: { id: { in: ids } },
-      data: { isVisible }
+      data
     });
 
     return NextResponse.json({ success: true, count: result.count });

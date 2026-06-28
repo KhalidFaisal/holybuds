@@ -150,6 +150,24 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleToggleFeatured = async (id, currentFeatured) => {
+    try {
+      const res = await fetch('/api/products/bulk', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ids: [id], featured: !currentFeatured })
+      });
+      if (res.ok) {
+        setProducts(prev => prev.map(p => p.id === id ? { ...p, featured: !currentFeatured } : p));
+      }
+    } catch (error) {
+      console.error('Toggle featured error:', error);
+    }
+  };
+
   const handleSave = (saved) => {
     if (editProduct) {
       setProducts((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
@@ -426,6 +444,7 @@ export default function AdminProductsPage() {
                 <th className="text-left p-4 text-pc-muted text-xs font-semibold uppercase tracking-wider">Price</th>
                 <th className="text-left p-4 text-pc-muted text-xs font-semibold uppercase tracking-wider">Stock</th>
                 <th className="text-left p-4 text-pc-muted text-xs font-semibold uppercase tracking-wider">Visible</th>
+                <th className="text-left p-4 text-pc-muted text-xs font-semibold uppercase tracking-wider">Featured</th>
                 <th className="text-right p-4 text-pc-muted text-xs font-semibold uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -493,6 +512,16 @@ export default function AdminProductsPage() {
                         className="modern-toggle" 
                         checked={product.isVisible} 
                         onChange={() => handleToggleVisibility(product.id, product.isVisible)} 
+                      />
+                    </label>
+                  </td>
+                  <td className="p-4">
+                    <label className="flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="modern-toggle" 
+                        checked={product.featured} 
+                        onChange={() => handleToggleFeatured(product.id, product.featured)} 
                       />
                     </label>
                   </td>
