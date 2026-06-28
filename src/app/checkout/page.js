@@ -62,6 +62,26 @@ function CheckoutContent() {
       }
 
       const order = await res.json();
+      
+      // Save to recent orders for "Buy Again"
+      try {
+        const pastOrders = JSON.parse(localStorage.getItem('holybuds_recent_orders') || '[]');
+        const fullOrder = {
+          ...order,
+          items: items.map(item => ({
+            productId: item.id,
+            quantity: item.quantity,
+            price: item.price,
+            product: item
+          }))
+        };
+        pastOrders.unshift(fullOrder);
+        // Keep only last 10 orders
+        localStorage.setItem('holybuds_recent_orders', JSON.stringify(pastOrders.slice(0, 10)));
+      } catch (e) {
+        console.error('Failed to save recent order', e);
+      }
+
       setOrderConfirm(order);
       clearCart();
     } catch (err) {

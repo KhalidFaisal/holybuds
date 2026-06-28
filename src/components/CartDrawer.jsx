@@ -1,13 +1,27 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useCart } from './CartProvider';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function CartDrawer() {
-  const { items, isOpen, setIsOpen, removeItem, updateQuantity, subtotal, discountAmount, discountName, total } = useCart();
+  const { items, isOpen, setIsOpen, removeItem, updateQuantity, subtotal, discountAmount, discountName, total, addItem } = useCart();
+  const [upscales, setUpscales] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/products/upscales')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setUpscales(data);
+      })
+      .catch(console.error);
+  }, []);
 
   if (!isOpen) return null;
+
+  const cartItemIds = items.map(i => i.id);
+  const recommended = upscales.filter(u => !cartItemIds.includes(u.id)).slice(0, 3);
 
   return (
     <>
@@ -141,6 +155,42 @@ export default function CartDrawer() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Upscales / Recommended */}
+          {items.length > 0 && recommended.length > 0 && (
+            <div className="mt-8 border-t border-pc-border pt-6">
+              <h3 className="text-sm font-bold text-white mb-4">Customers also add...</h3>
+              <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 hide-scrollbar -mx-6 px-6">
+                {recommended.map(product => (
+                  <div key={product.id} className="w-[140px] shrink-0 snap-start bg-pc-card rounded-xl border border-pc-border overflow-hidden flex flex-col">
+                    <div className="aspect-square bg-pc-smoke relative">
+                      {product.image ? (
+                        <Image src={product.image} alt={product.name} fill className="object-cover" sizes="140px" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <svg className="w-8 h-8 text-pc-border" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3 flex flex-col flex-1">
+                      <p className="text-xs font-bold text-white truncate mb-1">{product.name}</p>
+                      <div className="flex items-center justify-between mt-auto">
+                        <p className="text-pc-green text-sm font-bold">${product.calculatedDiscountPrice || product.price}</p>
+                        <button 
+                          onClick={() => addItem(product)}
+                          className="bg-pc-dark hover:bg-pc-border text-white text-xs px-2 py-1 rounded transition-colors"
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

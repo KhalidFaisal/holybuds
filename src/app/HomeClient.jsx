@@ -128,9 +128,11 @@ function ProductSection({ title, subtitle, products, viewAllHref, icon }) {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-6 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <div key={product.id} className="w-[180px] sm:w-[220px] lg:w-[260px] shrink-0 snap-start">
+            <ProductCard product={product} />
+          </div>
         ))}
       </div>
 
@@ -239,32 +241,80 @@ function Footer({ categories }) {
           </div>
           <p>© {new Date().getFullYear()} Holybuds. All rights reserved.</p>
         </div>
-      </div>
     </footer>
   );
 }
 
-export default function HomeClient({ featuredProducts, categories, banners }) {
+export default function HomeClient({ deals, staffPicks, newArrivals, bestSellers, categories, banners }) {
+  const [recentProducts, setRecentProducts] = useState([]);
+
+  useEffect(() => {
+    // Attempt to load recent products from localStorage
+    try {
+      const orders = JSON.parse(localStorage.getItem('holybuds_recent_orders') || '[]');
+      const productMap = new Map();
+      orders.forEach(o => {
+        o.items?.forEach(i => {
+          if (i.product && !productMap.has(i.productId)) {
+            productMap.set(i.productId, i.product);
+          }
+        });
+      });
+      setRecentProducts(Array.from(productMap.values()).slice(0, 8));
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   return (
     <CartProvider>
       <Navbar />
       <CartDrawer />
-
-      <main>
+      <main className="min-h-screen">
         <BannerCarousel banners={banners} />
 
-        {/* Featured */}
-        <ProductSection
-          title="Featured"
-          subtitle="Our top picks, curated for you"
-          products={featuredProducts}
-          viewAllHref="/menu"
-          icon={<svg className="w-6 h-6 text-pc-gold" fill="currentColor" viewBox="0 0 24 24"><path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>}
-        />
+        <div className="space-y-4">
+          <ProductSection 
+            title="Today's Deals" 
+            subtitle="Don't miss out on these limited-time offers" 
+            products={deals} 
+            viewAllHref="/menu" 
+            icon="🔥" 
+          />
+          
+          <ProductSection 
+            title="Best Sellers" 
+            subtitle="Our most popular products" 
+            products={bestSellers} 
+            viewAllHref="/menu" 
+            icon="⭐" 
+          />
 
-        {/* Divider */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="h-px bg-gradient-to-r from-transparent via-pc-border to-transparent" />
+          {recentProducts.length > 0 && (
+            <ProductSection 
+              title="Order Again" 
+              subtitle="Quickly reorder your favorites" 
+              products={recentProducts} 
+              viewAllHref="/account" 
+              icon="⚡" 
+            />
+          )}
+
+          <ProductSection 
+            title="New Arrivals" 
+            subtitle="Fresh drops and latest additions" 
+            products={newArrivals} 
+            viewAllHref="/menu" 
+            icon="🆕" 
+          />
+
+          <ProductSection 
+            title="Staff Picks" 
+            subtitle="Hand-selected by our team" 
+            products={staffPicks} 
+            viewAllHref="/menu" 
+            icon="🏷" 
+          />
         </div>
 
         {/* Shop By Category */}

@@ -1,13 +1,39 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from './CartProvider';
 import CannabisIcon from './icons/CannabisIcon';
 
-// Removed StrainBadge
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  useEffect(() => {
+    try {
+      const favs = JSON.parse(localStorage.getItem('holybuds_favorites') || '[]');
+      setIsFavorite(favs.includes(product.id));
+    } catch(e) {}
+  }, [product.id]);
+
+  const toggleFavorite = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const favs = JSON.parse(localStorage.getItem('holybuds_favorites') || '[]');
+      let newFavs;
+      if (favs.includes(product.id)) {
+        newFavs = favs.filter(id => id !== product.id);
+        setIsFavorite(false);
+      } else {
+        newFavs = [...favs, product.id];
+        setIsFavorite(true);
+      }
+      localStorage.setItem('holybuds_favorites', JSON.stringify(newFavs));
+      window.dispatchEvent(new Event('holybuds_favorites_updated'));
+    } catch(e) {}
+  };
 
   return (
     <div className="glass-card-hover overflow-hidden group flex flex-col h-full" id={`product-${product.id}`}>
@@ -37,8 +63,19 @@ export default function ProductCard({ product }) {
           </div>
         )}
 
+        {/* Favorite Button */}
+        <button 
+          onClick={toggleFavorite}
+          className="absolute top-2 right-2 z-10 p-2 bg-black/40 backdrop-blur-md rounded-full hover:bg-black/60 transition-colors pointer-events-auto group/fav"
+          title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+        >
+          <svg className={`w-5 h-5 transition-colors ${isFavorite ? 'text-red-500 fill-red-500' : 'text-white/80 group-hover/fav:text-white'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+          </svg>
+        </button>
+
         {/* Badges container */}
-        <div className="absolute top-2 left-2 right-2 flex justify-between items-start gap-1 pointer-events-none">
+        <div className="absolute top-2 left-2 right-12 flex justify-between items-start gap-1 pointer-events-none">
           {product.featured ? (
             <div className="bg-pc-gold text-black text-[9px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1 shrink-1 min-w-0">
               <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-black shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
@@ -48,14 +85,14 @@ export default function ProductCard({ product }) {
 
           {/* Stock warning */}
           {product.stock <= 5 && product.stock > 0 && (
-            <div className="bg-red-500/90 text-white text-[9px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full shrink-0 text-center">
+            <div className="bg-red-500/90 text-white text-[9px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full shrink-0 text-center pointer-events-none">
               Only {product.stock} left
             </div>
           )}
         </div>
 
         {product.stock === 0 && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none">
             <span className="text-white font-bold text-lg">Out of Stock</span>
           </div>
         )}
