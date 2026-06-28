@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminSidebar from '@/components/AdminSidebar';
+import AdminGlobalSearch from '@/components/AdminGlobalSearch';
 
 export default function AdminDashboardLayout({ children }) {
   const [authed, setAuthed] = useState(false);
@@ -37,6 +38,9 @@ export default function AdminDashboardLayout({ children }) {
           <img src="/logo.png" alt="Holybuds" className="h-6 w-auto object-contain" />
           <span className="text-sm font-black tracking-tight text-gradient uppercase">Admin</span>
         </div>
+        <div className="flex-1 mx-4">
+          <AdminGlobalSearch />
+        </div>
         <button 
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="p-2 text-pc-muted hover:text-white"
@@ -57,6 +61,11 @@ export default function AdminDashboardLayout({ children }) {
       </div>
 
       <main className={`${sidebarOpen ? 'hidden' : 'flex-1'} md:block overflow-y-auto`}>
+        <div className="hidden md:flex p-4 border-b border-pc-border bg-pc-dark/50 items-center justify-center">
+          <div className="w-full max-w-2xl">
+            <AdminGlobalSearch />
+          </div>
+        </div>
         <div className="p-4 md:p-8 min-h-full">
           {children}
         </div>

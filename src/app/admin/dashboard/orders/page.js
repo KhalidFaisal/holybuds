@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import OrderStatusBadge from '@/components/OrderStatusBadge';
 import CannabisIcon from '@/components/icons/CannabisIcon';
+import CustomerFlags from '@/components/CustomerFlags';
 
 const STATUSES = ['ALL', 'PENDING', 'PROCESSING', 'READY', 'COMPLETED', 'CANCELLED'];
 
@@ -458,8 +459,11 @@ export default function AdminOrdersPage() {
                         </button>
                       </div>
                       <div className="space-y-2 text-sm">
-                        <p><span className="text-pc-muted">Name:</span> <span className="text-white">{order.customerName}</span></p>
-                        <p><span className="text-pc-muted">Phone:</span> <span className="text-white">{order.customerPhone}</span></p>
+                        <div>
+                          <p><span className="text-pc-muted">Name:</span> <span className="text-white">{order.customerName}</span></p>
+                          <p><span className="text-pc-muted">Phone:</span> <span className="text-white">{order.customerPhone}</span></p>
+                          <CustomerFlags phone={order.customerPhone} />
+                        </div>
                         <p><span className="text-pc-muted">Method:</span> <span className="text-white">{order.deliveryMethod === 'DELIVERY' ? 'Delivery' : 'Pickup'}</span></p>
                         {order.deliveryMethod === 'DELIVERY' && order.deliveryAddress && (
                           <p><span className="text-pc-muted">Address:</span> <span className="text-white">{order.deliveryAddress}</span></p>

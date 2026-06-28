@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import ProductForm from '@/components/ProductForm';
 import CannabisIcon from '@/components/icons/CannabisIcon';
+import InventoryStatsModal from '@/components/InventoryStatsModal';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([]);
@@ -20,6 +21,7 @@ export default function AdminProductsPage() {
   const [parsedImportProducts, setParsedImportProducts] = useState(null);
   const [selectedImportIndices, setSelectedImportIndices] = useState(new Set());
   const [selectedExportIds, setSelectedExportIds] = useState(new Set());
+  const [viewStatsProduct, setViewStatsProduct] = useState(null);
   
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
@@ -528,6 +530,12 @@ export default function AdminProductsPage() {
                   <td className="p-4 text-right">
                     <div className="flex gap-2 justify-end">
                       <button
+                        onClick={() => setViewStatsProduct(product)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-pc-muted hover:text-white hover:bg-pc-card border border-pc-border transition-all"
+                      >
+                        Stats
+                      </button>
+                      <button
                         onClick={() => { setEditProduct(product); setShowForm(true); }}
                         className="px-3 py-1.5 rounded-lg text-xs font-medium text-pc-muted hover:text-white hover:bg-pc-card border border-pc-border transition-all"
                       >
@@ -676,6 +684,14 @@ export default function AdminProductsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {viewStatsProduct && (
+        <InventoryStatsModal
+          productId={viewStatsProduct.id}
+          productName={viewStatsProduct.name}
+          onClose={() => setViewStatsProduct(null)}
+        />
       )}
     </div>
   );
