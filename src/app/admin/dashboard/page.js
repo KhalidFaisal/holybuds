@@ -12,13 +12,6 @@ export default function AdminDashboardPage() {
   const [liveShoppers, setLiveShoppers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-    fetchLiveShoppers();
-    const interval = setInterval(fetchLiveShoppers, 15000);
-    return () => clearInterval(interval);
-  }, []);
-
   const fetchLiveShoppers = async () => {
     try {
       const token = localStorage.getItem('admin_token');
@@ -71,6 +64,13 @@ export default function AdminDashboardPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+    fetchLiveShoppers();
+    const interval = setInterval(fetchLiveShoppers, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (
