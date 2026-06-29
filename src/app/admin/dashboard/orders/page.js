@@ -124,6 +124,33 @@ export default function AdminOrdersPage() {
     setExpandedOrder(null);
   };
 
+  const updateSelectedOrdersStatus = async (newStatus) => {
+    if (selectedOrders.length === 0) return;
+    if (!window.confirm(`Are you sure you want to mark ${selectedOrders.length} orders as ${newStatus}?`)) return;
+    
+    // Process sequentially to not overload DB/API and ensure webhooks trigger correctly
+    for (const id of selectedOrders) {
+      try {
+        const res = await fetch(`/api/orders/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: newStatus }),
+        });
+
+        if (res.ok) {
+          const updated = await res.json();
+          setOrders((prev) => prev.map((o) => (o.id === id ? updated : o)));
+        }
+      } catch (e) {
+        console.error(`Error updating order ${id}`, e);
+      }
+    }
+    setSelectedOrders([]);
+  };
+
   const copyOrderDetails = async (order) => {
     let text = `Order #${order.orderNumber}\n`;
     text += `Name: ${order.customerName}\n`;
@@ -296,6 +323,22 @@ export default function AdminOrdersPage() {
         <div className="flex gap-2">
           {selectedOrders.length > 0 && (
             <>
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    updateSelectedOrdersStatus(e.target.value);
+                    e.target.value = ''; // reset selection
+                  }
+                }}
+                className="px-4 py-2 bg-pc-card border border-pc-border rounded-xl font-bold text-white transition-colors text-sm focus:outline-none cursor-pointer"
+              >
+                <option value="">Update Status...</option>
+                {STATUSES.filter(s => s !== 'ALL').map(status => (
+                  <option key={status} value={status}>
+                    Mark as {status.charAt(0) + status.slice(1).toLowerCase()}
+                  </option>
+                ))}
+              </select>
               <button 
                 onClick={deleteSelectedOrders}
                 className="px-4 py-2 bg-red-500/20 text-red-500 border border-red-500/50 rounded-xl font-bold hover:bg-red-500 hover:text-white transition-colors text-sm"
