@@ -18,15 +18,17 @@ export async function GET(request) {
     try {
       const response = await fetch(webhookUrl, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        // Removed Content-Type header as it can break Apps Script redirects for GET requests
       });
       if (!response.ok) {
-        throw new Error(`Google Script returned ${response.status}`);
+        const errorText = await response.text();
+        console.error('Apps Script Error Response:', errorText);
+        throw new Error(`Google Script returned ${response.status}: ${errorText.substring(0, 100)}`);
       }
       sheetData = await response.json();
     } catch (fetchError) {
       console.error('Failed to fetch from Google Sheet:', fetchError);
-      return NextResponse.json({ error: 'Failed to read from Google Sheet. Make sure doGet is deployed.' }, { status: 500 });
+      return NextResponse.json({ error: `Failed to read from Google Sheet: ${fetchError.message}` }, { status: 500 });
     }
 
     if (sheetData.error) {
