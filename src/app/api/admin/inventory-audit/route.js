@@ -22,12 +22,20 @@ export async function GET(request) {
         method: 'GET',
         cache: 'no-store',
       });
+      
+      const text = await response.text();
+      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Apps Script Error Response:', errorText);
-        throw new Error(`Google Script returned ${response.status}: ${errorText.substring(0, 100)}`);
+        console.error('Apps Script Error Response:', text);
+        throw new Error(`Google Script returned ${response.status}: ${text.substring(0, 100)}`);
       }
-      sheetData = await response.json();
+      
+      try {
+        sheetData = JSON.parse(text);
+      } catch (parseError) {
+        throw new Error(`Google Apps Script returned HTML instead of JSON. First 100 chars: ${text.substring(0, 100)}`);
+      }
+      
     } catch (fetchError) {
       console.error('Failed to fetch from Google Sheet:', fetchError);
       return NextResponse.json({ error: `Failed to read from Google Sheet: ${fetchError.message}` }, { status: 500 });
