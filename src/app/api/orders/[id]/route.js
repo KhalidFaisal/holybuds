@@ -112,7 +112,7 @@ export async function PUT(request, { params }) {
               const rowData = Array(11).fill(""); // A through K (0 to 10)
               rowData[2] = item.product.name; // C column
               rowData[3] = item.quantity; // D column
-              rowData[4] = Math.round(finalUnitPrice * 100) / 100; // E column (discounted unit price)
+              rowData[4] = Math.round(finalLineTotal * 100) / 100; // E column (discounted line total)
               rowData[6] = updatedOrder.customerName; // G column
               rowData[10] = deliveryFee > 0 ? deliveryFee : ""; // K column
               return rowData;
