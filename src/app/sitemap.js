@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 
 export default async function sitemap() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://holybuds.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://holybuds.net';
 
   const products = await prisma.product.findMany({
     where: { isVisible: true },
