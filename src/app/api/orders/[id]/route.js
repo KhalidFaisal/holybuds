@@ -42,27 +42,140 @@ export async function PUT(request, { params }) {
         throw new Error('Order not found');
       }
 
-      if (data.status === 'CANCELLED' && currentOrder.status !== 'CANCELLED') {
-        // Cancelled: restore inventory
+      if (data.items) {
+        // Edit order items
+        const productDiff = {};
         for (const item of currentOrder.items) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { increment: item.quantity } },
-          });
+          productDiff[item.productId] = (productDiff[item.productId] || 0) - item.quantity;
         }
-      } else if (data.status !== 'CANCELLED' && currentOrder.status === 'CANCELLED') {
-        // Un-cancelled: reserve inventory again
-        for (const item of currentOrder.items) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { decrement: item.quantity } },
-          });
+        for (const item of data.items) {
+          productDiff[item.productId] = (productDiff[item.productId] || 0) + item.quantity;
+        }
+
+        // Apply stock changes
+        if (currentOrder.status !== 'CANCELLED') {
+          for (const [productId, diff] of Object.entries(productDiff)) {
+            if (diff === 0) continue;
+            
+            if (diff > 0) {
+              const prod = await tx.product.findUnique({ where: { id: productId } });
+              if (!prod || prod.stock < diff) {
+                 throw new Error(`Insufficient stock for product ${prod?.name || productId}`);
+              }
+            }
+            
+            await tx.product.update({
+              where: { id: productId },
+              data: { stock: { decrement: diff } }
+            });
+          }
+        }
+
+        await tx.orderItem.deleteMany({ where: { orderId: id } });
+
+        let newSubtotal = 0;
+        const newItemsData = [];
+        const itemsWithCategory = [];
+        
+        for (const item of data.items) {
+           const prod = await tx.product.findUnique({ where: { id: item.productId } });
+           if (!prod) throw new Error(`Product not found: ${item.productId}`);
+           newSubtotal += prod.price * item.quantity;
+           newItemsData.push({
+             productId: item.productId,
+             quantity: item.quantity,
+             price: prod.price
+           });
+           itemsWithCategory.push({
+             productId: prod.id,
+             quantity: item.quantity,
+             price: prod.price,
+             category: prod.category
+           });
+        }
+
+        // Re-evaluate discount
+        const activeDiscounts = await tx.discount.findMany({ where: { isActive: true } });
+        let bestDiscountAmount = 0;
+        let bestDiscountName = null;
+
+        for (const discount of activeDiscounts) {
+          let qualifyingTotal = 0;
+          let targetIds = [];
+          if (discount.targetType === 'SPECIFIC_PRODUCTS' && discount.targetProductIds) {
+            try { targetIds = JSON.parse(discount.targetProductIds); } catch (e) {}
+          }
+
+          for (const item of itemsWithCategory) {
+            const lineTotal = item.price * item.quantity;
+            if (discount.targetType === 'ENTIRE_ORDER') {
+              qualifyingTotal += lineTotal;
+            } else if (discount.targetType === 'CATEGORY' && item.category === discount.targetCategory) {
+              qualifyingTotal += lineTotal;
+            } else if (discount.targetType === 'SPECIFIC_PRODUCTS' && targetIds.includes(item.productId)) {
+              qualifyingTotal += lineTotal;
+            }
+          }
+
+          if (qualifyingTotal >= discount.minOrderValue && qualifyingTotal > 0) {
+            let amount = discount.type === 'PERCENTAGE' 
+              ? qualifyingTotal * (discount.value / 100) 
+              : discount.value;
+            
+            if (amount > qualifyingTotal) amount = qualifyingTotal;
+
+            if (amount > bestDiscountAmount) {
+              bestDiscountAmount = amount;
+              bestDiscountName = discount.name;
+            }
+          }
+        }
+
+        let newTotal = newSubtotal - bestDiscountAmount;
+        let deliveryFee = 0;
+        if (currentOrder.deliveryMethod === 'DELIVERY' && newTotal < 100) {
+           deliveryFee = 10;
+           newTotal += deliveryFee;
+        }
+
+        await tx.order.update({
+          where: { id },
+          data: {
+             total: newTotal,
+             discountName: bestDiscountName,
+             discountAmount: bestDiscountAmount,
+             items: {
+               create: newItemsData
+             }
+          }
+        });
+      } else if (data.status) {
+        // Status updates
+        if (data.status === 'CANCELLED' && currentOrder.status !== 'CANCELLED') {
+          // Cancelled: restore inventory
+          for (const item of currentOrder.items) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { stock: { increment: item.quantity } },
+            });
+          }
+        } else if (data.status !== 'CANCELLED' && currentOrder.status === 'CANCELLED') {
+          // Un-cancelled: reserve inventory again
+          for (const item of currentOrder.items) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { stock: { decrement: item.quantity } },
+            });
+          }
         }
       }
 
+      const updateData = {};
+      if (data.status) updateData.status = data.status;
+
       const updatedOrder = await tx.order.update({
         where: { id },
-        data: { status: data.status },
+        data: updateData,
         include: {
           items: { include: { product: true } },
         },

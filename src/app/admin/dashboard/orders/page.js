@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import OrderStatusBadge from '@/components/OrderStatusBadge';
 import CannabisIcon from '@/components/icons/CannabisIcon';
 import CustomerFlags from '@/components/CustomerFlags';
+import OrderItemsEditor from './OrderItemsEditor';
 
 const STATUSES = ['ALL', 'PENDING', 'PROCESSING', 'READY', 'COMPLETED', 'CANCELLED'];
 
@@ -566,36 +567,14 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
 
-                  {/* Order items */}
-                  <div className="mt-6">
-                    <h4 className="text-sm font-semibold text-pc-muted uppercase tracking-wider mb-3">Items</h4>
-                    <div className="space-y-2">
-                      {order.items?.map((item) => (
-                        <div key={item.id} className="flex justify-between items-center p-3 rounded-xl bg-pc-dark/50 text-sm">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg overflow-hidden bg-pc-smoke flex-shrink-0">
-                              {item.product?.image ? (
-                                <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-8 h-8 rounded-lg bg-pc-dark border border-pc-border flex items-center justify-center shrink-0">
-                                  {item.product.category === 'FLOWER' ? (
-                                    <CannabisIcon className="w-4 h-4 text-pc-green" />
-                                  ) : (
-                                    <svg className="w-4 h-4 text-pc-border" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-white font-medium">{item.product?.name || 'Unknown'}</p>
-                              <p className="text-pc-muted text-xs">× {item.quantity}</p>
-                            </div>
-                          </div>
-                          <p className="text-white font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Order items editor */}
+                  <OrderItemsEditor 
+                    order={order} 
+                    token={token} 
+                    onUpdated={(updated) => {
+                      setOrders((prev) => prev.map((o) => (o.id === order.id ? updated : o)));
+                    }}
+                  />
                 </div>
               )}
             </div>
