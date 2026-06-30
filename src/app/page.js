@@ -5,6 +5,23 @@ import { withProductDiscounts } from '@/lib/discounts';
 
 export const dynamic = 'force-dynamic';
 
+function seededRandom(seed) {
+  var x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+}
+
+function shuffleHourly(array) {
+  const d = new Date();
+  let seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() + d.getHours();
+  let currentIndex = array.length, randomIndex;
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(seededRandom(seed++) * currentIndex);
+    currentIndex--;
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+  }
+  return array;
+}
+
 export default async function HomePage() {
   const allActiveProducts = await prisma.product.findMany({
     where: { isVisible: true, stock: { gt: 0 } },
@@ -14,10 +31,12 @@ export default async function HomePage() {
   const enrichedProducts = await withProductDiscounts(allActiveProducts);
 
   // 1. Deals
-  const deals = enrichedProducts.filter(p => p.eligibleDiscountNames && p.eligibleDiscountNames.length > 0).slice(0, 8);
+  const allDeals = enrichedProducts.filter(p => p.eligibleDiscountNames && p.eligibleDiscountNames.length > 0);
+  const deals = shuffleHourly([...allDeals]).slice(0, 8);
 
   // 2. Staff Picks (featured)
-  const staffPicks = enrichedProducts.filter(p => p.featured).slice(0, 8);
+  const allStaffPicks = enrichedProducts.filter(p => p.featured);
+  const staffPicks = shuffleHourly([...allStaffPicks]).slice(0, 8);
 
   // 3. New Arrivals
   const newArrivals = enrichedProducts.slice(0, 8);

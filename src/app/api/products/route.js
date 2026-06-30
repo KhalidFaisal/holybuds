@@ -17,7 +17,7 @@ export async function GET(request) {
     if (category && category !== 'ALL') where.category = category;
     if (featured === 'true') where.featured = true;
     if (search) {
-      where.name = { contains: search };
+      where.name = { contains: search, mode: 'insensitive' };
     }
 
     const products = await prisma.product.findMany({
