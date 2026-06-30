@@ -435,7 +435,7 @@ export default function AdminOrdersPage() {
       ) : (
         <div className="space-y-4">
           {paginatedOrders.map((order) => (
-            <div key={order.id} className="glass-card">
+            <div key={order.id} className={`glass-card relative ${expandedOrder === order.id ? 'z-50' : 'z-10'}`}>
               {/* Order Header */}
               <div className="flex w-full hover:bg-pc-card/30 transition-colors rounded-t-2xl">
                 <div className="pl-4 md:pl-6 pt-5 md:pt-7 flex-shrink-0" onClick={(e) => toggleSelectOrder(e, order.id)}>
