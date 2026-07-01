@@ -407,6 +407,7 @@ export default function AdminOrdersPage() {
             );
           })}
         </div>
+        </div>
         
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center bg-pc-card border border-pc-border rounded-lg px-3 py-1">
