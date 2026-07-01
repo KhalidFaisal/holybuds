@@ -15,13 +15,13 @@ export async function generateProductDescription(name, category, weight) {
     },
     body: JSON.stringify({
       models: [
-        "meta-llama/llama-3-8b-instruct:free",
-        "google/gemma-7b-it:free",
-        "mistralai/mistral-7b-instruct:free",
-        "openchat/openchat-7b:free",
-        "gryphe/mythomist-7b:free",
-        "undi95/toppy-m-7b:free",
-        "huggingfaceh4/zephyr-7b-beta:free"
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "google/gemma-4-31b-it:free",
+        "nousresearch/hermes-3-llama-3.1-405b:free",
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "qwen/qwen3-next-80b-a3b-instruct:free",
+        "openai/gpt-oss-120b:free",
+        "openrouter/free"
       ],
       messages: [
         {
