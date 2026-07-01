@@ -14,15 +14,7 @@ export async function generateProductDescription(name, category, weight) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      models: [
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "google/gemma-4-31b-it:free",
-        "nousresearch/hermes-3-llama-3.1-405b:free",
-        "nvidia/nemotron-3-ultra-550b-a55b:free",
-        "qwen/qwen3-next-80b-a3b-instruct:free",
-        "openai/gpt-oss-120b:free",
-        "openrouter/free"
-      ],
+      model: "openrouter/free",
       messages: [
         {
           role: "system",
