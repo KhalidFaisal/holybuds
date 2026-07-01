@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { withProductDiscounts } from '@/lib/discounts';
 import { requireAdmin } from '@/lib/auth';
+import { generateProductDescription } from '@/lib/ai';
 
 export async function GET(request) {
   try {
@@ -49,13 +50,22 @@ export async function POST(request) {
     }
     const primaryImage = imagesArr.length > 0 ? imagesArr[0] : '';
 
+    let finalDescription = data.description || '';
+    if (!finalDescription && data.name && data.category) {
+      try {
+        finalDescription = await generateProductDescription(data.name, data.category, data.weight);
+      } catch (err) {
+        console.error('Failed to auto-generate description:', err);
+      }
+    }
+
     const product = await prisma.product.create({
       data: {
         name: data.name,
         category: data.category,
         price: parseFloat(data.price),
         weight: data.weight || null,
-        description: data.description || '',
+        description: finalDescription,
         image: primaryImage,
         images: JSON.stringify(imagesArr),
         stock: parseInt(data.stock) || 0,

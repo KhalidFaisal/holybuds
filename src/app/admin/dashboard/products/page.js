@@ -33,6 +33,8 @@ export default function AdminProductsPage() {
   const [selectedImportIndices, setSelectedImportIndices] = useState(new Set());
   const [selectedExportIds, setSelectedExportIds] = useState(new Set());
   const [viewStatsProduct, setViewStatsProduct] = useState(null);
+  const [isBackfilling, setIsBackfilling] = useState(false);
+  const [backfillProgress, setBackfillProgress] = useState({ total: 0, current: 0 });
   
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
@@ -179,6 +181,60 @@ export default function AdminProductsPage() {
     } catch (error) {
       console.error('Toggle featured error:', error);
     }
+  };
+
+  const handleBulkBackfill = async () => {
+    const productsToBackfill = products.filter(p => !p.description || p.description.trim() === '');
+    if (productsToBackfill.length === 0) {
+      alert('All products already have descriptions!');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to backfill descriptions for ${productsToBackfill.length} products? This might take a while.`)) {
+      return;
+    }
+
+    setIsBackfilling(true);
+    setBackfillProgress({ total: productsToBackfill.length, current: 0 });
+
+    for (let i = 0; i < productsToBackfill.length; i++) {
+      const p = productsToBackfill[i];
+      setBackfillProgress(prev => ({ ...prev, current: i + 1 }));
+
+      try {
+        const aiRes = await fetch('/api/products/generate-description', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ name: p.name, category: p.category, weight: p.weight })
+        });
+
+        if (aiRes.ok) {
+          const { description } = await aiRes.json();
+          if (description) {
+            const putRes = await fetch(`/api/products/${p.id}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ description })
+            });
+            if (putRes.ok) {
+              const updated = await putRes.json();
+              setProducts(prev => prev.map(prod => prod.id === updated.id ? updated : prod));
+            }
+          }
+        }
+      } catch (err) {
+        console.error(`Failed to backfill description for ${p.name}:`, err);
+      }
+    }
+
+    setIsBackfilling(false);
+    alert('Finished backfilling descriptions!');
   };
 
   const handleSave = (saved) => {
@@ -394,6 +450,13 @@ export default function AdminProductsPage() {
             {isImporting ? 'Importing...' : 'Import CSV'}
             <input type="file" accept=".csv" className="hidden" onChange={handleImportCSV} disabled={isImporting} />
           </label>
+          <button 
+            onClick={handleBulkBackfill} 
+            disabled={isBackfilling}
+            className="btn-secondary text-pc-green border-pc-green/30 hover:bg-pc-green/10 whitespace-nowrap"
+          >
+            {isBackfilling ? `✨ Generating ${backfillProgress.current}/${backfillProgress.total}...` : '✨ AI Backfill'}
+          </button>
           <button onClick={() => { setEditProduct(null); setShowForm(true); }} className="btn-primary" id="add-product-btn">
             + Add Product
           </button>
