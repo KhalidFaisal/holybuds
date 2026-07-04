@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 
 export default function ChatWidget() {
   const pathname = usePathname();
@@ -85,7 +86,8 @@ export default function ChatWidget() {
           <div className="bg-pc-black p-4 flex justify-between items-center border-b border-pc-border">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-pc-green rounded-full animate-pulse"></div>
-              <h3 className="text-white font-bold">Virtual Budtender</h3>
+              <h3 className="text-white font-bold font-sans">Virtual Budtender</h3>
+              <span className="bg-pc-green/20 text-pc-green text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest">Beta</span>
             </div>
             <button onClick={() => setIsOpen(false)} className="text-pc-muted hover:text-white transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
@@ -98,8 +100,14 @@ export default function ChatWidget() {
           <div className="flex-1 p-4 overflow-y-auto min-h-[300px] max-h-[400px] space-y-4">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-pc-green text-black rounded-tr-sm' : 'bg-pc-black border border-pc-border text-white rounded-tl-sm'}`}>
-                  {msg.content}
+                <div className={`max-w-[85%] p-3 rounded-2xl text-sm font-sans ${msg.role === 'user' ? 'bg-pc-green text-black rounded-tr-sm' : 'bg-pc-black border border-pc-border text-white rounded-tl-sm'}`}>
+                  {msg.role === 'user' ? (
+                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                  ) : (
+                    <div className="text-sm font-sans [&>p]:mb-3 [&>p:last-child]:mb-0 [&>strong]:font-bold [&>ul]:list-disc [&>ul]:ml-4 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:ml-4 [&>ol]:mb-3">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
