@@ -8,10 +8,8 @@ export default function ChatWidget() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     if (typeof window !== 'undefined' && localStorage.getItem('admin_token')) {
       setIsAdmin(true);
     }
@@ -34,7 +32,6 @@ export default function ChatWidget() {
     }
   }, [messages, isOpen]);
 
-  if (!mounted) return null;
   if (!isAdmin) return null;
   if (pathname?.startsWith('/admin')) {
     return null;
