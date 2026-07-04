@@ -81,6 +81,7 @@ model SiteSettings {
   sitePassword      String  @default("Holymoly")
   adminPasswordHash String?
   timezone          String  @default("UTC")
+  chatbotPrompt     String  @default("You are a helpful, friendly budtender at Elevated Dispensary. Recommend products from our inventory based on the user's needs. Be concise, polite, and use a chill tone.")
 }
 
 model Category {

@@ -22,6 +22,8 @@ export const metadata = {
   },
 };
 
+import ChatWidget from '@/components/ChatWidget';
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} ${customFont.variable} antialiased`}>
@@ -33,6 +35,7 @@ export default function RootLayout({ children }) {
         <div className="relative z-10">
           {children}
         </div>
+        <ChatWidget />
       </body>
     </html>
   );

@@ -22,6 +22,10 @@ export default function SettingsPage() {
   const [loadingTimezone, setLoadingTimezone] = useState(false);
   const [messageTimezone, setMessageTimezone] = useState('');
 
+  const [chatbotPrompt, setChatbotPrompt] = useState('');
+  const [loadingPrompt, setLoadingPrompt] = useState(false);
+  const [messagePrompt, setMessagePrompt] = useState('');
+
   const timezones = useMemo(() => {
     if (typeof Intl === 'undefined' || !Intl.supportedValuesOf) return [];
     const tzs = Intl.supportedValuesOf('timeZone');
@@ -61,6 +65,9 @@ export default function SettingsPage() {
           if (data.timezone) {
             setCurrentTimezone(data.timezone);
             setTimezone(data.timezone);
+          }
+          if (data.chatbotPrompt) {
+            setChatbotPrompt(data.chatbotPrompt);
           }
         }
       } catch (e) {
@@ -108,6 +115,34 @@ export default function SettingsPage() {
       setMessageTimezone('An error occurred.');
     } finally {
       setLoadingTimezone(false);
+    }
+  };
+
+  const handlePromptSubmit = async (e) => {
+    e.preventDefault();
+    setLoadingPrompt(true);
+    setMessagePrompt('');
+
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        },
+        body: JSON.stringify({ chatbotPrompt }),
+      });
+
+      if (res.ok) {
+        setMessagePrompt('AI Budtender prompt updated successfully.');
+      } else {
+        const data = await res.json();
+        setMessagePrompt(data.error || 'Failed to update settings.');
+      }
+    } catch (err) {
+      setMessagePrompt('An error occurred.');
+    } finally {
+      setLoadingPrompt(false);
     }
   };
 
@@ -333,6 +368,41 @@ export default function SettingsPage() {
             className="btn-primary w-full py-3"
           >
             {loadingTimezone ? 'Saving...' : 'Update Timezone'}
+          </button>
+        </form>
+      </div>
+
+      {/* AI Settings Section */}
+      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 lg:col-span-2">
+        <h2 className="text-xl font-semibold text-white mb-4">✨ AI Budtender Settings</h2>
+        <p className="text-pc-muted mb-6 text-sm">
+          Customize the instructions given to the AI Chatbot on your storefront. Train it to use specific slang, recommend certain products, or adopt a unique persona.
+        </p>
+
+        <form onSubmit={handlePromptSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-pc-muted mb-1">System Prompt</label>
+            <textarea
+              value={chatbotPrompt}
+              onChange={(e) => setChatbotPrompt(e.target.value)}
+              rows={6}
+              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+              required
+            />
+          </div>
+
+          {messagePrompt && (
+            <div className={`p-3 rounded-lg text-sm ${messagePrompt.includes('success') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+              {messagePrompt}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loadingPrompt}
+            className="btn-primary w-full py-3"
+          >
+            {loadingPrompt ? 'Saving...' : 'Update AI Instructions'}
           </button>
         </form>
       </div>

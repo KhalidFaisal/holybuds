@@ -13,13 +13,21 @@ export default function CartDrawer() {
   const cartIdsString = cartItemIds.join(',');
 
   useEffect(() => {
-    fetch(`/api/products/upscales?cartIds=${cartIdsString}`)
+    if (!isOpen || items.length === 0) return;
+
+    fetch('/api/cart/upsell', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cartItems: items })
+    })
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) setUpscales(data);
+        if (data.recommendation) {
+          setUpscales([data.recommendation]);
+        }
       })
       .catch(console.error);
-  }, [cartIdsString]);
+  }, [isOpen, cartIdsString]);
 
   if (!isOpen) return null;
 
@@ -163,7 +171,9 @@ export default function CartDrawer() {
           {/* Upscales / Recommended */}
           {items.length > 0 && recommended.length > 0 && (
             <div className="mt-8 border-t border-pc-border pt-6">
-              <h3 className="text-sm font-bold text-white mb-4">Customers also add...</h3>
+              <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                <span className="text-pc-green">✨</span> AI Recommends
+              </h3>
               <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 hide-scrollbar -mx-6 px-6">
                 {recommended.map(product => (
                   <div key={product.id} className="w-[140px] shrink-0 snap-start bg-pc-card rounded-xl border border-pc-border overflow-hidden flex flex-col">
