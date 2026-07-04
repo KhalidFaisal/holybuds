@@ -7,6 +7,16 @@ import ReactMarkdown from 'react-markdown';
 export default function ChatWidget() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== 'undefined' && localStorage.getItem('admin_token')) {
+      setIsAdmin(true);
+    }
+  }, []);
+
   const [messages, setMessages] = useState([
     { role: 'assistant', content: 'Hey there! Need help finding the perfect strain or product today?' }
   ]);
@@ -24,6 +34,8 @@ export default function ChatWidget() {
     }
   }, [messages, isOpen]);
 
+  if (!mounted) return null;
+  if (!isAdmin) return null;
   if (pathname?.startsWith('/admin')) {
     return null;
   }
