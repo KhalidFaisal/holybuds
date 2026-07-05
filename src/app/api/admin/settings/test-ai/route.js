@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'pc-super-secret-key-change-in-production';
@@ -22,14 +23,17 @@ export async function POST(request) {
     const data = await request.json();
     const model = data.model || 'openrouter/free';
 
-    if (!OPENROUTER_API_KEY) {
-      return NextResponse.json({ error: 'OpenRouter API Key is missing in environment.' }, { status: 500 });
+    const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
+    const finalApiKey = settings?.openRouterApiKey || OPENROUTER_API_KEY;
+
+    if (!finalApiKey) {
+      return NextResponse.json({ error: 'OpenRouter API Key is missing. Please add one in settings.' }, { status: 500 });
     }
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Authorization': `Bearer ${finalApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -40,7 +44,20 @@ export async function POST(request) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      return NextResponse.json({ error: `API Error: ${errorText}` }, { status: response.status });
+      let errorMessage = errorText;
+      try {
+        const errorJson = JSON.parse(errorText);
+        // Extract readable message from OpenRouter format if possible
+        if (errorJson.error?.message) {
+          errorMessage = errorJson.error.message;
+          if (errorJson.error.metadata?.raw) {
+            errorMessage += ` - ${errorJson.error.metadata.raw}`;
+          }
+        }
+      } catch (e) {
+        // Not JSON
+      }
+      return NextResponse.json({ error: errorMessage }, { status: response.status });
     }
 
     const json = await response.json();

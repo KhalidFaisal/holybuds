@@ -9,15 +9,15 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Messages array is required' }, { status: 400 });
     }
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: 'OPENROUTER_API_KEY is not configured' }, { status: 500 });
-    }
-
-    // 1. Get the custom chatbot prompt
+    // 1. Get the custom chatbot prompt and API key
     let settings = await prisma.siteSettings.findUnique({
       where: { id: 'global' },
     });
+
+    const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'OPENROUTER_API_KEY is not configured' }, { status: 500 });
+    }
     
     // Fallback if settings don't exist yet
     const systemPrompt = settings?.chatbotPrompt || "You are a helpful, friendly budtender at Elevated Dispensary. Recommend products from our inventory based on the user's needs. Be concise, polite, and use a chill tone.";

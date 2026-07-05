@@ -1,16 +1,16 @@
 import prisma from '@/lib/prisma';
 
 export async function generateProductDescription(name, category, weight) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
+  const model = settings?.aiModel || "openrouter/free";
+  const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+
   if (!apiKey) {
     throw new Error('OPENROUTER_API_KEY is missing');
   }
 
   let prompt = `Product Name: ${name}\nCategory: ${category}`;
   if (weight) prompt += `\nWeight/Size: ${weight}`;
-
-  const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
-  const model = settings?.aiModel || "openrouter/free";
 
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',

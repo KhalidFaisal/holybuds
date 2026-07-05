@@ -24,6 +24,7 @@ export default function SettingsPage() {
 
   const [chatbotPrompt, setChatbotPrompt] = useState('');
   const [aiModel, setAiModel] = useState('openrouter/free');
+  const [openRouterApiKey, setOpenRouterApiKey] = useState('');
   const [loadingPrompt, setLoadingPrompt] = useState(false);
   const [messagePrompt, setMessagePrompt] = useState('');
   
@@ -75,6 +76,9 @@ export default function SettingsPage() {
           }
           if (data.aiModel) {
             setAiModel(data.aiModel);
+          }
+          if (data.openRouterApiKey !== undefined) {
+            setOpenRouterApiKey(data.openRouterApiKey);
           }
         }
       } catch (e) {
@@ -137,7 +141,11 @@ export default function SettingsPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
         },
-        body: JSON.stringify({ chatbotPrompt, aiModel }),
+        body: JSON.stringify({ 
+          chatbotPrompt, 
+          aiModel,
+          openRouterApiKey: openRouterApiKey === '••••••••••••••••' ? undefined : openRouterApiKey 
+        }),
       });
 
       if (res.ok) {
@@ -413,6 +421,18 @@ export default function SettingsPage() {
         </p>
 
         <form onSubmit={handlePromptSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-pc-muted mb-1">Custom OpenRouter API Key</label>
+            <p className="text-xs text-pc-muted mb-2">Leave blank to use the server's default environment key. Add your own key to bypass free limits or use paid models.</p>
+            <input
+              type="password"
+              value={openRouterApiKey}
+              onChange={(e) => setOpenRouterApiKey(e.target.value)}
+              placeholder="sk-or-v1-..."
+              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4"
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-pc-muted mb-1">AI Model (OpenRouter)</label>
             <div className="flex gap-2">

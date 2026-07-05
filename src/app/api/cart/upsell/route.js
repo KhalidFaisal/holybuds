@@ -13,7 +13,8 @@ export async function POST(request) {
       return NextResponse.json({ recommendation: null });
     }
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
+    const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: 'OPENROUTER_API_KEY is not configured' }, { status: 500 });
     }
