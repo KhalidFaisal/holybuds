@@ -54,7 +54,7 @@ If nothing fits well, or the cart is empty, return {"recommendedProductId": null
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "openrouter/free",
+        model: settings.aiModel || "openrouter/free",
         messages: [
           { role: "system", content: systemPrompt + '\n' + inventoryContext },
           { role: "user", content: cartContext }

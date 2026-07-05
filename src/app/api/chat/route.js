@@ -60,7 +60,7 @@ Only recommend products that are listed in the inventory above. Do not hallucina
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "openrouter/free",
+        model: settings.aiModel || "openrouter/free",
         messages: openRouterMessages,
       })
     });

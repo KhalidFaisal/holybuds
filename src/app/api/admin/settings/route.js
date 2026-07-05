@@ -32,7 +32,8 @@ export async function GET(request) {
     return NextResponse.json({ 
       sitePassword: settings.sitePassword,
       timezone: settings.timezone || 'UTC',
-      chatbotPrompt: settings.chatbotPrompt || "You are a helpful, friendly budtender at Elevated Dispensary. Recommend products from our inventory based on the user's needs. Be concise, polite, and use a chill tone."
+      chatbotPrompt: settings.chatbotPrompt || "You are a helpful, friendly budtender at Elevated Dispensary. Recommend products from our inventory based on the user's needs. Be concise, polite, and use a chill tone.",
+      aiModel: settings.aiModel || "openrouter/free"
     });
   } catch (error) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -77,6 +78,10 @@ export async function POST(request) {
 
     if (data.chatbotPrompt !== undefined) {
       updateData.chatbotPrompt = data.chatbotPrompt;
+    }
+
+    if (data.aiModel) {
+      updateData.aiModel = data.aiModel;
     }
 
     if (Object.keys(updateData).length === 0) {

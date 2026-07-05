@@ -23,8 +23,12 @@ export default function SettingsPage() {
   const [messageTimezone, setMessageTimezone] = useState('');
 
   const [chatbotPrompt, setChatbotPrompt] = useState('');
+  const [aiModel, setAiModel] = useState('openrouter/free');
   const [loadingPrompt, setLoadingPrompt] = useState(false);
   const [messagePrompt, setMessagePrompt] = useState('');
+  
+  const [testingModel, setTestingModel] = useState(false);
+  const [testMessage, setTestMessage] = useState('');
 
   const timezones = useMemo(() => {
     if (typeof Intl === 'undefined' || !Intl.supportedValuesOf) return [];
@@ -68,6 +72,9 @@ export default function SettingsPage() {
           }
           if (data.chatbotPrompt) {
             setChatbotPrompt(data.chatbotPrompt);
+          }
+          if (data.aiModel) {
+            setAiModel(data.aiModel);
           }
         }
       } catch (e) {
@@ -130,7 +137,7 @@ export default function SettingsPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
         },
-        body: JSON.stringify({ chatbotPrompt }),
+        body: JSON.stringify({ chatbotPrompt, aiModel }),
       });
 
       if (res.ok) {
@@ -143,6 +150,32 @@ export default function SettingsPage() {
       setMessagePrompt('An error occurred.');
     } finally {
       setLoadingPrompt(false);
+    }
+  };
+
+  const handleTestModel = async () => {
+    setTestingModel(true);
+    setTestMessage('');
+    try {
+      const res = await fetch('/api/admin/settings/test-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        },
+        body: JSON.stringify({ model: aiModel })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTestMessage(`Success! Response: "${data.reply}"`);
+      } else {
+        const data = await res.json();
+        setTestMessage(`Error: ${data.error}`);
+      }
+    } catch (err) {
+      setTestMessage('Failed to connect to test endpoint.');
+    } finally {
+      setTestingModel(false);
     }
   };
 
@@ -381,6 +414,34 @@ export default function SettingsPage() {
 
         <form onSubmit={handlePromptSubmit} className="space-y-4">
           <div>
+            <label className="block text-sm font-medium text-pc-muted mb-1">AI Model (OpenRouter)</label>
+            <div className="flex gap-2">
+              <select
+                value={aiModel}
+                onChange={(e) => setAiModel(e.target.value)}
+                className="flex-1 bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green appearance-none"
+              >
+                <option value="openrouter/free">OpenRouter Free (Default)</option>
+                <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
+                <option value="openai/gpt-5-mini">GPT-5 Mini</option>
+              </select>
+              <button
+                type="button"
+                onClick={handleTestModel}
+                disabled={testingModel}
+                className="px-4 py-2 bg-pc-green/10 text-pc-green hover:bg-pc-green hover:text-black rounded-xl text-sm font-bold transition-all whitespace-nowrap disabled:opacity-50"
+              >
+                {testingModel ? 'Testing...' : 'Test Connection'}
+              </button>
+            </div>
+            {testMessage && (
+              <div className={`mt-2 p-2 rounded text-xs ${testMessage.startsWith('Success') ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'}`}>
+                {testMessage}
+              </div>
+            )}
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-pc-muted mb-1">System Prompt</label>
             <textarea
               value={chatbotPrompt}
@@ -402,7 +463,7 @@ export default function SettingsPage() {
             disabled={loadingPrompt}
             className="btn-primary w-full py-3"
           >
-            {loadingPrompt ? 'Saving...' : 'Update AI Instructions'}
+            {loadingPrompt ? 'Saving...' : 'Update AI Settings'}
           </button>
         </form>
       </div>
