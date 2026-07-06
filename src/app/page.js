@@ -32,21 +32,21 @@ export default async function HomePage() {
 
   // 1. Deals
   const allDeals = enrichedProducts.filter(p => p.eligibleDiscountNames && p.eligibleDiscountNames.length > 0);
-  const deals = shuffleHourly([...allDeals]).slice(0, 8);
+  const deals = shuffleHourly([...allDeals]).slice(0, 12);
 
   // 2. Staff Picks (featured)
   const allStaffPicks = enrichedProducts.filter(p => p.featured);
-  const staffPicks = shuffleHourly([...allStaffPicks]).slice(0, 8);
+  const staffPicks = shuffleHourly([...allStaffPicks]).slice(0, 12);
 
   // 3. New Arrivals
-  const newArrivals = enrichedProducts.slice(0, 8);
+  const newArrivals = enrichedProducts.slice(0, 12);
 
   // 4. Best Sellers
   const topOrderItems = await prisma.orderItem.groupBy({
     by: ['productId'],
     _sum: { quantity: true },
     orderBy: { _sum: { quantity: 'desc' } },
-    take: 8,
+    take: 12,
   });
   
   const bestSellerIds = topOrderItems.map(i => i.productId);
@@ -55,8 +55,8 @@ export default async function HomePage() {
     .filter(Boolean);
 
   // Backfill best sellers if we don't have enough data
-  if (bestSellers.length < 4) {
-    const missing = 4 - bestSellers.length;
+  if (bestSellers.length < 12) {
+    const missing = 12 - bestSellers.length;
     const backfill = enrichedProducts.filter(p => !bestSellerIds.includes(p.id)).slice(0, missing);
     bestSellers.push(...backfill);
   }
