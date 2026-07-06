@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 import ProductCard from '@/components/ProductCard';
@@ -11,6 +11,15 @@ export default function MenuClient({ products, categories, initialCategory, init
   const [category, setCategory] = useState(initialCategory || 'ALL');
   const [search, setSearch] = useState(initialSearch || '');
   const [sortBy, setSortBy] = useState('newest');
+
+  // Sync state with URL params when navigating between categories
+  useEffect(() => {
+    setCategory(initialCategory || 'ALL');
+  }, [initialCategory]);
+
+  useEffect(() => {
+    setSearch(initialSearch || '');
+  }, [initialSearch]);
 
   const filtered = useMemo(() => {
     let result = [...products];
