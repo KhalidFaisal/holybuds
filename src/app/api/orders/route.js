@@ -196,9 +196,10 @@ export async function POST(request) {
         }
         message += `*Total:* $${order.total.toFixed(2)}`;
 
-        // Send POST request
+        // Send POST request with a 5 second timeout so it doesn't hang the order placement
         await fetch(process.env.WHATSAPP_WEBHOOK_URL, {
           method: 'POST',
+          signal: AbortSignal.timeout(5000),
           headers: { 
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${process.env.WHATSAPP_WEBHOOK_SECRET || ''}`,
