@@ -24,7 +24,7 @@ export async function callAI(messages, options = {}) {
     if (!res.ok) {
       const errorText = await res.text();
       console.error('Liner API error:', errorText);
-      throw new Error('Failed to communicate with Liner AI');
+      throw new Error(`Failed to communicate with Liner AI: ${res.status} ${errorText}`);
     }
 
     // Process SSE stream
