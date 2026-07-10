@@ -24,44 +24,20 @@ export async function POST(request) {
     const model = data.model || 'openrouter/free';
 
     const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
-    const finalApiKey = settings?.openRouterApiKey || OPENROUTER_API_KEY;
-
-    if (!finalApiKey) {
-      return NextResponse.json({ error: 'OpenRouter API Key is missing. Please add one in settings.' }, { status: 500 });
+    
+    const { callAI } = require('@/lib/ai');
+    let responseData;
+    try {
+      responseData = await callAI([{ role: 'user', content: 'Say "Hello, World!"' }], {
+        model,
+        openRouterApiKey: settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY,
+        linerApiKey: settings?.linerApiKey || process.env.LINER_API_KEY
+      });
+    } catch (e) {
+      return NextResponse.json({ error: e.message || 'Failed to connect' }, { status: 500 });
     }
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${finalApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [{ role: 'user', content: 'Say "Hello, World!"' }],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorMessage = errorText;
-      try {
-        const errorJson = JSON.parse(errorText);
-        // Extract readable message from OpenRouter format if possible
-        if (errorJson.error?.message) {
-          errorMessage = errorJson.error.message;
-          if (errorJson.error.metadata?.raw) {
-            errorMessage += ` - ${errorJson.error.metadata.raw}`;
-          }
-        }
-      } catch (e) {
-        // Not JSON
-      }
-      return NextResponse.json({ error: errorMessage }, { status: response.status });
-    }
-
-    const json = await response.json();
-    const reply = json.choices?.[0]?.message?.content || 'No content returned';
+    const reply = responseData.choices?.[0]?.message?.content || 'No content returned';
 
     return NextResponse.json({ success: true, reply });
   } catch (error) {

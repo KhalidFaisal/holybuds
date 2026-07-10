@@ -34,7 +34,8 @@ export async function GET(request) {
       timezone: settings.timezone || 'UTC',
       chatbotPrompt: settings.chatbotPrompt || "You are a helpful, friendly budtender at Elevated Dispensary. Recommend products from our inventory based on the user's needs. Be concise, polite, and use a chill tone.",
       aiModel: settings.aiModel || "openrouter/free",
-      openRouterApiKey: settings.openRouterApiKey ? '••••••••••••••••' : '' // Masked in response
+      openRouterApiKey: settings.openRouterApiKey ? '••••••••••••••••' : '', // Masked in response
+      linerApiKey: settings.linerApiKey ? '••••••••••••••••' : '' // Masked in response
     });
   } catch (error) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -88,6 +89,10 @@ export async function POST(request) {
     if (data.openRouterApiKey !== undefined) {
       // Allow clearing the key if empty string is passed
       updateData.openRouterApiKey = data.openRouterApiKey === '' ? null : data.openRouterApiKey;
+    }
+
+    if (data.linerApiKey !== undefined) {
+      updateData.linerApiKey = data.linerApiKey === '' ? null : data.linerApiKey;
     }
 
     if (Object.keys(updateData).length === 0) {

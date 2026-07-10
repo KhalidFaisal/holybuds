@@ -15,8 +15,10 @@ export async function POST(request) {
 
     const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
     const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: 'OPENROUTER_API_KEY is not configured' }, { status: 500 });
+    const linerApiKey = settings?.linerApiKey || process.env.LINER_API_KEY;
+
+    if (!apiKey && !linerApiKey) {
+      return NextResponse.json({ error: 'AI API Key is not configured' }, { status: 500 });
     }
 
     // 1. Get current active inventory
@@ -48,27 +50,22 @@ ${JSON.stringify(cartItems)}
 Return the response as a pure JSON object with a single key "recommendedProductId" containing the ID of the product you recommend. Do not include any markdown, quotes, or conversational text. Just the JSON object.
 If nothing fits well, or the cart is empty, return {"recommendedProductId": null}.`;
 
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: settings.aiModel || "openrouter/free",
-        messages: [
-          { role: "system", content: systemPrompt + '\n' + inventoryContext },
-          { role: "user", content: cartContext }
-        ]
-      })
-    });
-
-    if (!res.ok) {
-      console.error('OpenRouter Upsell API error:', await res.text());
+    const { callAI } = require('@/lib/ai');
+    
+    let data;
+    try {
+      data = await callAI([
+        { role: "system", content: systemPrompt + '\n' + inventoryContext },
+        { role: "user", content: cartContext }
+      ], {
+        model: settings.aiModel,
+        openRouterApiKey: apiKey,
+        linerApiKey: linerApiKey
+      });
+    } catch (e) {
+      console.error('AI Upsell error:', e);
       return NextResponse.json({ error: 'Failed to generate upsell' }, { status: 500 });
     }
-
-    const data = await res.json();
     const content = data.choices?.[0]?.message?.content;
     
     try {

@@ -25,6 +25,7 @@ export default function SettingsPage() {
   const [chatbotPrompt, setChatbotPrompt] = useState('');
   const [aiModel, setAiModel] = useState('openrouter/free');
   const [openRouterApiKey, setOpenRouterApiKey] = useState('');
+  const [linerApiKey, setLinerApiKey] = useState('');
   const [loadingPrompt, setLoadingPrompt] = useState(false);
   const [messagePrompt, setMessagePrompt] = useState('');
   
@@ -74,12 +75,9 @@ export default function SettingsPage() {
           if (data.chatbotPrompt) {
             setChatbotPrompt(data.chatbotPrompt);
           }
-          if (data.aiModel) {
-            setAiModel(data.aiModel);
-          }
-          if (data.openRouterApiKey !== undefined) {
-            setOpenRouterApiKey(data.openRouterApiKey);
-          }
+          setAiModel(data.aiModel || 'openrouter/free');
+          setOpenRouterApiKey(data.openRouterApiKey || '');
+          setLinerApiKey(data.linerApiKey || '');
         }
       } catch (e) {
         console.error(e);
@@ -144,7 +142,8 @@ export default function SettingsPage() {
         body: JSON.stringify({ 
           chatbotPrompt, 
           aiModel,
-          openRouterApiKey: openRouterApiKey === '••••••••••••••••' ? undefined : openRouterApiKey 
+          openRouterApiKey: openRouterApiKey === '••••••••••••••••' ? undefined : openRouterApiKey,
+          linerApiKey: linerApiKey === '••••••••••••••••' ? undefined : linerApiKey 
         }),
       });
 
@@ -434,6 +433,18 @@ export default function SettingsPage() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-pc-muted mb-1">Custom Liner AI API Key</label>
+            <p className="text-xs text-pc-muted mb-2">Leave blank to use the server's default environment key. Add your own key to bypass free limits or use paid models.</p>
+            <input
+              type="password"
+              value={linerApiKey}
+              onChange={(e) => setLinerApiKey(e.target.value)}
+              placeholder="Your Liner API Key..."
+              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4"
+            />
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-pc-muted mb-1">AI Model (OpenRouter)</label>
             <div className="flex gap-2">
               <select
@@ -444,6 +455,7 @@ export default function SettingsPage() {
                 <option value="openrouter/free">OpenRouter Free (Default)</option>
                 <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
                 <option value="openai/gpt-5-mini">GPT-5 Mini</option>
+                <option value="liner-ai">Liner AI (Pro)</option>
               </select>
               <button
                 type="button"

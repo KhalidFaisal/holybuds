@@ -53,25 +53,14 @@ Only recommend products that are listed in the inventory above. Do not hallucina
       ...messages
     ];
 
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: settings.aiModel || "openrouter/free",
-        messages: openRouterMessages,
-      })
+    const { callAI } = require('@/lib/ai');
+    
+    const data = await callAI(openRouterMessages, {
+      model: settings.aiModel,
+      openRouterApiKey: apiKey,
+      linerApiKey: settings.linerApiKey || process.env.LINER_API_KEY
     });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error('OpenRouter Chat API error:', errorText);
-      return NextResponse.json({ error: 'Failed to communicate with AI provider' }, { status: 500 });
-    }
-
-    const data = await res.json();
     return NextResponse.json(data);
 
   } catch (error) {
