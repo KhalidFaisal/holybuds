@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
+import { callAI } from '@/lib/ai';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'pc-super-secret-key-change-in-production';
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
@@ -25,7 +26,6 @@ export async function POST(request) {
 
     const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
     
-    const { callAI } = require('@/lib/ai');
     let responseData;
     try {
       responseData = await callAI([{ role: 'user', content: 'Say "Hello, World!"' }], {

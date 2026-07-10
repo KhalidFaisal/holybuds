@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { callAI } from '@/lib/ai';
 
 export async function POST(request) {
   try {
@@ -50,8 +51,6 @@ ${JSON.stringify(cartItems)}
 Return the response as a pure JSON object with a single key "recommendedProductId" containing the ID of the product you recommend. Do not include any markdown, quotes, or conversational text. Just the JSON object.
 If nothing fits well, or the cart is empty, return {"recommendedProductId": null}.`;
 
-    const { callAI } = require('@/lib/ai');
-    
     let data;
     try {
       data = await callAI([

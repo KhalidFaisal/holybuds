@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { callAI } from '@/lib/ai';
 
 export async function POST(request) {
   try {
@@ -53,8 +54,6 @@ Only recommend products that are listed in the inventory above. Do not hallucina
       ...messages
     ];
 
-    const { callAI } = require('@/lib/ai');
-    
     const data = await callAI(openRouterMessages, {
       model: settings.aiModel,
       openRouterApiKey: apiKey,
