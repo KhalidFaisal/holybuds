@@ -427,7 +427,7 @@ export default function SettingsPage() {
           {aiModel !== 'liner-ai' && (
             <div>
               <label className="block text-sm font-medium text-pc-muted mb-1">Custom OpenRouter API Key</label>
-              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server's default environment key. Add your own key to bypass free limits or use paid models.</p>
+              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key. Add your own key to bypass free limits or use paid models.</p>
               <input
                 type="password"
                 value={openRouterApiKey}
@@ -441,7 +441,7 @@ export default function SettingsPage() {
           {aiModel === 'liner-ai' && (
             <div>
               <label className="block text-sm font-medium text-pc-muted mb-1">Custom Liner AI API Key</label>
-              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server's default environment key. Add your own key to bypass free limits or use paid models.</p>
+              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key. Add your own key to bypass free limits or use paid models.</p>
               <input
                 type="password"
                 value={linerApiKey}
