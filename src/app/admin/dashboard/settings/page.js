@@ -170,7 +170,11 @@ export default function SettingsPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
         },
-        body: JSON.stringify({ model: aiModel })
+        body: JSON.stringify({ 
+          model: aiModel,
+          openRouterApiKey: openRouterApiKey === '••••••••••••••••' ? undefined : openRouterApiKey,
+          linerApiKey: linerApiKey === '••••••••••••••••' ? undefined : linerApiKey 
+        })
       });
       if (res.ok) {
         const data = await res.json();
@@ -420,29 +424,33 @@ export default function SettingsPage() {
         </p>
 
         <form onSubmit={handlePromptSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">Custom OpenRouter API Key</label>
-            <p className="text-xs text-pc-muted mb-2">Leave blank to use the server's default environment key. Add your own key to bypass free limits or use paid models.</p>
-            <input
-              type="password"
-              value={openRouterApiKey}
-              onChange={(e) => setOpenRouterApiKey(e.target.value)}
-              placeholder="sk-or-v1-..."
-              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4"
-            />
-          </div>
+          {aiModel !== 'liner-ai' && (
+            <div>
+              <label className="block text-sm font-medium text-pc-muted mb-1">Custom OpenRouter API Key</label>
+              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server's default environment key. Add your own key to bypass free limits or use paid models.</p>
+              <input
+                type="password"
+                value={openRouterApiKey}
+                onChange={(e) => setOpenRouterApiKey(e.target.value)}
+                placeholder="sk-or-v1-..."
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4"
+              />
+            </div>
+          )}
 
-          <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">Custom Liner AI API Key</label>
-            <p className="text-xs text-pc-muted mb-2">Leave blank to use the server's default environment key. Add your own key to bypass free limits or use paid models.</p>
-            <input
-              type="password"
-              value={linerApiKey}
-              onChange={(e) => setLinerApiKey(e.target.value)}
-              placeholder="Your Liner API Key..."
-              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4"
-            />
-          </div>
+          {aiModel === 'liner-ai' && (
+            <div>
+              <label className="block text-sm font-medium text-pc-muted mb-1">Custom Liner AI API Key</label>
+              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server's default environment key. Add your own key to bypass free limits or use paid models.</p>
+              <input
+                type="password"
+                value={linerApiKey}
+                onChange={(e) => setLinerApiKey(e.target.value)}
+                placeholder="Your Liner API Key..."
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4"
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-pc-muted mb-1">AI Model (OpenRouter)</label>

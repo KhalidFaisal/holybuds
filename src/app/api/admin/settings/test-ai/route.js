@@ -30,8 +30,8 @@ export async function POST(request) {
     try {
       responseData = await callAI([{ role: 'user', content: 'Say "Hello, World!"' }], {
         model,
-        openRouterApiKey: settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY,
-        linerApiKey: settings?.linerApiKey || process.env.LINER_API_KEY
+        openRouterApiKey: data.openRouterApiKey || settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY,
+        linerApiKey: data.linerApiKey || settings?.linerApiKey || process.env.LINER_API_KEY
       });
     } catch (e) {
       return NextResponse.json({ error: e.message || 'Failed to connect' }, { status: 500 });
