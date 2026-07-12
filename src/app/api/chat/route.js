@@ -15,9 +15,11 @@ export async function POST(request) {
       where: { id: 'global' },
     });
 
-    const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: 'OPENROUTER_API_KEY is not configured' }, { status: 500 });
+    const openRouterApiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+    const groqApiKey = settings?.groqApiKey || process.env.GROQ_API_KEY;
+    
+    if (!openRouterApiKey && !groqApiKey) {
+      return NextResponse.json({ error: 'AI API Key is not configured' }, { status: 500 });
     }
     
     // Fallback if settings don't exist yet
@@ -56,8 +58,8 @@ Only recommend products that are listed in the inventory above. Do not hallucina
 
     const data = await callAI(openRouterMessages, {
       model: settings.aiModel,
-      openRouterApiKey: apiKey,
-      groqApiKey: settings.groqApiKey || process.env.GROQ_API_KEY
+      openRouterApiKey: openRouterApiKey,
+      groqApiKey: groqApiKey
     });
 
     return NextResponse.json(data);
