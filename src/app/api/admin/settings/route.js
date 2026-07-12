@@ -35,7 +35,7 @@ export async function GET(request) {
       chatbotPrompt: settings.chatbotPrompt || "You are a helpful, friendly budtender at Elevated Dispensary. Recommend products from our inventory based on the user's needs. Be concise, polite, and use a chill tone.",
       aiModel: settings.aiModel || "openrouter/free",
       openRouterApiKey: settings.openRouterApiKey ? '••••••••••••••••' : '', // Masked in response
-      linerApiKey: settings.linerApiKey ? '••••••••••••••••' : '' // Masked in response
+      groqApiKey: settings.groqApiKey ? '••••••••••••••••' : '' // Masked in response
     });
   } catch (error) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -91,8 +91,8 @@ export async function POST(request) {
       updateData.openRouterApiKey = data.openRouterApiKey === '' ? null : data.openRouterApiKey;
     }
 
-    if (data.linerApiKey !== undefined) {
-      updateData.linerApiKey = data.linerApiKey === '' ? null : data.linerApiKey;
+    if (data.groqApiKey !== undefined) {
+      updateData.groqApiKey = data.groqApiKey === '' ? null : data.groqApiKey;
     }
 
     if (Object.keys(updateData).length === 0) {

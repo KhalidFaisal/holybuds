@@ -5,66 +5,34 @@ export async function callAI(messages, options = {}) {
   
   const model = options.model || settings?.aiModel || "openrouter/free";
   const openRouterApiKey = options.openRouterApiKey || settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
-  const linerApiKey = options.linerApiKey || settings?.linerApiKey || process.env.LINER_API_KEY;
+  const groqApiKey = options.groqApiKey || settings?.groqApiKey || process.env.GROQ_API_KEY;
 
-  if (model === 'liner-ai') {
-    if (!linerApiKey) {
-      throw new Error('Liner API Key is missing');
+  if (model.startsWith('groq-')) {
+    if (!groqApiKey) {
+      throw new Error('Groq API Key is missing');
     }
 
-    const res = await fetch('https://platform.liner.com/api/v1/agents/quick-answer', {
+    const actualModel = model.replace('groq-', '');
+
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'x-api-key': linerApiKey,
+        'Authorization': `Bearer ${groqApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify({
+        model: actualModel,
+        messages: messages
+      })
     });
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.error('Liner API error:', errorText);
-      throw new Error(`Failed to communicate with Liner AI: ${res.status} ${errorText}`);
+      console.error('Groq API error:', errorText);
+      throw new Error(`Failed to communicate with Groq: ${res.status} ${errorText}`);
     }
 
-    // Process SSE stream
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-    let fullText = '';
-    
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
-      
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const dataStr = line.replace('data: ', '').trim();
-          if (dataStr === '[DONE]') continue;
-          
-          try {
-            const parsed = JSON.parse(dataStr);
-            if (parsed.type === 'text-delta' && parsed.delta) {
-              fullText += parsed.delta;
-            }
-          } catch (e) {
-            // Ignore parse errors on partial chunks
-          }
-        }
-      }
-    }
-
-    return {
-      choices: [
-        {
-          message: {
-            content: fullText
-          }
-        }
-      ]
-    };
+    return await res.json();
   } else {
     // OpenRouter handling
     if (!openRouterApiKey) {

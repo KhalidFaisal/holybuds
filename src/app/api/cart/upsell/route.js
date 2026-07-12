@@ -16,9 +16,9 @@ export async function POST(request) {
 
     const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
     const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
-    const linerApiKey = settings?.linerApiKey || process.env.LINER_API_KEY;
+    const groqApiKey = settings?.groqApiKey || process.env.GROQ_API_KEY;
 
-    if (!apiKey && !linerApiKey) {
+    if (!apiKey && !groqApiKey) {
       return NextResponse.json({ error: 'AI API Key is not configured' }, { status: 500 });
     }
 
@@ -59,7 +59,7 @@ If nothing fits well, or the cart is empty, return {"recommendedProductId": null
       ], {
         model: settings.aiModel,
         openRouterApiKey: apiKey,
-        linerApiKey: linerApiKey
+        groqApiKey: groqApiKey
       });
     } catch (e) {
       console.error('AI Upsell error:', e);

@@ -57,7 +57,7 @@ Only recommend products that are listed in the inventory above. Do not hallucina
     const data = await callAI(openRouterMessages, {
       model: settings.aiModel,
       openRouterApiKey: apiKey,
-      linerApiKey: settings.linerApiKey || process.env.LINER_API_KEY
+      groqApiKey: settings.groqApiKey || process.env.GROQ_API_KEY
     });
 
     return NextResponse.json(data);

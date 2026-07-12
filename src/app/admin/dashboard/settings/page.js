@@ -25,7 +25,7 @@ export default function SettingsPage() {
   const [chatbotPrompt, setChatbotPrompt] = useState('');
   const [aiModel, setAiModel] = useState('openrouter/free');
   const [openRouterApiKey, setOpenRouterApiKey] = useState('');
-  const [linerApiKey, setLinerApiKey] = useState('');
+  const [groqApiKey, setGroqApiKey] = useState('');
   const [loadingPrompt, setLoadingPrompt] = useState(false);
   const [messagePrompt, setMessagePrompt] = useState('');
   
@@ -77,7 +77,7 @@ export default function SettingsPage() {
           }
           setAiModel(data.aiModel || 'openrouter/free');
           setOpenRouterApiKey(data.openRouterApiKey || '');
-          setLinerApiKey(data.linerApiKey || '');
+          setGroqApiKey(data.groqApiKey || '');
         }
       } catch (e) {
         console.error(e);
@@ -143,7 +143,7 @@ export default function SettingsPage() {
           chatbotPrompt, 
           aiModel,
           openRouterApiKey: openRouterApiKey === '••••••••••••••••' ? undefined : openRouterApiKey,
-          linerApiKey: linerApiKey === '••••••••••••••••' ? undefined : linerApiKey 
+          groqApiKey: groqApiKey === '••••••••••••••••' ? undefined : groqApiKey 
         }),
       });
 
@@ -173,7 +173,7 @@ export default function SettingsPage() {
         body: JSON.stringify({ 
           model: aiModel,
           openRouterApiKey: openRouterApiKey === '••••••••••••••••' ? undefined : openRouterApiKey,
-          linerApiKey: linerApiKey === '••••••••••••••••' ? undefined : linerApiKey 
+          groqApiKey: groqApiKey === '••••••••••••••••' ? undefined : groqApiKey 
         })
       });
       if (res.ok) {
@@ -424,7 +424,7 @@ export default function SettingsPage() {
         </p>
 
         <form onSubmit={handlePromptSubmit} className="space-y-4">
-          {aiModel !== 'liner-ai' && (
+          {!aiModel.startsWith('groq-') && (
             <div>
               <label className="block text-sm font-medium text-pc-muted mb-1">Custom OpenRouter API Key</label>
               <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key. Add your own key to bypass free limits or use paid models.</p>
@@ -438,15 +438,15 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {aiModel === 'liner-ai' && (
+          {aiModel.startsWith('groq-') && (
             <div>
-              <label className="block text-sm font-medium text-pc-muted mb-1">Custom Liner AI API Key</label>
+              <label className="block text-sm font-medium text-pc-muted mb-1">Custom Groq API Key</label>
               <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key. Add your own key to bypass free limits or use paid models.</p>
               <input
                 type="password"
-                value={linerApiKey}
-                onChange={(e) => setLinerApiKey(e.target.value)}
-                placeholder="Your Liner API Key..."
+                value={groqApiKey}
+                onChange={(e) => setGroqApiKey(e.target.value)}
+                placeholder="gsk_..."
                 className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4"
               />
             </div>
@@ -463,7 +463,9 @@ export default function SettingsPage() {
                 <option value="openrouter/free">OpenRouter Free (Default)</option>
                 <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
                 <option value="openai/gpt-5-mini">GPT-5 Mini</option>
-                <option value="liner-ai">Liner AI (Pro)</option>
+                <option value="groq-llama3-8b-8192">Groq LLaMA3 8B (Free)</option>
+                <option value="groq-llama3-70b-8192">Groq LLaMA3 70B (Free)</option>
+                <option value="groq-mixtral-8x7b-32768">Groq Mixtral 8x7B (Free)</option>
               </select>
               <button
                 type="button"
