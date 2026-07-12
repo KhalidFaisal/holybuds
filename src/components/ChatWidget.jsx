@@ -66,11 +66,12 @@ export default function ChatWidget() {
           throw new Error('Invalid response from AI');
         }
       } else {
-        throw new Error('API Error');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'API Error');
       }
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Oops! I am having trouble connecting right now. Please try again later.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message}` }]);
     } finally {
       setIsLoading(false);
     }

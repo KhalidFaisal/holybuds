@@ -48,12 +48,21 @@ ${JSON.stringify(products)}
 Only recommend products that are listed in the inventory above. Do not hallucinate products. Do not mention that you are an AI.
 `;
 
+    let formattedMessages = [...messages];
+    
+    // Groq's Llama models strictly require the conversation to start with a 'user' message 
+    // after the 'system' message. If the first message is from the assistant (the hardcoded greeting),
+    // we prepend a dummy user message to satisfy the API.
+    if (formattedMessages.length > 0 && formattedMessages[0].role === 'assistant') {
+      formattedMessages.unshift({ role: 'user', content: 'Hello' });
+    }
+
     const openRouterMessages = [
       {
         role: "system",
         content: `${systemPrompt}\n\n${inventoryContext}`
       },
-      ...messages
+      ...formattedMessages
     ];
 
     const data = await callAI(openRouterMessages, {
@@ -66,6 +75,6 @@ Only recommend products that are listed in the inventory above. Do not hallucina
 
   } catch (error) {
     console.error('Chat API Error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
 }
