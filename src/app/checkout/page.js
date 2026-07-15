@@ -8,13 +8,12 @@ import { CartProvider } from '@/components/CartProvider';
 import Link from 'next/link';
 
 export const LOYALTY_REWARDS = [
-  { id: '500_acc', points: 500, label: "$5 Off Any Accessory", type: "FIXED", category: "ACCESSORY", value: 5 },
-  { id: '1000_acc', points: 1000, label: "10% Off Accessory Order", type: "PERCENT", category: "ACCESSORY", value: 10 },
-  { id: '2000_any', points: 2000, label: "$15 Off Any Order", type: "FIXED", value: 15 },
-  { id: '3500_free', points: 3500, label: "Free Cart or Edible", type: "FREE_LOWEST", categories: ["VAPE", "CART", "EDIBLE"] },
+  { id: '1000_flower', points: 1000, label: "$5 Off Any Flower", type: "FIXED", value: 5, category: "flowers" },
+  { id: '2000_flower', points: 2000, label: "15% Off Any Flower", type: "PERCENT", value: 15, category: "flowers" },
+  { id: '3500_edible', points: 3500, label: "Free Pre-roll with Edible", type: "FIXED", value: 10, category: "edibles" },
   { id: '5000_any', points: 5000, label: "$35 Off Any Order", type: "FIXED", value: 35 },
   { id: '7500_any', points: 7500, label: "Free Premium Accessory or $50 Off", type: "FIXED", value: 50 },
-  { id: '10000_free', points: 10000, label: "Free 1/2", type: "FREE_LOWEST", categories: ["FLOWER"] }
+  { id: '10000_free', points: 10000, label: "Free 1/2", type: "FREE_LOWEST", categories: ["flowers"] }
 ];
 
 export function calcRewardDiscount(reward, items) {
@@ -22,7 +21,7 @@ export function calcRewardDiscount(reward, items) {
   
   if (reward.type === 'FIXED') {
     if (reward.category) {
-      const hasCat = items.some(i => i.category.toUpperCase().includes(reward.category));
+      const hasCat = items.some(i => i.category && i.category.toUpperCase().includes(reward.category.toUpperCase()));
       return hasCat ? reward.value : 0;
     }
     return reward.value;
@@ -30,7 +29,7 @@ export function calcRewardDiscount(reward, items) {
   
   if (reward.type === 'PERCENT') {
     if (reward.category) {
-      const catTotal = items.filter(i => i.category.toUpperCase().includes(reward.category))
+      const catTotal = items.filter(i => i.category && i.category.toUpperCase().includes(reward.category.toUpperCase()))
                             .reduce((sum, i) => sum + (i.price * i.quantity), 0);
       return catTotal * (reward.value / 100);
     }
@@ -41,7 +40,7 @@ export function calcRewardDiscount(reward, items) {
   if (reward.type === 'FREE_LOWEST') {
     let eligibleItems = items;
     if (reward.categories) {
-      eligibleItems = items.filter(i => reward.categories.some(c => i.category.toUpperCase().includes(c)));
+      eligibleItems = items.filter(i => i.category && reward.categories.some(c => i.category.toUpperCase().includes(c.toUpperCase())));
     }
     if (eligibleItems.length === 0) return 0;
     
