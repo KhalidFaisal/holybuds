@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function DiscountsPage() {
   const [discounts, setDiscounts] = useState([]);
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [productSearch, setProductSearch] = useState('');
@@ -30,12 +31,14 @@ export default function DiscountsPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [discRes, prodRes] = await Promise.all([
+      const [discRes, prodRes, catRes] = await Promise.all([
         fetch('/api/admin/discounts'),
-        fetch('/api/products')
+        fetch('/api/products'),
+        fetch('/api/categories')
       ]);
       if (discRes.ok) setDiscounts(await discRes.json());
       if (prodRes.ok) setProducts(await prodRes.json());
+      if (catRes.ok) setCategories(await catRes.json());
     } catch (err) {
       setError('Failed to load data');
     } finally {
@@ -215,8 +218,9 @@ export default function DiscountsPage() {
               <label className="block text-sm font-medium text-pc-muted mb-1">Select Category</label>
               <select name="targetCategory" value={form.targetCategory} onChange={handleChange} required className="input-field max-w-md">
                 <option value="">-- Choose Category --</option>
-                <option value="FLOWER">Flower</option>
-                <option value="EDIBLE">Edible</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.slug}>{cat.name}</option>
+                ))}
               </select>
             </div>
           )}
