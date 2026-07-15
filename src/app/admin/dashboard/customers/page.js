@@ -1,22 +1,27 @@
 import prisma from '@/lib/prisma';
-import Navbar from '@/components/Navbar';
 import CustomersTable from './CustomersTable';
 
+export const dynamic = 'force-dynamic';
+
 export default async function CustomersPage() {
-  const customers = await prisma.customer.findMany({
+  const rawCustomers = await prisma.customer.findMany({
     orderBy: { totalOrders: 'desc' },
   });
 
-  return (
-    <div className="min-h-screen pt-24 pb-16">
-      <Navbar />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="section-title">Customers & Loyalty</h1>
-        </div>
+  // Serialize Date objects for the client component
+  const customers = rawCustomers.map(customer => ({
+    ...customer,
+    createdAt: customer.createdAt.toISOString(),
+    updatedAt: customer.updatedAt.toISOString(),
+  }));
 
-        <CustomersTable initialCustomers={customers} />
+  return (
+    <div className="max-w-6xl mx-auto space-y-8 animate-fade-in pb-12">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-white mb-2">Customers & Loyalty</h1>
       </div>
+
+      <CustomersTable initialCustomers={customers} />
     </div>
   );
 }
