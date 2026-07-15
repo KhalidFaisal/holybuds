@@ -39,9 +39,45 @@ export default function CustomersTable({ initialCustomers }) {
     }
   };
 
+  const handleMigrate = async () => {
+    if (!confirm('Are you sure you want to scan all past orders and reward points to customers? This may take a moment.')) return;
+    
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/migrate-customers', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Success! Migrated ${data.migratedOrders} orders and created ${data.newCustomersCreated} new customer profiles. Please refresh the page to see the updated table.`);
+        window.location.reload();
+      } else {
+        alert('Failed to migrate: ' + data.error);
+      }
+    } catch (err) {
+      alert('Error running migration');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <div className="glass-card overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="space-y-6">
+      <div className="flex justify-end">
+        <button 
+          onClick={handleMigrate}
+          disabled={saving}
+          className="btn-secondary px-4 py-2 text-sm"
+        >
+          {saving ? 'Processing...' : 'Reward Past Orders'}
+        </button>
+      </div>
+
+      <div className="glass-card overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="bg-pc-dark/50 text-pc-muted border-b border-pc-border">
             <tr>
@@ -113,6 +149,7 @@ export default function CustomersTable({ initialCustomers }) {
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   );
 }
