@@ -8,9 +8,10 @@ import { CartProvider } from '@/components/CartProvider';
 import Link from 'next/link';
 
 export const LOYALTY_REWARDS = [
-  { id: '1000_flower', points: 1000, label: "$5 Off Any Flower", type: "FIXED", value: 5, category: "flowers" },
-  { id: '2000_flower', points: 2000, label: "15% Off Any Flower", type: "PERCENT", value: 15, category: "flowers" },
-  { id: '3500_edible', points: 3500, label: "Free Pre-roll with Edible", type: "FIXED", value: 10, category: "edibles" },
+  { id: '500_acc', points: 500, label: "$5 Off Any Accessory", type: "FIXED", category: "accessories", value: 5 },
+  { id: '1000_acc', points: 1000, label: "10% Off One Accessory Order", type: "PERCENT", category: "accessories", value: 10 },
+  { id: '2000_any', points: 2000, label: "$15 Off Any Order", type: "FIXED", value: 15 },
+  { id: '3500_free', points: 3500, label: "Free Cart or Edible (Makes the lowest-priced eligible cart/edible free)", type: "FREE_LOWEST", categories: ["vapes", "edibles"] },
   { id: '5000_any', points: 5000, label: "$35 Off Any Order", type: "FIXED", value: 35 },
   { id: '7500_any', points: 7500, label: "Free Premium Accessory or $50 Off", type: "FIXED", value: 50 },
   { id: '10000_free', points: 10000, label: "Free 1/2", type: "FREE_LOWEST", categories: ["flowers"] }
