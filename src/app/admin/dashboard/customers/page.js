@@ -16,7 +16,7 @@ export default async function CustomersPage() {
   }));
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-fade-in pb-12">
+    <div className="space-y-8 animate-fade-in pb-12">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-white mb-2">Customers & Loyalty</h1>
       </div>
