@@ -35,7 +35,10 @@ export async function GET(request) {
       chatbotPrompt: settings.chatbotPrompt || "You are a helpful, friendly budtender at Elevated Dispensary. Recommend products from our inventory based on the user's needs. Be concise, polite, and use a chill tone.",
       aiModel: settings.aiModel || "openrouter/free",
       openRouterApiKey: settings.openRouterApiKey ? '••••••••••••••••' : '', // Masked in response
-      groqApiKey: settings.groqApiKey ? '••••••••••••••••' : '' // Masked in response
+      groqApiKey: settings.groqApiKey ? '••••••••••••••••' : '', // Masked in response
+      loyaltyEnabled: settings.loyaltyEnabled ?? true,
+      pointsPerDollar: settings.pointsPerDollar ?? 1,
+      signupBonus: settings.signupBonus ?? 50
     });
   } catch (error) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -93,6 +96,18 @@ export async function POST(request) {
 
     if (data.groqApiKey !== undefined) {
       updateData.groqApiKey = data.groqApiKey === '' ? null : data.groqApiKey;
+    }
+
+    if (data.loyaltyEnabled !== undefined) {
+      updateData.loyaltyEnabled = data.loyaltyEnabled;
+    }
+
+    if (data.pointsPerDollar !== undefined) {
+      updateData.pointsPerDollar = parseInt(data.pointsPerDollar, 10);
+    }
+
+    if (data.signupBonus !== undefined) {
+      updateData.signupBonus = parseInt(data.signupBonus, 10);
     }
 
     if (Object.keys(updateData).length === 0) {

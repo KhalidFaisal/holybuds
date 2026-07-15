@@ -28,6 +28,12 @@ export default function SettingsPage() {
   const [groqApiKey, setGroqApiKey] = useState('');
   const [loadingPrompt, setLoadingPrompt] = useState(false);
   const [messagePrompt, setMessagePrompt] = useState('');
+
+  const [loyaltyEnabled, setLoyaltyEnabled] = useState(true);
+  const [pointsPerDollar, setPointsPerDollar] = useState(1);
+  const [signupBonus, setSignupBonus] = useState(50);
+  const [loadingLoyalty, setLoadingLoyalty] = useState(false);
+  const [messageLoyalty, setMessageLoyalty] = useState('');
   
   const [testingModel, setTestingModel] = useState(false);
   const [testMessage, setTestMessage] = useState('');
@@ -78,6 +84,10 @@ export default function SettingsPage() {
           setAiModel(data.aiModel || 'openrouter/free');
           setOpenRouterApiKey(data.openRouterApiKey || '');
           setGroqApiKey(data.groqApiKey || '');
+          
+          if (data.loyaltyEnabled !== undefined) setLoyaltyEnabled(data.loyaltyEnabled);
+          if (data.pointsPerDollar !== undefined) setPointsPerDollar(data.pointsPerDollar);
+          if (data.signupBonus !== undefined) setSignupBonus(data.signupBonus);
         }
       } catch (e) {
         console.error(e);
@@ -262,6 +272,38 @@ export default function SettingsPage() {
     }
   };
 
+  const handleLoyaltySubmit = async (e) => {
+    e.preventDefault();
+    setLoadingLoyalty(true);
+    setMessageLoyalty('');
+
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        },
+        body: JSON.stringify({ 
+          loyaltyEnabled, 
+          pointsPerDollar,
+          signupBonus
+        }),
+      });
+
+      if (res.ok) {
+        setMessageLoyalty('Loyalty settings updated successfully.');
+      } else {
+        const data = await res.json();
+        setMessageLoyalty(data.error || 'Failed to update settings.');
+      }
+    } catch (err) {
+      setMessageLoyalty('An error occurred.');
+    } finally {
+      setLoadingLoyalty(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in pb-12">
       <div className="flex justify-between items-end">
@@ -272,6 +314,71 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+      {/* Loyalty & Rewards Section */}
+      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 lg:col-span-2">
+        <h2 className="text-xl font-semibold text-white mb-4">🏆 Loyalty & Rewards</h2>
+        <p className="text-pc-muted mb-6 text-sm">
+          Configure the points system and sign-up bonuses. Turn it off if you do not wish to offer rewards.
+        </p>
+
+        <form onSubmit={handleLoyaltySubmit} className="space-y-4">
+          <div className="flex items-center gap-3 mb-6 bg-pc-black border border-pc-border p-4 rounded-xl">
+            <input 
+              type="checkbox" 
+              id="loyaltyEnabled" 
+              checked={loyaltyEnabled}
+              onChange={(e) => setLoyaltyEnabled(e.target.checked)}
+              className="w-5 h-5 accent-pc-green rounded cursor-pointer"
+            />
+            <label htmlFor="loyaltyEnabled" className="text-white font-medium cursor-pointer">
+              Enable Loyalty Program
+            </label>
+          </div>
+
+          {loyaltyEnabled && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-pc-muted mb-1">Points Earned Per $1 Spent</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={pointsPerDollar}
+                  onChange={(e) => setPointsPerDollar(e.target.value)}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-pc-muted mb-1">New Customer Sign-Up Bonus (Points)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={signupBonus}
+                  onChange={(e) => setSignupBonus(e.target.value)}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+                  required
+                />
+              </div>
+            </div>
+          )}
+
+          {messageLoyalty && (
+            <div className={`p-3 rounded-lg text-sm mt-4 ${messageLoyalty.includes('success') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+              {messageLoyalty}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loadingLoyalty}
+            className="btn-primary w-full py-3 mt-4"
+          >
+            {loadingLoyalty ? 'Saving...' : 'Update Loyalty Settings'}
+          </button>
+        </form>
+      </div>
 
       <div className="bg-pc-dark border border-pc-border rounded-2xl p-6">
         <h2 className="text-xl font-semibold text-white mb-4">Site Access Password</h2>

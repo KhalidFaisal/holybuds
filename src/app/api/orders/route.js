@@ -120,7 +120,73 @@ export async function POST(request) {
       }
     }
 
-    let total = subtotal - bestDiscountAmount;
+    let notes = data.notes || '';
+    const pointsUsed = data.pointsUsed || 0;
+    const rewardUsed = data.rewardUsed || null;
+
+    // Calculate Reward Discount Server Side
+    let rewardDiscountAmount = 0;
+    if (rewardUsed && pointsUsed > 0) {
+      // Define rewards map to match frontend
+      const REWARDS_MAP = {
+        '500_acc': { points: 500, label: "$5 Off Any Accessory", type: "FIXED", category: "ACCESSORY", value: 5 },
+        '1000_acc': { points: 1000, label: "10% Off Accessory Order", type: "PERCENT", category: "ACCESSORY", value: 10 },
+        '2000_any': { points: 2000, label: "$15 Off Any Order", type: "FIXED", value: 15 },
+        '3500_free': { points: 3500, label: "Free Cart or Edible", type: "FREE_LOWEST", categories: ["VAPE", "CART", "EDIBLE"] },
+        '5000_any': { points: 5000, label: "$35 Off Any Order", type: "FIXED", value: 35 },
+        '7500_any': { points: 7500, label: "Free Premium Accessory or $50 Off", type: "FIXED", value: 50 },
+        '10000_free': { points: 10000, label: "Free 1/2", type: "FREE_LOWEST", categories: ["FLOWER"] }
+      };
+
+      // Find the reward by label
+      const rewardDef = Object.values(REWARDS_MAP).find(r => r.label === rewardUsed);
+      if (rewardDef && pointsUsed === rewardDef.points) {
+        if (rewardDef.type === 'FIXED') {
+          if (rewardDef.category) {
+            const hasCat = itemsData.some(i => i.category.toUpperCase().includes(rewardDef.category));
+            rewardDiscountAmount = hasCat ? rewardDef.value : 0;
+          } else {
+            rewardDiscountAmount = rewardDef.value;
+          }
+        } else if (rewardDef.type === 'PERCENT') {
+          if (rewardDef.category) {
+            const catTotal = itemsData.filter(i => i.category.toUpperCase().includes(rewardDef.category))
+                                      .reduce((sum, i) => sum + (i.price * i.quantity), 0);
+            rewardDiscountAmount = catTotal * (rewardDef.value / 100);
+          } else {
+            const totalItems = itemsData.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+            rewardDiscountAmount = totalItems * (rewardDef.value / 100);
+          }
+        } else if (rewardDef.type === 'FREE_LOWEST') {
+          let eligibleItems = itemsData;
+          if (rewardDef.categories) {
+            eligibleItems = itemsData.filter(i => rewardDef.categories.some(c => i.category.toUpperCase().includes(c)));
+          }
+          if (eligibleItems.length > 0) {
+            const lowest = eligibleItems.reduce((min, item) => item.price < min.price ? item : min, eligibleItems[0]);
+            rewardDiscountAmount = lowest.price;
+          }
+        }
+      }
+    }
+
+    // Fetch site settings for loyalty config
+    const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
+    const loyaltyEnabled = settings?.loyaltyEnabled ?? true;
+    const pointsPerDollar = settings?.pointsPerDollar ?? 1;
+    const signupBonus = settings?.signupBonus ?? 50;
+
+    let pointsEarned = 0;
+    if (loyaltyEnabled) {
+      pointsEarned = Math.floor(subtotal - bestDiscountAmount - rewardDiscountAmount) * pointsPerDollar;
+      if (pointsEarned < 0) pointsEarned = 0;
+    }
+
+    const sanitizedPhone = data.customerPhone.replace(/\D/g, '');
+
+    let effectiveTotal = subtotal - bestDiscountAmount - rewardDiscountAmount;
+    if (effectiveTotal < 0) effectiveTotal = 0;
+    let total = effectiveTotal;
     let deliveryFee = 0;
 
     if (deliveryMethod === 'DELIVERY' && total < 100) {
@@ -128,21 +194,43 @@ export async function POST(request) {
       total += deliveryFee;
     }
 
-    let notes = data.notes || '';
-
     // Create order and decrement stock in a transaction
     const order = await prisma.$transaction(async (tx) => {
+      // Find or create customer
+      let customer = await tx.customer.findUnique({ where: { phone: sanitizedPhone } });
+      
+      if (!customer) {
+        customer = await tx.customer.create({
+          data: {
+            phone: sanitizedPhone,
+            name: data.customerName,
+            points: loyaltyEnabled ? signupBonus : 0,
+            totalOrders: 0
+          }
+        });
+      }
+
+      // If they don't have enough points, throw error
+      if (pointsUsed > customer.points) {
+        throw new Error('Insufficient points for this reward');
+      }
+
+      // Create Order
       const newOrder = await tx.order.create({
         data: {
           orderNumber: generateOrderNumber(),
           customerName: data.customerName,
           customerPhone: data.customerPhone,
+          customerId: customer.id,
           deliveryMethod,
           deliveryAddress: data.deliveryAddress || '',
           total,
           discountName: bestDiscountName,
           discountAmount: bestDiscountAmount,
           notes,
+          pointsEarned: loyaltyEnabled ? pointsEarned : 0,
+          pointsUsed: pointsUsed,
+          rewardUsed: rewardUsed,
           items: {
             create: itemsData.map(i => ({
               productId: i.productId,
@@ -154,6 +242,19 @@ export async function POST(request) {
         include: {
           items: { include: { product: true } },
         },
+      });
+
+      // Update customer points and total orders
+      await tx.customer.update({
+        where: { id: customer.id },
+        data: {
+          points: {
+            increment: (loyaltyEnabled ? pointsEarned : 0) - pointsUsed
+          },
+          totalOrders: {
+            increment: 1
+          }
+        }
       });
 
       // Decrement stock

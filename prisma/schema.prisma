@@ -35,6 +35,11 @@ model Order {
   discountName    String?
   discountAmount  Float       @default(0)
   notes           String      @default("")
+  customerId      String?
+  customer        Customer?   @relation(fields: [customerId], references: [id])
+  pointsEarned    Int         @default(0)
+  pointsUsed      Int         @default(0)
+  rewardUsed      String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   items           OrderItem[]
@@ -85,6 +90,9 @@ model SiteSettings {
   aiModel           String  @default("openrouter/free")
   openRouterApiKey  String?
   groqApiKey        String?
+  loyaltyEnabled    Boolean @default(true)
+  pointsPerDollar   Int     @default(1)
+  signupBonus       Int     @default(50)
 }
 
 model Category {
@@ -96,6 +104,17 @@ model Category {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id              String   @id @default(cuid())
+  phone           String   @unique
+  name            String
+  points          Int      @default(0)
+  totalOrders     Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  orders          Order[]
 }
 
 model ActiveSession {

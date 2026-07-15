@@ -7,6 +7,51 @@ import Navbar from '@/components/Navbar';
 import { CartProvider } from '@/components/CartProvider';
 import Link from 'next/link';
 
+export const LOYALTY_REWARDS = [
+  { id: '500_acc', points: 500, label: "$5 Off Any Accessory", type: "FIXED", category: "ACCESSORY", value: 5 },
+  { id: '1000_acc', points: 1000, label: "10% Off Accessory Order", type: "PERCENT", category: "ACCESSORY", value: 10 },
+  { id: '2000_any', points: 2000, label: "$15 Off Any Order", type: "FIXED", value: 15 },
+  { id: '3500_free', points: 3500, label: "Free Cart or Edible", type: "FREE_LOWEST", categories: ["VAPE", "CART", "EDIBLE"] },
+  { id: '5000_any', points: 5000, label: "$35 Off Any Order", type: "FIXED", value: 35 },
+  { id: '7500_any', points: 7500, label: "Free Premium Accessory or $50 Off", type: "FIXED", value: 50 },
+  { id: '10000_free', points: 10000, label: "Free 1/2", type: "FREE_LOWEST", categories: ["FLOWER"] }
+];
+
+export function calcRewardDiscount(reward, items) {
+  if (!reward) return 0;
+  
+  if (reward.type === 'FIXED') {
+    if (reward.category) {
+      const hasCat = items.some(i => i.category.toUpperCase().includes(reward.category));
+      return hasCat ? reward.value : 0;
+    }
+    return reward.value;
+  }
+  
+  if (reward.type === 'PERCENT') {
+    if (reward.category) {
+      const catTotal = items.filter(i => i.category.toUpperCase().includes(reward.category))
+                            .reduce((sum, i) => sum + (i.price * i.quantity), 0);
+      return catTotal * (reward.value / 100);
+    }
+    const total = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    return total * (reward.value / 100);
+  }
+  
+  if (reward.type === 'FREE_LOWEST') {
+    let eligibleItems = items;
+    if (reward.categories) {
+      eligibleItems = items.filter(i => reward.categories.some(c => i.category.toUpperCase().includes(c)));
+    }
+    if (eligibleItems.length === 0) return 0;
+    
+    const lowest = eligibleItems.reduce((min, item) => item.price < min.price ? item : min, eligibleItems[0]);
+    return lowest.price; // Making 1 unit of this free
+  }
+  
+  return 0;
+}
+
 function CheckoutContent() {
   const { items, subtotal, total, discountAmount, discountName, clearCart, updateQuantity, removeItem } = useCart();
   const router = useRouter();
@@ -24,14 +69,56 @@ function CheckoutContent() {
   const [error, setError] = useState('');
   const [orderConfirm, setOrderConfirm] = useState(null);
 
+  // Loyalty states
+  const [customerProfile, setCustomerProfile] = useState(null);
+  const [loyaltyLoading, setLoyaltyLoading] = useState(false);
+  const [selectedReward, setSelectedReward] = useState(null);
+
+  // Phone lookup
+  useEffect(() => {
+    const sanitized = form.customerPhone.replace(/\D/g, '');
+    if (sanitized.length >= 10) {
+      const fetchLoyalty = async () => {
+        setLoyaltyLoading(true);
+        try {
+          const res = await fetch(`/api/loyalty/lookup?phone=${sanitized}`);
+          if (res.ok) {
+            const data = await res.json();
+            setCustomerProfile(data.customer);
+          } else {
+            setCustomerProfile(null);
+            setSelectedReward(null);
+          }
+        } catch (e) {
+          setCustomerProfile(null);
+          setSelectedReward(null);
+        } finally {
+          setLoyaltyLoading(false);
+        }
+      };
+      
+      const timeoutId = setTimeout(fetchLoyalty, 500);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setCustomerProfile(null);
+      setSelectedReward(null);
+    }
+  }, [form.customerPhone]);
+
   // Sync draft to localStorage so SessionTracker can pick it up
   useEffect(() => {
     localStorage.setItem('holybuds_checkout_draft', JSON.stringify(form));
   }, [form]);
 
+  // If a reward is selected, calculate its discount
+  const rewardDiscount = calcRewardDiscount(selectedReward, items);
+  
+  // To avoid double dipping, if a standard promo code discount exists, we just sum them.
+  // Wait, let's just make the final total subtract both.
   const isDelivery = form.deliveryMethod === 'DELIVERY';
-  const deliveryFee = isDelivery && total < 100 ? 10 : 0;
-  const finalTotal = total + deliveryFee;
+  const effectiveTotal = total - rewardDiscount;
+  const deliveryFee = isDelivery && effectiveTotal < 100 ? 10 : 0;
+  const finalTotal = Math.max(0, effectiveTotal) + deliveryFee;
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -54,6 +141,8 @@ function CheckoutContent() {
         body: JSON.stringify({
           ...form,
           deliveryAddress: isDelivery ? `${form.deliveryAddress}, ${form.town}, ${form.zipCode}` : form.town,
+          pointsUsed: selectedReward ? selectedReward.points : 0,
+          rewardUsed: selectedReward ? selectedReward.label : null,
           items: items.map((item) => ({
             productId: item.id,
             quantity: item.quantity,
@@ -217,6 +306,64 @@ function CheckoutContent() {
                   <label className="block text-sm font-medium text-pc-muted mb-1">Phone Number *</label>
                   <input name="customerPhone" value={form.customerPhone} onChange={handleChange} required className="input-field" placeholder="(555) 123-4567" type="tel" />
                 </div>
+                
+                {/* LOYALTY DASHBOARD */}
+                {loyaltyLoading && (
+                  <div className="text-pc-muted text-sm py-2 animate-pulse">Checking loyalty status...</div>
+                )}
+                {customerProfile && !loyaltyLoading && (
+                  <div className="bg-pc-green/10 border border-pc-green/30 rounded-xl p-4 mt-4 animate-fade-in-up">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="font-bold text-pc-green text-lg">Welcome back, {customerProfile.name}!</h3>
+                        <p className="text-sm text-pc-muted">You have <strong className="text-white">{customerProfile.points} Points</strong></p>
+                      </div>
+                      <div className="bg-pc-dark/50 px-3 py-1 rounded-full text-xs font-medium text-pc-muted border border-pc-border/50">
+                        {customerProfile.totalOrders} Orders
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2 mt-4">
+                      <p className="text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">Available Rewards</p>
+                      {LOYALTY_REWARDS.map(reward => {
+                        const canAfford = customerProfile.points >= reward.points;
+                        const isSelected = selectedReward?.id === reward.id;
+                        
+                        return (
+                          <div 
+                            key={reward.id}
+                            className={`p-3 rounded-lg border text-sm flex items-center justify-between transition-colors ${
+                              isSelected ? 'bg-pc-green/20 border-pc-green text-white' : 
+                              canAfford ? 'bg-pc-dark border-pc-border hover:border-pc-green/50 text-white cursor-pointer' : 
+                              'bg-pc-dark/50 border-pc-border/30 text-pc-muted/50 cursor-not-allowed'
+                            }`}
+                            onClick={() => {
+                              if (!canAfford) return;
+                              setSelectedReward(isSelected ? null : reward);
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                isSelected ? 'border-pc-green bg-pc-green' : 
+                                canAfford ? 'border-pc-muted' : 'border-pc-border/30'
+                              }`}>
+                                {isSelected && <div className="w-2 h-2 bg-pc-dark rounded-full" />}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className={isSelected ? 'font-bold' : ''}>{reward.label}</span>
+                                <span className="text-xs opacity-70">{reward.points} Pts</span>
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <span className="text-pc-green font-bold text-xs bg-pc-dark px-2 py-1 rounded">Selected</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {/* END LOYALTY DASHBOARD */}
 
                 {isDelivery && (
                   <div className="space-y-4">
@@ -336,6 +483,12 @@ function CheckoutContent() {
                   <div className="flex justify-between text-pc-green">
                     <span>Discount: {discountName}</span>
                     <span>-${discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                {rewardDiscount > 0 && (
+                  <div className="flex justify-between text-pc-green">
+                    <span>Reward: {selectedReward?.label}</span>
+                    <span>-${rewardDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 {deliveryFee > 0 && (
