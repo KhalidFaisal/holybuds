@@ -15,15 +15,31 @@ export async function GET(request) {
     });
 
     if (!customer) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+      return NextResponse.json({
+        success: true,
+        isNewCustomer: true,
+        customer: null
+      });
+    }
+
+    let referralCode = customer.referralCode;
+    if (!referralCode) {
+      // Generate a short, friendly referral code
+      referralCode = 'HOLY-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+      await prisma.customer.update({
+        where: { id: customer.id },
+        data: { referralCode }
+      });
     }
 
     return NextResponse.json({
       success: true,
+      isNewCustomer: false,
       customer: {
         name: customer.name,
         points: customer.points,
-        totalOrders: customer.totalOrders
+        totalOrders: customer.totalOrders,
+        referralCode: referralCode
       }
     });
   } catch (error) {

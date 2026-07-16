@@ -200,12 +200,15 @@ export async function POST(request) {
       let customer = await tx.customer.findUnique({ where: { phone: sanitizedPhone } });
       
       if (!customer) {
+        const generatedReferralCode = 'HOLY-' + Math.random().toString(36).substring(2, 7).toUpperCase();
         customer = await tx.customer.create({
           data: {
             phone: sanitizedPhone,
             name: data.customerName,
             points: loyaltyEnabled ? signupBonus : 0,
-            totalOrders: 0
+            totalOrders: 0,
+            referralCode: generatedReferralCode,
+            referredByCode: data.referredByCode || null
           }
         });
       }

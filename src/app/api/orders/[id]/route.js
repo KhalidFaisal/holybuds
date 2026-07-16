@@ -35,7 +35,7 @@ export async function PUT(request, { params }) {
     const order = await prisma.$transaction(async (tx) => {
       const currentOrder = await tx.order.findUnique({
         where: { id },
-        include: { items: true },
+        include: { items: true, customer: true },
       });
 
       if (!currentOrder) {
@@ -183,6 +183,25 @@ export async function PUT(request, { params }) {
 
       // TRIGGER GOOGLE SHEETS WEBHOOK ON COMPLETION
       if (data.status === 'COMPLETED' && currentOrder.status !== 'COMPLETED') {
+        
+        // Handle referral points if applicable
+        if (currentOrder.customer && currentOrder.customer.referredByCode && !currentOrder.customer.referralPaidOut) {
+          const referrer = await tx.customer.findUnique({
+            where: { referralCode: currentOrder.customer.referredByCode }
+          });
+          
+          if (referrer) {
+            await tx.customer.update({
+              where: { id: referrer.id },
+              data: { points: { increment: 100 } }
+            });
+            await tx.customer.update({
+              where: { id: currentOrder.customer.id },
+              data: { referralPaidOut: true }
+            });
+          }
+        }
+
         const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
         if (webhookUrl) {
           try {

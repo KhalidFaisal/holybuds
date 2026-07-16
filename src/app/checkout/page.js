@@ -67,6 +67,7 @@ function CheckoutContent() {
     town: '',
     zipCode: '',
     notes: '',
+    referredByCode: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -74,6 +75,7 @@ function CheckoutContent() {
 
   // Loyalty states
   const [customerProfile, setCustomerProfile] = useState(null);
+  const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [loyaltyLoading, setLoyaltyLoading] = useState(false);
   const [selectedReward, setSelectedReward] = useState(null);
 
@@ -88,12 +90,15 @@ function CheckoutContent() {
           if (res.ok) {
             const data = await res.json();
             setCustomerProfile(data.customer);
+            setIsNewCustomer(data.isNewCustomer || false);
           } else {
             setCustomerProfile(null);
+            setIsNewCustomer(false);
             setSelectedReward(null);
           }
         } catch (e) {
           setCustomerProfile(null);
+          setIsNewCustomer(false);
           setSelectedReward(null);
         } finally {
           setLoyaltyLoading(false);
@@ -104,6 +109,7 @@ function CheckoutContent() {
       return () => clearTimeout(timeoutId);
     } else {
       setCustomerProfile(null);
+      setIsNewCustomer(false);
       setSelectedReward(null);
     }
   }, [form.customerPhone]);
@@ -310,11 +316,20 @@ function CheckoutContent() {
                   <input name="customerPhone" value={form.customerPhone} onChange={handleChange} required className="input-field" placeholder="(555) 123-4567" type="tel" />
                 </div>
                 
+                {/* NEW CUSTOMER REFERRAL INPUT */}
+                {isNewCustomer && !loyaltyLoading && (
+                  <div className="animate-fade-in-up">
+                    <label className="block text-sm font-medium text-pc-muted mb-1 text-pc-gold">Referral Code (Optional)</label>
+                    <input name="referredByCode" value={form.referredByCode} onChange={handleChange} className="input-field border-pc-gold/30 focus:border-pc-gold focus:ring-pc-gold/20" placeholder="e.g. HOLY-A1B2C" />
+                    <p className="text-xs text-pc-muted mt-1">Referred by a friend? Enter their code so they get 100 points!</p>
+                  </div>
+                )}
+
                 {/* LOYALTY DASHBOARD */}
                 {loyaltyLoading && (
                   <div className="text-pc-muted text-sm py-2 animate-pulse">Checking loyalty status...</div>
                 )}
-                {customerProfile && !loyaltyLoading && (
+                {customerProfile && !loyaltyLoading && !isNewCustomer && (
                   <div className="bg-pc-green/10 border border-pc-green/30 rounded-xl p-4 mt-4 animate-fade-in-up">
                     <div className="flex justify-between items-start mb-4">
                       <div>
@@ -325,6 +340,13 @@ function CheckoutContent() {
                         {customerProfile.totalOrders} Orders
                       </div>
                     </div>
+
+                    {customerProfile.referralCode && (
+                      <div className="mb-4 bg-pc-gold/10 border border-pc-gold/20 rounded p-3 text-sm">
+                        <p className="text-pc-gold font-bold mb-1">Refer a Friend!</p>
+                        <p className="text-pc-muted">Give them code <strong className="text-white bg-pc-dark px-1.5 py-0.5 rounded">{customerProfile.referralCode}</strong> to earn 100 points on their first order.</p>
+                      </div>
+                    )}
                     
                     <div className="space-y-2 mt-4">
                       <p className="text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">Available Rewards</p>
