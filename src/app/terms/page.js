@@ -64,6 +64,16 @@ export default function TermsPage() {
             <h2 className="text-xl font-bold text-white mb-3">5. Liability</h2>
             <p className="leading-relaxed">Holybuds and its affiliates are not responsible for any legal action, confiscation, or health issues resulting from the use or purchase of our products. Use at your own risk. By purchasing from our store, you agree to assume full responsibility for all parts pertaining to your purchase.</p>
           </section>
+
+          <section>
+            <h2 className="text-xl font-bold text-white mb-3">6. Loyalty & Referral Programs</h2>
+            <ul className="list-disc pl-5 space-y-2 leading-relaxed">
+              <li><strong>Earning Points:</strong> Points are earned based on the order total after discounts and before delivery fees. Points are not transferable and hold no cash value outside of our rewards program.</li>
+              <li><strong>Redeeming Rewards:</strong> Rewards are subject to availability. Only one loyalty reward can be applied per order, though it can be combined with standard promotional discounts unless otherwise stated.</li>
+              <li><strong>Referral Program:</strong> When you refer a new customer, you will receive your bonus points only after their first order is successfully completed and marked as delivered by our team. We reserve the right to revoke points or suspend accounts if we suspect abuse of the referral system (e.g., creating fake accounts or self-referrals).</li>
+              <li><strong>Modifications:</strong> Holybuds reserves the right to modify, suspend, or terminate the loyalty and referral programs, including point values and reward tiers, at any time without prior notice.</li>
+            </ul>
+          </section>
         </div>
       </div>
     </div>
