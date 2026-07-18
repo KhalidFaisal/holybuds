@@ -27,6 +27,14 @@ export default function FAQPage() {
     {
       question: "How long will the driver wait?",
       answer: "Our drivers will wait no longer than 10 minutes before departing, so please be prepared at your scheduled delivery time."
+    },
+    {
+      question: "How does the loyalty program work?",
+      answer: "You earn points on every order you place (calculated after discounts and before delivery fees). You can redeem these points at checkout for free items or discounts!"
+    },
+    {
+      question: "How do referrals work?",
+      answer: "Returning customers are given a unique referral code. Give this code to a friend, and they can enter it at checkout on their first order. Once their order is successfully delivered, you'll automatically receive 100 bonus points!"
     }
   ];
 
