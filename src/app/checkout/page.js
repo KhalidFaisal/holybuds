@@ -78,6 +78,7 @@ function CheckoutContent() {
   const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [loyaltyLoading, setLoyaltyLoading] = useState(false);
   const [selectedReward, setSelectedReward] = useState(null);
+  const [showFullLoyaltyPanel, setShowFullLoyaltyPanel] = useState(false);
 
   // Phone lookup
   useEffect(() => {
@@ -95,11 +96,13 @@ function CheckoutContent() {
             setCustomerProfile(null);
             setIsNewCustomer(false);
             setSelectedReward(null);
+            setShowFullLoyaltyPanel(false);
           }
         } catch (e) {
           setCustomerProfile(null);
           setIsNewCustomer(false);
           setSelectedReward(null);
+          setShowFullLoyaltyPanel(false);
         } finally {
           setLoyaltyLoading(false);
         }
@@ -111,6 +114,7 @@ function CheckoutContent() {
       setCustomerProfile(null);
       setIsNewCustomer(false);
       setSelectedReward(null);
+      setShowFullLoyaltyPanel(false);
     }
   }, [form.customerPhone]);
 
@@ -331,61 +335,88 @@ function CheckoutContent() {
                 )}
                 {customerProfile && !loyaltyLoading && !isNewCustomer && (
                   <div className="bg-pc-green/10 border border-pc-green/30 rounded-xl p-4 mt-4 animate-fade-in-up">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-bold text-pc-green text-lg">Welcome back, {customerProfile.name}!</h3>
-                        <p className="text-sm text-pc-muted">You have <strong className="text-white">{customerProfile.points} Points</strong></p>
+                    {!showFullLoyaltyPanel ? (
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-bold text-pc-green text-lg">Welcome back, {customerProfile.name}!</h3>
+                          <p className="text-sm text-pc-muted">You have <strong className="text-white">{customerProfile.points} Points</strong></p>
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={() => setShowFullLoyaltyPanel(true)} 
+                          className="bg-pc-green text-pc-dark font-bold py-2 px-4 rounded-lg text-sm hover:bg-pc-green/90 transition-colors"
+                        >
+                          Redeem Points
+                        </button>
                       </div>
-                      <div className="bg-pc-dark/50 px-3 py-1 rounded-full text-xs font-medium text-pc-muted border border-pc-border/50">
-                        {customerProfile.totalOrders} Orders
-                      </div>
-                    </div>
-
-                    {customerProfile.referralCode && (
-                      <div className="mb-4 bg-pc-gold/10 border border-pc-gold/20 rounded p-3 text-sm">
-                        <p className="text-pc-gold font-bold mb-1">Refer a Friend!</p>
-                        <p className="text-pc-muted">Give them code <strong className="text-white bg-pc-dark px-1.5 py-0.5 rounded">{customerProfile.referralCode}</strong> to earn 100 points on their first order.</p>
-                      </div>
-                    )}
-                    
-                    <div className="space-y-2 mt-4">
-                      <p className="text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">Available Rewards</p>
-                      {LOYALTY_REWARDS.map(reward => {
-                        const canAfford = customerProfile.points >= reward.points;
-                        const isSelected = selectedReward?.id === reward.id;
-                        
-                        return (
-                          <div 
-                            key={reward.id}
-                            className={`p-3 rounded-lg border text-sm flex items-center justify-between transition-colors ${
-                              isSelected ? 'bg-pc-green/20 border-pc-green text-white' : 
-                              canAfford ? 'bg-pc-dark border-pc-border hover:border-pc-green/50 text-white cursor-pointer' : 
-                              'bg-pc-dark/50 border-pc-border/30 text-pc-muted/50 cursor-not-allowed'
-                            }`}
-                            onClick={() => {
-                              if (!canAfford) return;
-                              setSelectedReward(isSelected ? null : reward);
-                            }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                                isSelected ? 'border-pc-green bg-pc-green' : 
-                                canAfford ? 'border-pc-muted' : 'border-pc-border/30'
-                              }`}>
-                                {isSelected && <div className="w-2 h-2 bg-pc-dark rounded-full" />}
-                              </div>
-                              <div className="flex flex-col">
-                                <span className={isSelected ? 'font-bold' : ''}>{reward.label}</span>
-                                <span className="text-xs opacity-70">{reward.points} Pts</span>
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <span className="text-pc-green font-bold text-xs bg-pc-dark px-2 py-1 rounded">Selected</span>
-                            )}
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="font-bold text-pc-green text-lg">Welcome back, {customerProfile.name}!</h3>
+                            <p className="text-sm text-pc-muted">You have <strong className="text-white">{customerProfile.points} Points</strong></p>
                           </div>
-                        );
-                      })}
-                    </div>
+                          <div className="flex items-center gap-3">
+                            <div className="bg-pc-dark/50 px-3 py-1 rounded-full text-xs font-medium text-pc-muted border border-pc-border/50">
+                              {customerProfile.totalOrders} Orders
+                            </div>
+                            <button 
+                              type="button"
+                              onClick={() => setShowFullLoyaltyPanel(false)}
+                              className="text-pc-muted hover:text-white text-sm underline decoration-pc-muted hover:decoration-white transition-colors"
+                            >
+                              Hide
+                            </button>
+                          </div>
+                        </div>
+
+                        {customerProfile.referralCode && (
+                          <div className="mb-4 bg-pc-gold/10 border border-pc-gold/20 rounded p-3 text-sm">
+                            <p className="text-pc-gold font-bold mb-1">Refer a Friend!</p>
+                            <p className="text-pc-muted">Give them code <strong className="text-white bg-pc-dark px-1.5 py-0.5 rounded">{customerProfile.referralCode}</strong> to earn 100 points on their first order.</p>
+                          </div>
+                        )}
+                        
+                        <div className="space-y-2 mt-4">
+                          <p className="text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">Available Rewards</p>
+                          {LOYALTY_REWARDS.map(reward => {
+                            const canAfford = customerProfile.points >= reward.points;
+                            const isSelected = selectedReward?.id === reward.id;
+                            
+                            return (
+                              <div 
+                                key={reward.id}
+                                className={`p-3 rounded-lg border text-sm flex items-center justify-between transition-colors ${
+                                  isSelected ? 'bg-pc-green/20 border-pc-green text-white' : 
+                                  canAfford ? 'bg-pc-dark border-pc-border hover:border-pc-green/50 text-white cursor-pointer' : 
+                                  'bg-pc-dark/50 border-pc-border/30 text-pc-muted/50 cursor-not-allowed'
+                                }`}
+                                onClick={() => {
+                                  if (!canAfford) return;
+                                  setSelectedReward(isSelected ? null : reward);
+                                }}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                    isSelected ? 'border-pc-green bg-pc-green' : 
+                                    canAfford ? 'border-pc-muted' : 'border-pc-border/30'
+                                  }`}>
+                                    {isSelected && <div className="w-2 h-2 bg-pc-dark rounded-full" />}
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className={isSelected ? 'font-bold' : ''}>{reward.label}</span>
+                                    <span className="text-xs opacity-70">{reward.points} Pts</span>
+                                  </div>
+                                </div>
+                                {isSelected && (
+                                  <span className="text-pc-green font-bold text-xs bg-pc-dark px-2 py-1 rounded">Selected</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
                 {/* END LOYALTY DASHBOARD */}
