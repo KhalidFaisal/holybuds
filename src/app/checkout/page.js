@@ -79,6 +79,7 @@ function CheckoutContent() {
   const [loyaltyLoading, setLoyaltyLoading] = useState(false);
   const [selectedReward, setSelectedReward] = useState(null);
   const [showFullLoyaltyPanel, setShowFullLoyaltyPanel] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   // Phone lookup
   useEffect(() => {
@@ -122,6 +123,18 @@ function CheckoutContent() {
   useEffect(() => {
     localStorage.setItem('holybuds_checkout_draft', JSON.stringify(form));
   }, [form]);
+
+  const handleCopyCode = async () => {
+    if (customerProfile?.referralCode) {
+      try {
+        await navigator.clipboard.writeText(customerProfile.referralCode);
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy code: ', err);
+      }
+    }
+  };
 
   // If a reward is selected, calculate its discount
   const rewardDiscount = calcRewardDiscount(selectedReward, items);
@@ -373,7 +386,27 @@ function CheckoutContent() {
                         {customerProfile.referralCode && (
                           <div className="mb-4 bg-pc-gold/10 border border-pc-gold/20 rounded p-3 text-sm">
                             <p className="text-pc-gold font-bold mb-1">Refer a Friend!</p>
-                            <p className="text-pc-muted">Give them code <strong className="text-white bg-pc-dark px-1.5 py-0.5 rounded">{customerProfile.referralCode}</strong> to earn 100 points on their first order.</p>
+                            <div className="text-pc-muted">
+                              Give them code 
+                              <button 
+                                type="button"
+                                onClick={handleCopyCode}
+                                className="mx-1 text-white bg-pc-dark px-2 py-1 rounded hover:bg-pc-dark/70 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                                title="Click to copy"
+                              >
+                                <strong>{customerProfile.referralCode}</strong>
+                                {copySuccess ? (
+                                  <svg className="w-3 h-3 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
+                                  </svg>
+                                )}
+                              </button>
+                              to earn 100 points on their first order.
+                            </div>
                           </div>
                         )}
                         
