@@ -344,7 +344,7 @@ function CheckoutContent() {
                         <button 
                           type="button" 
                           onClick={() => setShowFullLoyaltyPanel(true)} 
-                          className="bg-pc-green text-pc-dark font-bold py-2 px-4 rounded-lg text-sm hover:bg-pc-green/90 transition-colors"
+                          className="bg-pc-green text-black font-bold py-2 px-4 rounded-lg text-sm hover:bg-pc-green/90 transition-colors"
                         >
                           Redeem Points
                         </button>
