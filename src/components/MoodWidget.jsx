@@ -84,6 +84,7 @@ export default function MoodWidget() {
                   </button>
                 );
               })}
+              </div>
             </div>
           </div>
         )}
