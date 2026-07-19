@@ -92,9 +92,9 @@ export default function MenuClient({ products, categories, initialCategory, init
 
           {/* Filters Bar */}
           <div className="glass-card p-4 md:p-6 mb-8">
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row flex-wrap gap-4">
               {/* Search */}
-              <div className="flex-1 relative">
+              <div className="flex-1 relative order-1 min-w-[200px]">
                 <svg
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-pc-muted"
                   fill="none"
@@ -109,12 +109,32 @@ export default function MenuClient({ products, categories, initialCategory, init
                   placeholder="Search products..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="input-field pl-10"
+                  className="input-field pl-10 w-full"
                   id="menu-search"
                 />
               </div>
 
-              <div className="flex gap-4 w-full md:w-auto">
+              {/* Mood Dropdown (Only for Flower) - Positioned after search on desktop, last on mobile */}
+              {category?.toLowerCase() === 'flowers' && (
+                <div className="w-full md:w-auto order-3 md:order-2 flex">
+                  <select
+                    value={effectFilter}
+                    onChange={(e) => setEffectFilter(e.target.value)}
+                    className="select-field flex-1 md:w-auto min-w-[140px]"
+                    id="mood-select"
+                  >
+                    <option value="ALL">All Moods</option>
+                    {AVAILABLE_EFFECTS.map(effect => (
+                      <option key={effect} value={effect}>
+                        {effect}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Category and Sort Dropdowns */}
+              <div className="flex flex-wrap sm:flex-nowrap gap-4 w-full md:w-auto order-2 md:order-3">
                 {/* Category Dropdown */}
                 {isFullMenuPage && (
                   <select
@@ -144,23 +164,6 @@ export default function MenuClient({ products, categories, initialCategory, init
                   <option value="price-high">Price: High → Low</option>
                   <option value="name">Name: A → Z</option>
                 </select>
-
-                {/* Mood Dropdown (Only for Flower) */}
-                {category?.toLowerCase() === 'flowers' && (
-                  <select
-                    value={effectFilter}
-                    onChange={(e) => setEffectFilter(e.target.value)}
-                    className="select-field flex-1 md:w-auto min-w-[140px]"
-                    id="mood-select"
-                  >
-                    <option value="ALL">All Moods</option>
-                    {AVAILABLE_EFFECTS.map(effect => (
-                      <option key={effect} value={effect}>
-                        {effect}
-                      </option>
-                    ))}
-                  </select>
-                )}
               </div>
             </div>
           </div>
