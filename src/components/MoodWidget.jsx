@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import Image from 'next/image';
 import { getEffectColorClass } from '@/lib/colors';
 
 const AVAILABLE_EFFECTS = ['Sleep', 'Focus', 'Energy', 'Relax', 'Creative', 'Euphoric'];
@@ -48,9 +49,13 @@ export default function MoodWidget() {
         {isOpen && (
           <div className="absolute right-full mr-4 w-72 bg-pc-card border border-pc-border shadow-2xl rounded-2xl p-5 flex flex-col animate-in slide-in-from-right-4 zoom-in-95 fade-in duration-200">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-black text-white">
-                Shop by Mood
-              </h2>
+              <Image 
+                src="/shop-by-mood.png" 
+                alt="Shop by Mood" 
+                width={150} 
+                height={40} 
+                className="w-auto h-8 object-contain"
+              />
               <button 
                 onClick={() => setIsOpen(false)}
                 className="p-1.5 text-pc-muted hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-lg"
