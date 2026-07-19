@@ -252,8 +252,8 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
                 ))
               ) : (
                 <>
-                  <option value="FLOWER">Flower</option>
-                  <option value="EDIBLE">Edible</option>
+                  <option value="FLOWERS">Flowers</option>
+                  <option value="EDIBLES">Edibles</option>
                 </>
               )}
             </select>
@@ -292,7 +292,7 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
           </div>
 
           {/* Effects */}
-          {form.category === 'FLOWER' && (
+          {form.category === 'FLOWERS' && (
             <div className="bg-pc-dark/30 rounded-xl p-4 border border-pc-border/50">
               <div className="flex justify-between items-center mb-3">
                 <label className="block text-sm font-medium text-white">Effects / Mood</label>

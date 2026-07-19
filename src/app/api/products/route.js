@@ -63,7 +63,7 @@ export async function POST(request) {
     try {
       const parsed = JSON.parse(finalEffectsStr);
       // Auto tag if it's a FLOWER and no effects were provided
-      if (data.category === 'FLOWER' && parsed.length === 0 && (data.name || finalDescription)) {
+      if (data.category === 'FLOWERS' && parsed.length === 0 && (data.name || finalDescription)) {
         const generatedEffects = await autoTagProduct(data.name, data.category, finalDescription);
         finalEffectsStr = JSON.stringify(generatedEffects);
       }

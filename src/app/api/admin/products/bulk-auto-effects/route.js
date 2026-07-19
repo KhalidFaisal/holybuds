@@ -19,7 +19,7 @@ export async function POST(request) {
     const products = await prisma.product.findMany({
       where: {
         id: { in: ids },
-        category: 'FLOWER', // Only process flowers
+        category: 'FLOWERS', // Only process flowers
       },
     });
 
