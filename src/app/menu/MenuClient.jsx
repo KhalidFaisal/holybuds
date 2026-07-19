@@ -7,11 +7,11 @@ import ProductCard from '@/components/ProductCard';
 import { CartProvider } from '@/components/CartProvider';
 import Link from 'next/link';
 
-export default function MenuClient({ products, categories, initialCategory, initialSearch }) {
+export default function MenuClient({ products, categories, initialCategory, initialSearch, initialEffect }) {
   const [category, setCategory] = useState(initialCategory || 'ALL');
   const [search, setSearch] = useState(initialSearch || '');
   const [sortBy, setSortBy] = useState('newest');
-  const [effectFilter, setEffectFilter] = useState('ALL');
+  const [effectFilter, setEffectFilter] = useState(initialEffect || 'ALL');
   
   const AVAILABLE_EFFECTS = ['Sleep', 'Focus', 'Energy', 'Relax', 'Creative', 'Euphoric'];
 
@@ -23,6 +23,10 @@ export default function MenuClient({ products, categories, initialCategory, init
   useEffect(() => {
     setSearch(initialSearch || '');
   }, [initialSearch]);
+
+  useEffect(() => {
+    setEffectFilter(initialEffect || 'ALL');
+  }, [initialEffect]);
 
   const filtered = useMemo(() => {
     let result = [...products];

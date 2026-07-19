@@ -6,6 +6,7 @@ export default async function MenuPage({ searchParams }) {
   const sp = await searchParams;
   const category = sp?.category || null;
   const search = sp?.search || null;
+  const effect = sp?.effect || null;
 
   const where = { isVisible: true };
   if (category) where.category = category;
@@ -28,6 +29,7 @@ export default async function MenuPage({ searchParams }) {
       categories={JSON.parse(JSON.stringify(categories))}
       initialCategory={category}
       initialSearch={search}
+      initialEffect={effect}
     />
   );
 }

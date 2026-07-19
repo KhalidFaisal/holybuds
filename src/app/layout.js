@@ -24,6 +24,7 @@ export const metadata = {
 
 import ChatWidget from '@/components/ChatWidget';
 import MixpanelTracker from '@/components/MixpanelTracker';
+import MoodWidget from '@/components/MoodWidget';
 
 export default function RootLayout({ children }) {
   return (
@@ -38,6 +39,7 @@ export default function RootLayout({ children }) {
           {children}
         </div>
         <ChatWidget />
+        <MoodWidget />
       </body>
     </html>
   );
