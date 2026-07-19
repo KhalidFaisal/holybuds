@@ -11,6 +11,9 @@ export default function MenuClient({ products, categories, initialCategory, init
   const [category, setCategory] = useState(initialCategory || 'ALL');
   const [search, setSearch] = useState(initialSearch || '');
   const [sortBy, setSortBy] = useState('newest');
+  const [effectFilter, setEffectFilter] = useState('ALL');
+  
+  const AVAILABLE_EFFECTS = ['Sleep', 'Focus', 'Energy', 'Relax', 'Creative', 'Euphoric'];
 
   // Sync state with URL params when navigating between categories
   useEffect(() => {
@@ -39,6 +42,18 @@ export default function MenuClient({ products, categories, initialCategory, init
       );
     }
 
+    // Effect filter
+    if (effectFilter !== 'ALL') {
+      result = result.filter(p => {
+        try {
+          const parsedEffects = JSON.parse(p.effects || '[]');
+          return parsedEffects.includes(effectFilter);
+        } catch {
+          return false;
+        }
+      });
+    }
+
     // Sort
     switch (sortBy) {
       case 'price-low':
@@ -56,7 +71,7 @@ export default function MenuClient({ products, categories, initialCategory, init
     }
 
     return result;
-  }, [products, category, search, sortBy]);
+  }, [products, category, search, sortBy, effectFilter]);
 
   const isFullMenuPage = !initialCategory || initialCategory === 'ALL';
   const activeCategoryObj = categories?.find(c => c.slug === category);
@@ -129,6 +144,36 @@ export default function MenuClient({ products, categories, initialCategory, init
                   <option value="price-high">Price: High → Low</option>
                   <option value="name">Name: A → Z</option>
                 </select>
+              </div>
+            </div>
+
+            {/* Effects Pills */}
+            <div className="pt-4 mt-4 border-t border-pc-border/50 overflow-x-auto pb-1 scrollbar-hide">
+              <div className="flex items-center gap-2 min-w-max">
+                <span className="text-xs font-bold text-pc-muted uppercase tracking-wider mr-2">Mood:</span>
+                <button
+                  onClick={() => setEffectFilter('ALL')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    effectFilter === 'ALL'
+                      ? 'bg-white text-black'
+                      : 'bg-pc-dark/50 text-pc-muted hover:bg-pc-dark hover:text-white'
+                  }`}
+                >
+                  All
+                </button>
+                {AVAILABLE_EFFECTS.map(effect => (
+                  <button
+                    key={effect}
+                    onClick={() => setEffectFilter(effect)}
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                      effectFilter === effect
+                        ? 'bg-pc-gold/20 border-pc-gold text-pc-gold shadow-[0_0_15px_rgba(234,179,8,0.2)]'
+                        : 'bg-pc-dark/50 border-transparent text-pc-muted hover:border-pc-gold/30 hover:text-white'
+                    }`}
+                  >
+                    {effect}
+                  </button>
+                ))}
               </div>
             </div>
 

@@ -18,6 +18,7 @@ model Product {
   stock       Int         @default(0)
   featured    Boolean     @default(false)
   isVisible   Boolean     @default(true)
+  effects     String      @default("[]")
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+const AVAILABLE_EFFECTS = ['Sleep', 'Focus', 'Energy', 'Relax', 'Creative', 'Euphoric'];
+
 export default function ProductForm({ product, token, onSave, onCancel }) {
   const isEdit = !!product;
 
@@ -43,11 +45,28 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
     }
   });
 
+  const [effects, setEffects] = useState(() => {
+    try {
+      return JSON.parse(product?.effects || '[]');
+    } catch {
+      return [];
+    }
+  });
+
   const [newUrl, setNewUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [generatingDesc, setGeneratingDesc] = useState(false);
+  const [taggingEffects, setTaggingEffects] = useState(false);
   const [error, setError] = useState('');
+
+  const handleToggleEffect = (effect) => {
+    setEffects(prev => 
+      prev.includes(effect) 
+        ? prev.filter(e => e !== effect)
+        : [...prev, effect]
+    );
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -132,6 +151,45 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
     }
   };
 
+  const handleAutoTagEffects = async () => {
+    if (!form.name && !form.description) {
+      setError('Please enter a name or description to auto-tag effects.');
+      return;
+    }
+    
+    setTaggingEffects(true);
+    setError('');
+    
+    try {
+      const res = await fetch('/api/admin/products/auto-effects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: form.name,
+          category: form.category,
+          description: form.description
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to auto-tag effects');
+      }
+
+      const data = await res.json();
+      if (data.effects) {
+        setEffects(data.effects);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setTaggingEffects(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -147,7 +205,7 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ ...form, images }),
+        body: JSON.stringify({ ...form, images, effects: JSON.stringify(effects) }),
       });
 
       if (!res.ok) {
@@ -231,6 +289,41 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
               </button>
             </div>
             <textarea name="description" value={form.description} onChange={handleChange} rows={3} className="input-field resize-none" placeholder="Describe this product..." />
+          </div>
+
+          {/* Effects */}
+          <div className="bg-pc-dark/30 rounded-xl p-4 border border-pc-border/50">
+            <div className="flex justify-between items-center mb-3">
+              <label className="block text-sm font-medium text-white">Effects / Mood</label>
+              <button 
+                type="button" 
+                onClick={handleAutoTagEffects}
+                disabled={taggingEffects || (!form.name && !form.description)}
+                className="text-xs font-bold text-pc-gold hover:text-pc-gold-light disabled:opacity-50 transition-colors flex items-center gap-1"
+              >
+                {taggingEffects ? 'Analyzing...' : '✨ Auto-Tag with AI'}
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {AVAILABLE_EFFECTS.map(effect => (
+                <label 
+                  key={effect} 
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-colors border ${
+                    effects.includes(effect) 
+                      ? 'bg-pc-gold/20 border-pc-gold text-pc-gold' 
+                      : 'bg-pc-dark border-pc-border text-pc-muted hover:border-pc-gold/50 hover:text-white'
+                  }`}
+                >
+                  <input 
+                    type="checkbox" 
+                    className="hidden" 
+                    checked={effects.includes(effect)} 
+                    onChange={() => handleToggleEffect(effect)} 
+                  />
+                  {effect}
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* Image Gallery */}
