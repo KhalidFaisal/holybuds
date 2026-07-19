@@ -531,10 +531,23 @@ export default function SettingsPage() {
         </p>
 
         <form onSubmit={handlePromptSubmit} className="space-y-4">
-          {!aiModel.startsWith('groq-') && (
-            <div>
-              <label className="block text-sm font-medium text-pc-muted mb-1">Custom OpenRouter API Key</label>
-              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key. Add your own key to bypass free limits or use paid models.</p>
+          {/* OpenRouter API Key */}
+          <div>
+            <label className="block text-sm font-medium text-pc-muted mb-1">OpenRouter API Key</label>
+            <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key. Add your own key to bypass free limits or use paid models.</p>
+            {openRouterApiKey === '••••••••••••••••' ? (
+              <div className="flex items-center gap-4 bg-pc-black border border-pc-border rounded-xl px-4 py-2 mb-4">
+                <span className="text-pc-green font-bold">✅ Configured</span>
+                <span className="text-pc-muted flex-1 text-right tracking-widest">{openRouterApiKey}</span>
+                <button
+                  type="button"
+                  onClick={() => setOpenRouterApiKey('')}
+                  className="text-xs font-bold text-pc-muted hover:text-white px-3 py-1 bg-pc-dark rounded-lg transition-colors border border-pc-border hover:border-pc-muted"
+                >
+                  Edit
+                </button>
+              </div>
+            ) : (
               <input
                 type="password"
                 value={openRouterApiKey}
@@ -542,13 +555,26 @@ export default function SettingsPage() {
                 placeholder="sk-or-v1-..."
                 className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4"
               />
-            </div>
-          )}
+            )}
+          </div>
 
-          {aiModel.startsWith('groq-') && (
-            <div>
-              <label className="block text-sm font-medium text-pc-muted mb-1">Custom Groq API Key</label>
-              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key. Add your own key to bypass free limits or use paid models.</p>
+          {/* Groq API Key */}
+          <div>
+            <label className="block text-sm font-medium text-pc-muted mb-1">Groq API Key</label>
+            <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key. Add your own key to bypass free limits or use paid models.</p>
+            {groqApiKey === '••••••••••••••••' ? (
+              <div className="flex items-center gap-4 bg-pc-black border border-pc-border rounded-xl px-4 py-2 mb-4">
+                <span className="text-pc-green font-bold">✅ Configured</span>
+                <span className="text-pc-muted flex-1 text-right tracking-widest">{groqApiKey}</span>
+                <button
+                  type="button"
+                  onClick={() => setGroqApiKey('')}
+                  className="text-xs font-bold text-pc-muted hover:text-white px-3 py-1 bg-pc-dark rounded-lg transition-colors border border-pc-border hover:border-pc-muted"
+                >
+                  Edit
+                </button>
+              </div>
+            ) : (
               <input
                 type="password"
                 value={groqApiKey}
@@ -556,11 +582,11 @@ export default function SettingsPage() {
                 placeholder="gsk_..."
                 className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4"
               />
-            </div>
-          )}
+            )}
+          </div>
 
           <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">AI Model (OpenRouter)</label>
+            <label className="block text-sm font-medium text-pc-muted mb-1">Primary AI Model</label>
             <div className="flex gap-2">
               <select
                 value={aiModel}

@@ -1,63 +1,97 @@
 import prisma from '@/lib/prisma';
 
+async function callGroq(model, messages, apiKey) {
+  if (!apiKey) throw new Error('Groq API Key is missing');
+  const actualModel = model.replace('groq-', '');
+
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: actualModel,
+      messages: messages
+    })
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    const error = new Error(`Groq API error: ${res.status} ${errorText}`);
+    error.status = res.status;
+    throw error;
+  }
+  return await res.json();
+}
+
+async function callOpenRouter(model, messages, apiKey) {
+  if (!apiKey) throw new Error('OPENROUTER_API_KEY is missing');
+
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: messages
+    })
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    const error = new Error(`OpenRouter API error: ${res.status} ${errorText}`);
+    error.status = res.status;
+    throw error;
+  }
+  return await res.json();
+}
+
 export async function callAI(messages, options = {}) {
   const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
   
-  const model = options.model || settings?.aiModel || "openrouter/free";
+  const primaryModel = options.model || settings?.aiModel || "openrouter/free";
   const openRouterApiKey = options.openRouterApiKey || settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
   const groqApiKey = options.groqApiKey || settings?.groqApiKey || process.env.GROQ_API_KEY;
 
-  if (model.startsWith('groq-')) {
-    if (!groqApiKey) {
-      throw new Error('Groq API Key is missing');
+  const isPrimaryGroq = primaryModel.startsWith('groq-');
+  
+  try {
+    // Attempt Primary Provider
+    if (isPrimaryGroq) {
+      return await callGroq(primaryModel, messages, groqApiKey);
+    } else {
+      return await callOpenRouter(primaryModel, messages, openRouterApiKey);
     }
-
-    const actualModel = model.replace('groq-', '');
-
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${groqApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: actualModel,
-        messages: messages
-      })
-    });
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error('Groq API error:', errorText);
-      throw new Error(`Failed to communicate with Groq: ${res.status} ${errorText}`);
+  } catch (error) {
+    // Check if it's a rate limit (429) or service unavailable (503) error
+    const isRetryableError = error.status === 429 || error.status === 503;
+    
+    if (isRetryableError) {
+      console.warn(`[AI Failover] Primary provider failed with ${error.status}. Attempting fallback...`);
+      
+      try {
+        // Attempt Secondary Provider as Fallback
+        if (isPrimaryGroq) {
+          // Fallback to OpenRouter
+          console.log('[AI Failover] Falling back to OpenRouter');
+          return await callOpenRouter("openrouter/free", messages, openRouterApiKey);
+        } else {
+          // Fallback to Groq
+          console.log('[AI Failover] Falling back to Groq');
+          return await callGroq("groq-llama-3.1-8b-instant", messages, groqApiKey);
+        }
+      } catch (fallbackError) {
+        console.error('[AI Failover] Fallback provider also failed:', fallbackError);
+        // Throw the original error if both fail, or fallback error if preferred
+        throw error; 
+      }
     }
-
-    return await res.json();
-  } else {
-    // OpenRouter handling
-    if (!openRouterApiKey) {
-      throw new Error('OPENROUTER_API_KEY is missing');
-    }
-
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openRouterApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: messages
-      })
-    });
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error('OpenRouter API error:', errorText);
-      throw new Error('Failed to communicate with OpenRouter');
-    }
-
-    return await res.json();
+    
+    // If it wasn't a rate limit/503, just throw the original error
+    throw error;
   }
 }
 
