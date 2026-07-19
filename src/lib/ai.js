@@ -67,10 +67,10 @@ export async function callAI(messages, options = {}) {
     }
   } catch (error) {
     // Check if it's a rate limit (429) or service unavailable (503) error
-    const isRetryableError = error.status === 429 || error.status === 503;
+    const isRetryableError = error.status === 429 || error.status === 503 || error.message.toLowerCase().includes('rate limit');
     
     if (isRetryableError) {
-      console.warn(`[AI Failover] Primary provider failed with ${error.status}. Attempting fallback...`);
+      console.warn(`[AI Failover] Primary provider failed with ${error.status || 'rate limit'}. Attempting fallback...`);
       
       try {
         // Attempt Secondary Provider as Fallback
@@ -85,8 +85,7 @@ export async function callAI(messages, options = {}) {
         }
       } catch (fallbackError) {
         console.error('[AI Failover] Fallback provider also failed:', fallbackError);
-        // Throw the original error if both fail, or fallback error if preferred
-        throw error; 
+        throw new Error(`Primary Provider Error: ${error.message}. Fallback Provider Error: ${fallbackError.message}`); 
       }
     }
     

@@ -29,6 +29,7 @@ export default function AdminProductsPage() {
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
   const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
   const [isTaggingBulk, setIsTaggingBulk] = useState(false);
+  const [tagProgress, setTagProgress] = useState(null);
   const [importResult, setImportResult] = useState(null);
   const [parsedImportProducts, setParsedImportProducts] = useState(null);
   const [selectedImportIndices, setSelectedImportIndices] = useState(new Set());
@@ -151,31 +152,38 @@ export default function AdminProductsPage() {
   const handleBulkTagEffects = async () => {
     if (selectedExportIds.size === 0) return;
     setIsTaggingBulk(true);
+    setTagProgress({ current: 0, total: selectedExportIds.size });
     try {
       const idsToUpdate = Array.from(selectedExportIds);
-      const res = await fetch('/api/admin/products/bulk-auto-effects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ ids: idsToUpdate })
-      });
+      let successCount = 0;
 
-      if (res.ok) {
-        // Just refetch all products to get the latest data easily
-        await fetchProducts();
-        setSelectedExportIds(new Set());
-        alert('Successfully tagged products with Moods!');
-      } else {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to auto-tag products');
+      for (let i = 0; i < idsToUpdate.length; i++) {
+        const id = idsToUpdate[i];
+        try {
+          const res = await fetch('/api/admin/products/bulk-auto-effects', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ ids: [id] })
+          });
+          if (res.ok) successCount++;
+        } catch (e) {
+          console.error("Failed to tag item", id, e);
+        }
+        setTagProgress({ current: i + 1, total: idsToUpdate.length });
       }
+
+      await fetchProducts();
+      setSelectedExportIds(new Set());
+      alert(`Successfully tagged ${successCount} products with Moods!`);
     } catch (error) {
       console.error('Bulk tag error:', error);
       alert('Error updating effects: ' + error.message);
     } finally {
       setIsTaggingBulk(false);
+      setTagProgress(null);
     }
   };
 
@@ -469,10 +477,10 @@ export default function AdminProductsPage() {
               </button>
               <button
                 onClick={handleBulkTagEffects}
-                className="btn-secondary text-pc-gold border-pc-gold/30 hover:bg-pc-gold/10 whitespace-nowrap"
                 disabled={isTaggingBulk}
+                className="btn-secondary text-pc-gold border-pc-gold/30 hover:bg-pc-gold/10 whitespace-nowrap"
               >
-                {isTaggingBulk ? 'Analyzing...' : '✨ Auto-Tag Mood'}
+                {isTaggingBulk ? (tagProgress ? `Analyzing... (${tagProgress.current}/${tagProgress.total})` : 'Analyzing...') : '✨ Auto-Tag Mood'}
               </button>
               <button 
                 onClick={() => setDeleteConfirm('bulk')} 
