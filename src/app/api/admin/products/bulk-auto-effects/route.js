@@ -19,13 +19,14 @@ export async function POST(request) {
     const products = await prisma.product.findMany({
       where: {
         id: { in: ids },
-        category: 'FLOWERS', // Only process flowers
       },
     });
 
+    const flowerProducts = products.filter(p => p.category?.toLowerCase().includes('flower'));
+
     let updatedCount = 0;
 
-    for (const product of products) {
+    for (const product of flowerProducts) {
       // Auto tag using the AI
       const effects = await autoTagProduct(product.name, product.category, product.description);
       

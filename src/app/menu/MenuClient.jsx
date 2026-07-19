@@ -146,7 +146,7 @@ export default function MenuClient({ products, categories, initialCategory, init
                 </select>
 
                 {/* Mood Dropdown (Only for Flower) */}
-                {category === 'FLOWERS' && (
+                {category?.toLowerCase().includes('flower') && (
                   <select
                     value={effectFilter}
                     onChange={(e) => setEffectFilter(e.target.value)}
