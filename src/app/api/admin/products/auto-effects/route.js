@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { callAI } from '@/lib/ai';
-import { verifyAuth } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth';
 
 const AVAILABLE_EFFECTS = ['Sleep', 'Focus', 'Energy', 'Relax', 'Creative', 'Euphoric'];
 
 export async function POST(request) {
   try {
-    const authError = await verifyAuth(request);
-    if (authError) return authError;
+    if (!requireAdmin(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { name, description, category } = await request.json();
 
