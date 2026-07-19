@@ -47,30 +47,31 @@ export default function MoodWidget() {
 
         {/* Floating Popup */}
         {isOpen && (
-          <div className="absolute right-full mr-4 w-72 bg-pc-card border border-pc-border shadow-2xl rounded-2xl p-5 flex flex-col animate-in slide-in-from-right-4 zoom-in-95 fade-in duration-200">
-            <div className="flex items-center justify-between mb-4">
+          <div className="absolute right-full mr-4 w-72 bg-pc-card border border-pc-border shadow-2xl rounded-2xl overflow-hidden flex flex-col animate-in slide-in-from-right-4 zoom-in-95 fade-in duration-200">
+            <div className="relative w-full">
               <Image 
                 src="/shop-by-mood.png" 
                 alt="Shop by Mood" 
-                width={150} 
-                height={40} 
-                className="w-auto h-8 object-contain"
+                width={300} 
+                height={100} 
+                className="w-full h-auto object-cover block"
               />
               <button 
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 text-pc-muted hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-lg"
+                className="absolute top-2 right-2 p-1.5 text-white/90 hover:text-white bg-black/40 hover:bg-black/70 backdrop-blur-sm rounded-full transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            <p className="text-pc-muted mb-6 text-xs">
-              Select a desired effect to find the perfect flower strains for your current vibe.
-            </p>
+            <div className="p-5 flex flex-col">
+              <p className="text-pc-muted mb-5 text-xs font-semibold leading-relaxed">
+                Select a desired effect to find the perfect flower strains for your current vibe.
+              </p>
 
-            <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2">
               {AVAILABLE_EFFECTS.map(effect => {
                 const colors = getEffectColorClass(effect);
                 return (
