@@ -292,39 +292,41 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
           </div>
 
           {/* Effects */}
-          <div className="bg-pc-dark/30 rounded-xl p-4 border border-pc-border/50">
-            <div className="flex justify-between items-center mb-3">
-              <label className="block text-sm font-medium text-white">Effects / Mood</label>
-              <button 
-                type="button" 
-                onClick={handleAutoTagEffects}
-                disabled={taggingEffects || (!form.name && !form.description)}
-                className="text-xs font-bold text-pc-gold hover:text-pc-gold-light disabled:opacity-50 transition-colors flex items-center gap-1"
-              >
-                {taggingEffects ? 'Analyzing...' : '✨ Auto-Tag with AI'}
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {AVAILABLE_EFFECTS.map(effect => (
-                <label 
-                  key={effect} 
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-colors border ${
-                    effects.includes(effect) 
-                      ? 'bg-pc-gold/20 border-pc-gold text-pc-gold' 
-                      : 'bg-pc-dark border-pc-border text-pc-muted hover:border-pc-gold/50 hover:text-white'
-                  }`}
+          {form.category === 'FLOWER' && (
+            <div className="bg-pc-dark/30 rounded-xl p-4 border border-pc-border/50">
+              <div className="flex justify-between items-center mb-3">
+                <label className="block text-sm font-medium text-white">Effects / Mood</label>
+                <button 
+                  type="button" 
+                  onClick={handleAutoTagEffects}
+                  disabled={taggingEffects || (!form.name && !form.description)}
+                  className="text-xs font-bold text-pc-gold hover:text-pc-gold-light disabled:opacity-50 transition-colors flex items-center gap-1"
                 >
-                  <input 
-                    type="checkbox" 
-                    className="hidden" 
-                    checked={effects.includes(effect)} 
-                    onChange={() => handleToggleEffect(effect)} 
-                  />
-                  {effect}
-                </label>
-              ))}
+                  {taggingEffects ? 'Analyzing...' : '✨ Auto-Tag with AI'}
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {AVAILABLE_EFFECTS.map(effect => (
+                  <label 
+                    key={effect} 
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-colors border ${
+                      effects.includes(effect) 
+                        ? 'bg-pc-gold/20 border-pc-gold text-pc-gold' 
+                        : 'bg-pc-dark border-pc-border text-pc-muted hover:border-pc-gold/50 hover:text-white'
+                    }`}
+                  >
+                    <input 
+                      type="checkbox" 
+                      className="hidden" 
+                      checked={effects.includes(effect)} 
+                      onChange={() => handleToggleEffect(effect)} 
+                    />
+                    {effect}
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Image Gallery */}
           <div>

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { withProductDiscounts } from '@/lib/discounts';
 import { requireAdmin } from '@/lib/auth';
-import { generateProductDescription } from '@/lib/ai';
+import { generateProductDescription, autoTagProduct } from '@/lib/ai';
 
 export async function GET(request) {
   try {
@@ -59,6 +59,18 @@ export async function POST(request) {
       }
     }
 
+    let finalEffectsStr = data.effects || '[]';
+    try {
+      const parsed = JSON.parse(finalEffectsStr);
+      // Auto tag if it's a FLOWER and no effects were provided
+      if (data.category === 'FLOWER' && parsed.length === 0 && (data.name || finalDescription)) {
+        const generatedEffects = await autoTagProduct(data.name, data.category, finalDescription);
+        finalEffectsStr = JSON.stringify(generatedEffects);
+      }
+    } catch (err) {
+      console.error('Failed to auto-tag effects:', err);
+    }
+
     const product = await prisma.product.create({
       data: {
         name: data.name,
@@ -68,6 +80,7 @@ export async function POST(request) {
         description: finalDescription,
         image: primaryImage,
         images: JSON.stringify(imagesArr),
+        effects: finalEffectsStr,
         stock: parseInt(data.stock) || 0,
         featured: data.featured || false,
         isVisible: data.isVisible !== undefined ? data.isVisible : true,

@@ -144,39 +144,25 @@ export default function MenuClient({ products, categories, initialCategory, init
                   <option value="price-high">Price: High → Low</option>
                   <option value="name">Name: A → Z</option>
                 </select>
-              </div>
-            </div>
 
-            {/* Effects Pills */}
-            <div className="pt-4 mt-4 border-t border-pc-border/50 overflow-x-auto pb-1 scrollbar-hide">
-              <div className="flex items-center gap-2 min-w-max">
-                <span className="text-xs font-bold text-pc-muted uppercase tracking-wider mr-2">Mood:</span>
-                <button
-                  onClick={() => setEffectFilter('ALL')}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    effectFilter === 'ALL'
-                      ? 'bg-white text-black'
-                      : 'bg-pc-dark/50 text-pc-muted hover:bg-pc-dark hover:text-white'
-                  }`}
-                >
-                  All
-                </button>
-                {AVAILABLE_EFFECTS.map(effect => (
-                  <button
-                    key={effect}
-                    onClick={() => setEffectFilter(effect)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
-                      effectFilter === effect
-                        ? 'bg-pc-gold/20 border-pc-gold text-pc-gold shadow-[0_0_15px_rgba(234,179,8,0.2)]'
-                        : 'bg-pc-dark/50 border-transparent text-pc-muted hover:border-pc-gold/30 hover:text-white'
-                    }`}
+                {/* Mood Dropdown (Only for Flower) */}
+                {category === 'FLOWER' && (
+                  <select
+                    value={effectFilter}
+                    onChange={(e) => setEffectFilter(e.target.value)}
+                    className="select-field flex-1 md:w-auto min-w-[140px]"
+                    id="mood-select"
                   >
-                    {effect}
-                  </button>
-                ))}
+                    <option value="ALL">All Moods</option>
+                    {AVAILABLE_EFFECTS.map(effect => (
+                      <option key={effect} value={effect}>
+                        {effect}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
-
           </div>
 
           {/* Results count */}

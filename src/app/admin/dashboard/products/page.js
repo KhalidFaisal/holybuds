@@ -28,6 +28,7 @@ export default function AdminProductsPage() {
   const [isImporting, setIsImporting] = useState(false);
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
   const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
+  const [isTaggingBulk, setIsTaggingBulk] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const [parsedImportProducts, setParsedImportProducts] = useState(null);
   const [selectedImportIndices, setSelectedImportIndices] = useState(new Set());
@@ -144,6 +145,37 @@ export default function AdminProductsPage() {
       alert('Error updating visibility');
     } finally {
       setIsTogglingVisibility(false);
+    }
+  };
+
+  const handleBulkTagEffects = async () => {
+    if (selectedExportIds.size === 0) return;
+    setIsTaggingBulk(true);
+    try {
+      const idsToUpdate = Array.from(selectedExportIds);
+      const res = await fetch('/api/admin/products/bulk-auto-effects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ids: idsToUpdate })
+      });
+
+      if (res.ok) {
+        // Just refetch all products to get the latest data easily
+        await fetchProducts();
+        setSelectedExportIds(new Set());
+        alert('Successfully tagged products with Moods!');
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to auto-tag products');
+      }
+    } catch (error) {
+      console.error('Bulk tag error:', error);
+      alert('Error updating effects: ' + error.message);
+    } finally {
+      setIsTaggingBulk(false);
     }
   };
 
@@ -434,6 +466,13 @@ export default function AdminProductsPage() {
                 disabled={isTogglingVisibility}
               >
                 Show Selected
+              </button>
+              <button
+                onClick={handleBulkTagEffects}
+                className="btn-secondary text-pc-gold border-pc-gold/30 hover:bg-pc-gold/10 whitespace-nowrap"
+                disabled={isTaggingBulk}
+              >
+                {isTaggingBulk ? 'Analyzing...' : '✨ Auto-Tag Mood'}
               </button>
               <button 
                 onClick={() => setDeleteConfirm('bulk')} 
