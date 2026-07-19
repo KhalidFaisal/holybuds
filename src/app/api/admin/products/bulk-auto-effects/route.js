@@ -22,7 +22,7 @@ export async function POST(request) {
       },
     });
 
-    const flowerProducts = products.filter(p => p.category?.toLowerCase().includes('flower'));
+    const flowerProducts = products.filter(p => p.category?.toLowerCase() === 'flowers');
 
     let updatedCount = 0;
 
