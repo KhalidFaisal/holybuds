@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 import { CartProvider, useCart } from '@/components/CartProvider';
+import { getEffectColorClass } from '@/lib/colors';
 
 // Removed StrainBadge
 function ProductDetails({ product }) {
@@ -101,10 +102,24 @@ function ProductDetails({ product }) {
 
             {/* Content Section */}
             <div className="lg:col-span-3 p-8 md:p-12 flex flex-col">
-              <div className="mb-4">
+              <div className="mb-4 flex flex-wrap items-center gap-2">
                 <span className={product.category === 'FLOWER' ? 'badge-hybrid' : 'badge-edible'}>
                   {product.category === 'FLOWER' ? 'Flowers' : (product.category?.charAt(0)?.toUpperCase() + product.category?.slice(1)?.toLowerCase()) || 'Product'}
                 </span>
+                
+                {(() => {
+                  try {
+                    const parsedEffects = JSON.parse(product.effects || '[]');
+                    if (parsedEffects.length > 0) {
+                      return parsedEffects.map(effect => (
+                        <span key={effect} className={`${getEffectColorClass(effect)} text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full`}>
+                          {effect}
+                        </span>
+                      ));
+                    }
+                  } catch (e) {}
+                  return null;
+                })()}
               </div>
               
               <h1 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">
