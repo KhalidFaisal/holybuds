@@ -21,7 +21,7 @@ export default async function sitemap() {
   }));
 
   const categoryUrls = categories.map((category) => ({
-    url: `${baseUrl}/menu/${category.slug}`,
+    url: `${baseUrl}/menu?category=${category.slug}`,
     lastModified: category.updatedAt,
     changeFrequency: 'weekly',
     priority: 0.9,
