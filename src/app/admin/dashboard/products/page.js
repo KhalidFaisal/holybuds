@@ -24,6 +24,8 @@ export default function AdminProductsPage() {
   const [editProduct, setEditProduct] = useState(null);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('ALL');
+  const [filterInventory, setFilterInventory] = useState('ALL');
+  const [filterVisibility, setFilterVisibility] = useState('ALL');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
@@ -422,6 +424,13 @@ export default function AdminProductsPage() {
   const filtered = products.filter((p) => {
     if (filterCategory !== 'ALL' && p.category !== filterCategory) return false;
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+    
+    if (filterInventory === 'IN_STOCK' && p.stock <= 0) return false;
+    if (filterInventory === 'OUT_OF_STOCK' && p.stock > 0) return false;
+    
+    if (filterVisibility === 'VISIBLE' && !p.isVisible) return false;
+    if (filterVisibility === 'HIDDEN' && p.isVisible) return false;
+    
     return true;
   });
 
@@ -430,7 +439,7 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterCategory, search]);
+  }, [filterCategory, filterInventory, filterVisibility, search]);
 
   const stockColor = (stock) => {
     if (stock === 0) return 'text-red-400 bg-red-500/10';
@@ -538,19 +547,31 @@ export default function AdminProductsPage() {
       )}
 
       {/* Filters */}
-      <div className="glass-card p-4 mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
+      <div className="glass-card p-4 mb-6 flex flex-col sm:flex-row flex-wrap gap-4">
+        <div className="flex-1 relative min-w-[200px]">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-pc-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
           <input type="text" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="input-field pl-10" />
         </div>
-        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="select-field w-auto">
-          <option value="ALL">All Categories</option>
-          {categories.map(c => (
-            <option key={c.id} value={c.slug}>{c.name}</option>
-          ))}
-        </select>
+        <div className="flex flex-wrap gap-4 w-full sm:w-auto">
+          <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="select-field flex-1 sm:flex-none sm:w-auto min-w-[140px]">
+            <option value="ALL">All Categories</option>
+            {categories.map(c => (
+              <option key={c.id} value={c.slug}>{c.name}</option>
+            ))}
+          </select>
+          <select value={filterInventory} onChange={(e) => setFilterInventory(e.target.value)} className="select-field flex-1 sm:flex-none sm:w-auto min-w-[140px]">
+            <option value="ALL">All Inventory</option>
+            <option value="IN_STOCK">In stock</option>
+            <option value="OUT_OF_STOCK">Out of stock</option>
+          </select>
+          <select value={filterVisibility} onChange={(e) => setFilterVisibility(e.target.value)} className="select-field flex-1 sm:flex-none sm:w-auto min-w-[140px]">
+            <option value="ALL">All Visibility</option>
+            <option value="VISIBLE">Shown in store</option>
+            <option value="HIDDEN">Hidden from store</option>
+          </select>
+        </div>
       </div>
 
       {/* Products Table */}
