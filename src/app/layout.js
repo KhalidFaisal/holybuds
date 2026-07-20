@@ -25,6 +25,7 @@ export const metadata = {
 import ChatWidget from '@/components/ChatWidget';
 import MixpanelTracker from '@/components/MixpanelTracker';
 import MoodWidget from '@/components/MoodWidget';
+import { Analytics } from '@vercel/analytics/react';
 
 export default function RootLayout({ children }) {
   return (
@@ -40,6 +41,7 @@ export default function RootLayout({ children }) {
         </div>
         <ChatWidget />
         <MoodWidget />
+        <Analytics />
       </body>
     </html>
   );
