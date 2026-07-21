@@ -22,6 +22,9 @@ export async function GET(request) {
       });
     }
 
+    const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
+    const pointsPerDollar = settings?.pointsPerDollar ?? 1;
+
     let referralCode = customer.referralCode;
     if (!referralCode) {
       // Generate a short, friendly referral code
@@ -40,6 +43,9 @@ export async function GET(request) {
         points: customer.points,
         totalOrders: customer.totalOrders,
         referralCode: referralCode
+      },
+      settings: {
+        pointsPerDollar
       }
     });
   } catch (error) {
