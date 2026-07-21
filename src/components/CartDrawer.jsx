@@ -12,6 +12,7 @@ export default function CartDrawer() {
   const cartItemIds = items.map(i => i.id);
   const cartIdsString = cartItemIds.join(',');
 
+  useEffect(() => {
     if (!isOpen || items.length === 0) return;
 
     // Sync cart stock
