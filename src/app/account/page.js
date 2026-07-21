@@ -310,7 +310,8 @@ function AccountContent() {
 
                   {/* Rewards Grid */}
                   <div>
-                    <h3 className="text-2xl font-black text-white mb-6">Unlockable Rewards</h3>
+                    <h3 className="text-2xl font-black text-white mb-2">Unlockable Rewards</h3>
+                    <p className="text-pc-muted mb-6">Rewards can be selected and applied to your total during the Checkout process.</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {LOYALTY_REWARDS.map(reward => {
                         const isUnlockable = customerProfile.points >= reward.points;
