@@ -56,8 +56,12 @@ export function calcRewardDiscount(reward, items) {
 }
 
 function CheckoutContent() {
-  const { items, subtotal, total, discountAmount, discountName, clearCart, updateQuantity, removeItem } = useCart();
+  const { items, subtotal, total, discountAmount, discountName, clearCart, updateQuantity, removeItem, syncCart, syncMessages, setSyncMessages } = useCart();
   const router = useRouter();
+
+  useEffect(() => {
+    syncCart();
+  }, [syncCart]);
 
   const [form, setForm] = useState({
     customerName: '',
@@ -285,6 +289,29 @@ function CheckoutContent() {
     <div className="pt-24 pb-16 min-h-screen">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="section-title mb-8">Checkout</h1>
+
+        {syncMessages && syncMessages.length > 0 && (
+          <div className="bg-orange-500/10 border border-orange-500/20 p-4 mb-6 rounded-xl relative">
+            <button 
+              onClick={() => setSyncMessages([])}
+              className="absolute top-2 right-2 p-1 text-orange-400 hover:text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="flex gap-3">
+              <svg className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div className="space-y-1 pr-6">
+                {syncMessages.map((msg, i) => (
+                  <p key={i} className="text-orange-400 font-medium text-sm">{msg}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl mb-6 text-sm">

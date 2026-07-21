@@ -14,6 +14,8 @@ export function CartProvider({ children }) {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [discountName, setDiscountName] = useState(null);
 
+  const [syncMessages, setSyncMessages] = useState([]);
+
   // Fetch active discounts on mount
   useEffect(() => {
     fetch('/api/discounts/active')
@@ -45,10 +47,26 @@ export function CartProvider({ children }) {
   const addItem = useCallback((product, quantity = 1) => {
     setItems((prev) => {
       const existing = prev.find((item) => item.id === product.id);
+      const currentQty = existing ? existing.quantity : 0;
+      const newQty = currentQty + quantity;
+      
+      if (newQty > product.stock) {
+        setSyncMessages([`Sorry, we only have ${product.stock} of "${product.name}" in stock.`]);
+        if (currentQty === product.stock) return prev;
+        
+        if (existing) {
+          return prev.map((item) =>
+            item.id === product.id ? { ...item, quantity: product.stock } : item
+          );
+        }
+        return [...prev, { ...product, quantity: product.stock }];
+      }
+
+      setSyncMessages([]);
       if (existing) {
         return prev.map((item) =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: newQty }
             : item
         );
       }
@@ -67,9 +85,17 @@ export function CartProvider({ children }) {
       return;
     }
     setItems((prev) =>
-      prev.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
-      )
+      prev.map((item) => {
+        if (item.id === productId) {
+          if (quantity > item.stock) {
+            setSyncMessages([`Sorry, we only have ${item.stock} of "${item.name}" in stock.`]);
+            return { ...item, quantity: item.stock };
+          }
+          setSyncMessages([]);
+          return { ...item, quantity };
+        }
+        return item;
+      })
     );
   }, []);
 
@@ -123,6 +149,26 @@ export function CartProvider({ children }) {
 
   const total = subtotal - discountAmount;
 
+  const syncCart = useCallback(async () => {
+    if (items.length === 0) return;
+    try {
+      const res = await fetch('/api/cart/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cartItems: items })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setItems(data.items);
+        if (data.messages && data.messages.length > 0) {
+          setSyncMessages(data.messages);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to sync cart', e);
+    }
+  }, [items]);
+
   return (
     <CartContext.Provider
       value={{
@@ -138,6 +184,9 @@ export function CartProvider({ children }) {
         discountAmount,
         discountName,
         total,
+        syncCart,
+        syncMessages,
+        setSyncMessages,
       }}
     >
       <SessionTracker />
