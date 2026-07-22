@@ -1,14 +1,25 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/components/CartProvider';
 
 export default function SessionTracker() {
   const pathname = usePathname();
   const { total, items } = useCart();
+  const lastActivityRef = useRef(Date.now());
 
   useEffect(() => {
+    // Track user activity to prevent "zombie" background tabs from pinging forever
+    const handleActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    window.addEventListener('mousemove', handleActivity, { passive: true });
+    window.addEventListener('keydown', handleActivity, { passive: true });
+    window.addEventListener('scroll', handleActivity, { passive: true });
+    window.addEventListener('touchstart', handleActivity, { passive: true });
+
     // Generate or get session token
     let sessionToken = localStorage.getItem('holybuds_session_token');
     if (!sessionToken) {
@@ -17,6 +28,11 @@ export default function SessionTracker() {
     }
 
     const pingPresence = async () => {
+      // If inactive for more than 5 minutes, stop pinging so they disappear from Live Shoppers
+      if (Date.now() - lastActivityRef.current > 5 * 60 * 1000) {
+        return;
+      }
+
       try {
         // Read checkout draft
         const checkoutDraftStr = localStorage.getItem('holybuds_checkout_draft');
@@ -73,7 +89,13 @@ export default function SessionTracker() {
     // Ping every 15 seconds
     const interval = setInterval(pingPresence, 15000);
     
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('scroll', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+    };
   }, [pathname, total, items]);
 
   return null;
