@@ -159,7 +159,13 @@ export function CartProvider({ children }) {
       });
       if (res.ok) {
         const data = await res.json();
-        setItems(data.items);
+        
+        // Prevent race condition: if cart was cleared while sync was in flight, do not restore items
+        setItems(prev => {
+          if (prev.length === 0) return prev;
+          return data.items;
+        });
+
         if (data.messages && data.messages.length > 0) {
           setSyncMessages(data.messages);
         }
