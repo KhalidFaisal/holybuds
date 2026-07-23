@@ -25,29 +25,23 @@ async function callGroq(model, messages, apiKey) {
   return await res.json();
 }
 
+import OpenAI from 'openai';
+
 async function callAgentRouter(model, messages, apiKey) {
   if (!apiKey) throw new Error('AgentRouter API Key is missing');
   const actualModel = model.replace('agentrouter/', '');
 
-  const res = await fetch('https://agentrouter.org/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: actualModel,
-      messages: messages
-    })
+  const openai = new OpenAI({
+    apiKey: apiKey,
+    baseURL: 'https://agentrouter.org/v1',
   });
 
-  if (!res.ok) {
-    const errorText = await res.text();
-    const error = new Error(`AgentRouter API error: ${res.status} ${errorText}`);
-    error.status = res.status;
-    throw error;
-  }
-  return await res.json();
+  const response = await openai.chat.completions.create({
+    model: actualModel,
+    messages: messages,
+  });
+
+  return response;
 }
 
 async function callOpenRouter(model, messages, apiKey) {
