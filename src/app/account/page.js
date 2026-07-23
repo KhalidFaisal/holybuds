@@ -8,7 +8,7 @@ import { CartProvider, useCart } from '@/components/CartProvider';
 import ProductCard from '@/components/ProductCard';
 import { getFavoriteProducts } from './actions';
 import { LOYALTY_REWARDS } from '@/lib/loyalty';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 function AccountContent() {
@@ -37,48 +37,46 @@ function AccountContent() {
 
   useEffect(() => {
     if (status === 'authenticated') {
-      loadUserData();
+      const fetchUserData = async () => {
+        setLoadingLoyalty(true);
+        try {
+          const res = await fetch('/api/account/me');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.customer) {
+              setCustomerProfile(data.customer);
+              setRecentOrders(data.orders || []);
+            }
+            if (data.settings?.pointsPerDollar) {
+              setPointsPerDollar(data.settings.pointsPerDollar);
+            }
+          }
+        } catch (e) {
+        } finally {
+          setLoadingLoyalty(false);
+        }
+      };
+      fetchUserData();
     }
-    
-    const handleFavUpdate = () => loadFavorites();
-    window.addEventListener('holybuds_favorites_updated', handleFavUpdate);
-    return () => window.removeEventListener('holybuds_favorites_updated', handleFavUpdate);
   }, [status]);
 
-  const loadUserData = async () => {
-    setLoadingLoyalty(true);
-    try {
-      const res = await fetch('/api/account/me');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.customer) {
-          setCustomerProfile(data.customer);
-          setRecentOrders(data.orders || []);
-          if (data.settings?.pointsPerDollar) {
-            setPointsPerDollar(data.settings.pointsPerDollar);
-          }
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingLoyalty(false);
+  useEffect(() => {
+    if (activeTab === 'favorites') {
+      loadFavs();
     }
-    loadFavorites();
-  };
+  }, [activeTab]);
 
-  const loadFavorites = async () => {
+  const loadFavs = async () => {
+    setLoadingFavs(true);
     try {
       const favIds = JSON.parse(localStorage.getItem('holybuds_favorites') || '[]');
-      if (favIds.length === 0) {
+      if (favIds.length > 0) {
+        const products = await getFavoriteProducts(favIds);
+        setFavorites(products);
+      } else {
         setFavorites([]);
-        return;
       }
-      setLoadingFavs(true);
-      const favProducts = await getFavoriteProducts(favIds);
-      setFavorites(favProducts);
     } catch (e) {
-      console.error(e);
     } finally {
       setLoadingFavs(false);
     }
@@ -86,18 +84,29 @@ function AccountContent() {
 
   const handlePhoneSubmit = async (e) => {
     e.preventDefault();
+    if (!phoneInput) return;
     setLinkingPhone(true);
+    
     try {
       const res = await fetch('/api/account/link-phone', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: phoneInput })
       });
+      
       if (res.ok) {
-        loadUserData();
+        // reload the me endpoint to get the customer details
+        const meRes = await fetch('/api/account/me');
+        if (meRes.ok) {
+          const data = await meRes.json();
+          if (data.customer) {
+            setCustomerProfile(data.customer);
+            setRecentOrders(data.orders || []);
+          }
+        }
       } else {
-        const data = await res.json();
-        alert(data.error || 'Failed to link phone');
+        const err = await res.json();
+        alert(err.error || 'Failed to link phone');
       }
     } catch (err) {
       alert('Network error');
@@ -106,10 +115,10 @@ function AccountContent() {
     }
   };
 
-  const handleCopyCode = async () => {
-    if (customerProfile?.referralCode) {
+  const handleCopyCode = async (code) => {
+    if (navigator.clipboard && window.isSecureContext) {
       try {
-        await navigator.clipboard.writeText(customerProfile.referralCode);
+        await navigator.clipboard.writeText(code);
         setCopySuccess(true);
         setTimeout(() => setCopySuccess(false), 2000);
       } catch (err) {}
@@ -117,14 +126,9 @@ function AccountContent() {
   };
 
   const reorderEntireOrder = (order) => {
-    // We don't want to clear the cart necessarily, but "Reorder Entire Order" usually implies a fresh cart or merging.
-    // Let's just merge. If they want it clean, they can manually remove items.
     order.items?.forEach(item => {
       if (item.product && item.product.stock > 0) {
-        // We'll add it. In CartProvider, addItem increments if it exists.
         addItem(item.product);
-        // Note: quantity isn't perfectly mapped this way (addItem adds 1), but we can write a quick loop or add a specialized function in CartProvider.
-        // For now, let's just trigger multiple addItems or we can just open the cart. 
       }
     });
     setIsOpen(true);
@@ -173,9 +177,16 @@ function AccountContent() {
             <button
               type="submit"
               disabled={linkingPhone}
-              className="w-full btn-primary py-3 font-bold"
+              className="w-full btn-primary py-3 font-bold mb-4"
             >
               {linkingPhone ? 'Linking...' : 'Link Phone Number'}
+            </button>
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="w-full btn-secondary py-3 font-bold"
+            >
+              Sign Out
             </button>
           </form>
         </div>
@@ -189,7 +200,18 @@ function AccountContent() {
       <CartDrawer />
       <main className="min-h-screen pt-24 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl md:text-5xl font-black text-white mb-8">My Account</h1>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+            <h1 className="text-3xl md:text-5xl font-black text-white">My Account</h1>
+            <button 
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="text-pc-muted hover:text-white transition-colors text-sm font-semibold flex items-center gap-2 bg-pc-dark/50 px-4 py-2 rounded-lg"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+              </svg>
+              Sign Out
+            </button>
+          </div>
 
           {/* Tabs */}
           <div className="flex items-center gap-4 border-b border-pc-border mb-8 overflow-x-auto hide-scrollbar">
