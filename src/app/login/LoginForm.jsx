@@ -72,7 +72,7 @@ export default function LoginForm() {
   };
 
   const handleGoogleSignIn = () => {
-    signIn('google', { callbackUrl: '/account' });
+    signIn('google', { callbackUrl: '/account' }, { prompt: 'select_account' });
   };
 
   return (
