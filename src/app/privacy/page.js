@@ -1,4 +1,5 @@
 import Navbar from '@/components/Navbar';
+import { CartProvider } from '@/components/CartProvider';
 
 export const metadata = {
   title: 'Privacy Policy - Holybuds',
@@ -7,7 +8,7 @@ export const metadata = {
 
 export default function PrivacyPage() {
   return (
-    <>
+    <CartProvider>
       <Navbar />
       <main className="min-h-screen pt-24 pb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -58,6 +59,6 @@ export default function PrivacyPage() {
           </div>
         </div>
       </main>
-    </>
+    </CartProvider>
   );
 }
