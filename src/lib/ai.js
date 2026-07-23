@@ -94,6 +94,7 @@ export async function callAI(messages, options = {}) {
     // If it wasn't a rate limit/503, just throw the original error
     throw error;
   }
+}
 
 export async function generateProductDescription(name, category, weight) {
   let prompt = `Product Name: ${name}\nCategory: ${category}`;
