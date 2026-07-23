@@ -22,7 +22,6 @@
     "mixpanel-browser": "^2.80.0",
     "next": "16.2.9",
     "next-auth": "^5.0.0-beta.32",
-    "openai": "^6.48.0",
     "pg": "^8.21.0",
     "prisma": "^7.8.0",
     "react": "19.2.4",

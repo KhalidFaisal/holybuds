@@ -33,10 +33,9 @@ export async function GET(request) {
       sitePassword: settings.sitePassword,
       timezone: settings.timezone || 'UTC',
       chatbotPrompt: settings.chatbotPrompt || "You are a helpful, friendly budtender at Elevated Dispensary. Recommend products from our inventory based on the user's needs. Be concise, polite, and use a chill tone.",
-      aiModel: settings.aiModel || "agentrouter/gpt-5.5",
+      aiModel: settings.aiModel || "openai/gpt-4o-mini",
       openRouterApiKey: settings.openRouterApiKey ? '••••••••••••••••' : '', // Masked in response
       groqApiKey: settings.groqApiKey ? '••••••••••••••••' : '', // Masked in response
-      agentRouterApiKey: settings.agentRouterApiKey ? '••••••••••••••••' : '', // Masked in response
       loyaltyEnabled: settings.loyaltyEnabled ?? true,
       pointsPerDollar: settings.pointsPerDollar ?? 1,
       signupBonus: settings.signupBonus ?? 50
@@ -97,10 +96,6 @@ export async function POST(request) {
 
     if (data.groqApiKey !== undefined) {
       updateData.groqApiKey = data.groqApiKey === '' ? null : data.groqApiKey;
-    }
-
-    if (data.agentRouterApiKey !== undefined) {
-      updateData.agentRouterApiKey = data.agentRouterApiKey === '' ? null : data.agentRouterApiKey;
     }
 
     if (data.loyaltyEnabled !== undefined) {

@@ -25,27 +25,7 @@ async function callGroq(model, messages, apiKey) {
   return await res.json();
 }
 
-import OpenAI from 'openai';
 
-async function callAgentRouter(model, messages, apiKey) {
-  if (!apiKey) throw new Error('AgentRouter API Key is missing');
-  const actualModel = model.replace('agentrouter/', '');
-
-  const openai = new OpenAI({
-    apiKey: apiKey,
-    baseURL: 'https://agentrouter.org/v1',
-    defaultHeaders: {
-      'System-Access-Token': 'WA4ATB9r8lpvIZyAbAwDCteXwNc+lAY='
-    }
-  });
-
-  const response = await openai.chat.completions.create({
-    model: actualModel,
-    messages: messages,
-  });
-
-  return response;
-}
 
 async function callOpenRouter(model, messages, apiKey) {
   if (!apiKey) throw new Error('OPENROUTER_API_KEY is missing');
@@ -74,21 +54,16 @@ async function callOpenRouter(model, messages, apiKey) {
 export async function callAI(messages, options = {}) {
   const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
   
-  const primaryModel = options.model || settings?.aiModel || "agentrouter/gpt-5.5";
+  const primaryModel = options.model || settings?.aiModel || "openai/gpt-4o-mini";
   const openRouterApiKey = options.openRouterApiKey || settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
   const groqApiKey = options.groqApiKey || settings?.groqApiKey || process.env.GROQ_API_KEY;
 
-  const agentRouterApiKey = options.agentRouterApiKey || settings?.agentRouterApiKey || process.env.AGENTROUTER_API_KEY;
-
   const isPrimaryGroq = primaryModel.startsWith('groq-');
-  const isAgentRouter = primaryModel.startsWith('agentrouter/');
   
   try {
     // Attempt Primary Provider
     if (isPrimaryGroq) {
       return await callGroq(primaryModel, messages, groqApiKey);
-    } else if (isAgentRouter) {
-      return await callAgentRouter(primaryModel, messages, agentRouterApiKey);
     } else {
       return await callOpenRouter(primaryModel, messages, openRouterApiKey);
     }
@@ -119,7 +94,6 @@ export async function callAI(messages, options = {}) {
     // If it wasn't a rate limit/503, just throw the original error
     throw error;
   }
-}
 
 export async function generateProductDescription(name, category, weight) {
   let prompt = `Product Name: ${name}\nCategory: ${category}`;
