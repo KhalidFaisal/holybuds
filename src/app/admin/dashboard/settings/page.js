@@ -596,6 +596,7 @@ export default function SettingsPage() {
                 <option value="openrouter/free">OpenRouter Free (Default)</option>
                 <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
                 <option value="openai/gpt-5-mini">GPT-5 Mini</option>
+                <option value="agentrouter">AgentRouter</option>
                 <option value="groq-llama-3.1-8b-instant">Groq LLaMA 3.1 8B (Free)</option>
                 <option value="groq-llama-3.3-70b-versatile">Groq LLaMA 3.3 70B (Free)</option>
                 <option value="groq-mixtral-8x7b-32768">Groq Mixtral 8x7B (Free)</option>
