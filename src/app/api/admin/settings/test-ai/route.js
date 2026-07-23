@@ -38,7 +38,8 @@ export async function POST(request) {
       return NextResponse.json({ error: e.message || 'Failed to connect' }, { status: 500 });
     }
 
-    const reply = responseData.choices?.[0]?.message?.content || 'No content returned';
+    const content = responseData.choices?.[0]?.message?.content;
+    const reply = content ? content : `No content returned. Full response: ${JSON.stringify(responseData)}`;
 
     return NextResponse.json({ success: true, reply });
   } catch (error) {
