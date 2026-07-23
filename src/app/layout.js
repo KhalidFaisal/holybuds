@@ -23,6 +23,7 @@ export const metadata = {
 };
 
 import ChatWidget from '@/components/ChatWidget';
+import AuthProvider from '@/components/AuthProvider';
 import MixpanelTracker from '@/components/MixpanelTracker';
 import MoodWidget from '@/components/MoodWidget';
 import { Analytics } from '@vercel/analytics/react';
@@ -36,12 +37,14 @@ export default function RootLayout({ children }) {
           className="fixed inset-0 z-0 opacity-10 pointer-events-none bg-center bg-no-repeat bg-[length:300px_300px] sm:bg-[length:500px_500px]"
           style={{ backgroundImage: "url('/Leaf-Logo.png')" }}
         />
-        <div className="relative z-10">
-          {children}
-        </div>
-        <ChatWidget />
-        <MoodWidget />
-        <Analytics />
+        <AuthProvider>
+          <div className="relative z-10">
+            {children}
+          </div>
+          <ChatWidget />
+          <MoodWidget />
+          <Analytics />
+        </AuthProvider>
       </body>
     </html>
   );

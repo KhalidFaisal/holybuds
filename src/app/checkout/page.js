@@ -7,10 +7,12 @@ import Navbar from '@/components/Navbar';
 import { CartProvider } from '@/components/CartProvider';
 import Link from 'next/link';
 import { LOYALTY_REWARDS, calcRewardDiscount } from '@/lib/loyalty';
+import { useSession } from 'next-auth/react';
 
 function CheckoutContent() {
   const { items, subtotal, total, discountAmount, discountName, clearCart, updateQuantity, removeItem, syncCart, syncMessages, setSyncMessages } = useCart();
   const router = useRouter();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     syncCart();
@@ -26,6 +28,29 @@ function CheckoutContent() {
     notes: '',
     referredByCode: '',
   });
+
+  // Prefill form if session is present
+  useEffect(() => {
+    if (status === 'authenticated') {
+      const fetchUserData = async () => {
+        try {
+          const res = await fetch('/api/account/me');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.customer) {
+              setForm(prev => ({
+                ...prev,
+                customerName: prev.customerName || data.customer.name,
+                customerPhone: prev.customerPhone || data.customer.phone
+              }));
+            }
+          }
+        } catch (e) {}
+      };
+      fetchUserData();
+    }
+  }, [status]);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [orderConfirm, setOrderConfirm] = useState(null);

@@ -8,8 +8,13 @@ import { CartProvider, useCart } from '@/components/CartProvider';
 import ProductCard from '@/components/ProductCard';
 import { getFavoriteProducts } from './actions';
 import { LOYALTY_REWARDS } from '@/lib/loyalty';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 function AccountContent() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   const [activeTab, setActiveTab] = useState('orders');
   const [recentOrders, setRecentOrders] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -20,26 +25,47 @@ function AccountContent() {
   const [loadingLoyalty, setLoadingLoyalty] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [linkingPhone, setLinkingPhone] = useState(false);
 
   const { items: cartItems, addItem, clearCart, setIsOpen } = useCart();
 
   useEffect(() => {
-    // Load recent orders
-    try {
-      const orders = JSON.parse(localStorage.getItem('holybuds_recent_orders') || '[]');
-      setRecentOrders(orders);
-      if (orders.length > 0 && orders[0].customerPhone) {
-        loadLoyalty(orders[0].customerPhone);
-      }
-    } catch (e) {}
-    
-    // Load favorites
-    loadFavorites();
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
 
+  useEffect(() => {
+    if (status === 'authenticated') {
+      loadUserData();
+    }
+    
     const handleFavUpdate = () => loadFavorites();
     window.addEventListener('holybuds_favorites_updated', handleFavUpdate);
     return () => window.removeEventListener('holybuds_favorites_updated', handleFavUpdate);
-  }, []);
+  }, [status]);
+
+  const loadUserData = async () => {
+    setLoadingLoyalty(true);
+    try {
+      const res = await fetch('/api/account/me');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.customer) {
+          setCustomerProfile(data.customer);
+          setRecentOrders(data.orders || []);
+          if (data.settings?.pointsPerDollar) {
+            setPointsPerDollar(data.settings.pointsPerDollar);
+          }
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingLoyalty(false);
+    }
+    loadFavorites();
+  };
 
   const loadFavorites = async () => {
     try {
@@ -58,32 +84,26 @@ function AccountContent() {
     }
   };
 
-  const loadLoyalty = async (phone) => {
-    const sanitized = phone.replace(/\D/g, '');
-    if (sanitized.length < 10) return;
-    
-    setLoadingLoyalty(true);
-    try {
-      const res = await fetch(`/api/loyalty/lookup?phone=${sanitized}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (!data.isNewCustomer) {
-          setCustomerProfile(data.customer);
-          if (data.settings?.pointsPerDollar) {
-            setPointsPerDollar(data.settings.pointsPerDollar);
-          }
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingLoyalty(false);
-    }
-  };
-
-  const handlePhoneSubmit = (e) => {
+  const handlePhoneSubmit = async (e) => {
     e.preventDefault();
-    loadLoyalty(phoneInput);
+    setLinkingPhone(true);
+    try {
+      const res = await fetch('/api/account/link-phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneInput })
+      });
+      if (res.ok) {
+        loadUserData();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to link phone');
+      }
+    } catch (err) {
+      alert('Network error');
+    } finally {
+      setLinkingPhone(false);
+    }
   };
 
   const handleCopyCode = async () => {
@@ -115,6 +135,53 @@ function AccountContent() {
       month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
     });
   };
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen pt-24 pb-16 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-pc-green border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (status === 'unauthenticated') {
+    return null; // Will redirect
+  }
+
+  // If user hasn't linked a phone number yet, force them to do it.
+  if (!customerProfile && !loadingLoyalty) {
+    return (
+      <main className="min-h-screen pt-24 pb-16 px-4">
+        <div className="max-w-md mx-auto glass-card p-8 text-center animate-fade-in-up mt-12">
+          <div className="w-16 h-16 bg-pc-green/20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Link Your Phone</h1>
+          <p className="text-pc-muted mb-6">To access your past orders and loyalty points, please link your phone number to your account.</p>
+          
+          <form onSubmit={handlePhoneSubmit} className="space-y-4">
+            <input
+              type="tel"
+              required
+              placeholder="(555) 555-5555"
+              value={phoneInput}
+              onChange={e => setPhoneInput(e.target.value)}
+              className="w-full bg-pc-dark border border-pc-border rounded-xl px-4 py-3 text-white focus:border-pc-green focus:outline-none text-center text-lg"
+            />
+            <button
+              type="submit"
+              disabled={linkingPhone}
+              className="w-full btn-primary py-3 font-bold"
+            >
+              {linkingPhone ? 'Linking...' : 'Link Phone Number'}
+            </button>
+          </form>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <>
@@ -221,22 +288,6 @@ function AccountContent() {
             <div>
               {loadingLoyalty ? (
                 <div className="text-center py-12 text-pc-muted">Loading your rewards...</div>
-              ) : !customerProfile ? (
-                <div className="glass-card p-8 md:p-12 text-center max-w-lg mx-auto">
-                  <h2 className="text-2xl font-bold text-white mb-4">Check Your Rewards</h2>
-                  <p className="text-pc-muted mb-6">Enter the phone number associated with your previous orders to view your points and referral code.</p>
-                  <form onSubmit={handlePhoneSubmit} className="flex gap-2">
-                    <input
-                      type="tel"
-                      value={phoneInput}
-                      onChange={(e) => setPhoneInput(e.target.value)}
-                      placeholder="Phone Number"
-                      className="form-input flex-1"
-                      required
-                    />
-                    <button type="submit" className="btn-primary px-6">Check</button>
-                  </form>
-                </div>
               ) : (
                 <div className="space-y-8">
                   {/* Point Balance */}

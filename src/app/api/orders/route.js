@@ -199,6 +199,11 @@ export async function POST(request) {
       // Find or create customer
       let customer = await tx.customer.findUnique({ where: { phone: sanitizedPhone } });
       
+      // If logged in, grab the user to link if creating
+      const { auth } = require('@/auth');
+      const session = await auth();
+      const userId = session?.user?.id || null;
+
       if (!customer) {
         const generatedReferralCode = 'HOLY-' + Math.random().toString(36).substring(2, 7).toUpperCase();
         customer = await tx.customer.create({
@@ -208,8 +213,15 @@ export async function POST(request) {
             points: loyaltyEnabled ? signupBonus : 0,
             totalOrders: 0,
             referralCode: generatedReferralCode,
-            referredByCode: data.referredByCode || null
+            referredByCode: data.referredByCode || null,
+            userId: userId
           }
+        });
+      } else if (userId && !customer.userId) {
+        // Link existing customer to the newly logged in user if they check out
+        customer = await tx.customer.update({
+          where: { id: customer.id },
+          data: { userId }
         });
       }
 
