@@ -31,7 +31,8 @@ export async function POST(request) {
       responseData = await callAI([{ role: 'user', content: 'Say "Hello, World!"' }], {
         model,
         openRouterApiKey: data.openRouterApiKey || settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY,
-        groqApiKey: data.groqApiKey || settings?.groqApiKey || process.env.GROQ_API_KEY
+        groqApiKey: data.groqApiKey || settings?.groqApiKey || process.env.GROQ_API_KEY,
+        agentRouterApiKey: data.agentRouterApiKey || settings?.agentRouterApiKey || process.env.AGENTROUTER_API_KEY
       });
     } catch (e) {
       return NextResponse.json({ error: e.message || 'Failed to connect' }, { status: 500 });

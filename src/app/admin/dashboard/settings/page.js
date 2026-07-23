@@ -26,6 +26,7 @@ export default function SettingsPage() {
   const [aiModel, setAiModel] = useState('openrouter/free');
   const [openRouterApiKey, setOpenRouterApiKey] = useState('');
   const [groqApiKey, setGroqApiKey] = useState('');
+  const [agentRouterApiKey, setAgentRouterApiKey] = useState('');
   const [loadingPrompt, setLoadingPrompt] = useState(false);
   const [messagePrompt, setMessagePrompt] = useState('');
 
@@ -84,6 +85,7 @@ export default function SettingsPage() {
           setAiModel(data.aiModel || 'openrouter/free');
           setOpenRouterApiKey(data.openRouterApiKey || '');
           setGroqApiKey(data.groqApiKey || '');
+          setAgentRouterApiKey(data.agentRouterApiKey || '');
           
           if (data.loyaltyEnabled !== undefined) setLoyaltyEnabled(data.loyaltyEnabled);
           if (data.pointsPerDollar !== undefined) setPointsPerDollar(data.pointsPerDollar);
@@ -153,7 +155,8 @@ export default function SettingsPage() {
           chatbotPrompt, 
           aiModel,
           openRouterApiKey: openRouterApiKey === '••••••••••••••••' ? undefined : openRouterApiKey,
-          groqApiKey: groqApiKey === '••••••••••••••••' ? undefined : groqApiKey 
+          groqApiKey: groqApiKey === '••••••••••••••••' ? undefined : groqApiKey,
+          agentRouterApiKey: agentRouterApiKey === '••••••••••••••••' ? undefined : agentRouterApiKey
         }),
       });
 
@@ -183,7 +186,8 @@ export default function SettingsPage() {
         body: JSON.stringify({ 
           model: aiModel,
           openRouterApiKey: openRouterApiKey === '••••••••••••••••' ? undefined : openRouterApiKey,
-          groqApiKey: groqApiKey === '••••••••••••••••' ? undefined : groqApiKey 
+          groqApiKey: groqApiKey === '••••••••••••••••' ? undefined : groqApiKey,
+          agentRouterApiKey: agentRouterApiKey === '••••••••••••••••' ? undefined : agentRouterApiKey
         })
       });
       if (res.ok) {
@@ -585,6 +589,33 @@ export default function SettingsPage() {
             )}
           </div>
 
+          {/* AgentRouter API Key */}
+          <div>
+            <label className="block text-sm font-medium text-pc-muted mb-1">AgentRouter API Key</label>
+            <p className="text-xs text-pc-muted mb-2">Required if you use an AgentRouter model.</p>
+            {agentRouterApiKey === '••••••••••••••••' ? (
+              <div className="flex items-center gap-4 bg-pc-black border border-pc-border rounded-xl px-4 py-2 mb-4">
+                <span className="text-pc-green font-bold">✅ Configured</span>
+                <span className="text-pc-muted flex-1 text-right tracking-widest">{agentRouterApiKey}</span>
+                <button
+                  type="button"
+                  onClick={() => setAgentRouterApiKey('')}
+                  className="text-xs font-bold text-pc-muted hover:text-white px-3 py-1 bg-pc-dark rounded-lg transition-colors border border-pc-border hover:border-pc-muted"
+                >
+                  Edit
+                </button>
+              </div>
+            ) : (
+              <input
+                type="password"
+                value={agentRouterApiKey}
+                onChange={(e) => setAgentRouterApiKey(e.target.value)}
+                placeholder="sk-..."
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4"
+              />
+            )}
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-pc-muted mb-1">Primary AI Model</label>
             <div className="flex gap-2">
@@ -596,7 +627,7 @@ export default function SettingsPage() {
                 <option value="openrouter/free">OpenRouter Free (Default)</option>
                 <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
                 <option value="openai/gpt-5-mini">GPT-5 Mini</option>
-                <option value="agentrouter">AgentRouter</option>
+                <option value="agentrouter/gpt-5.5">AgentRouter (GPT-5.5)</option>
                 <option value="groq-llama-3.1-8b-instant">Groq LLaMA 3.1 8B (Free)</option>
                 <option value="groq-llama-3.3-70b-versatile">Groq LLaMA 3.3 70B (Free)</option>
                 <option value="groq-mixtral-8x7b-32768">Groq Mixtral 8x7B (Free)</option>

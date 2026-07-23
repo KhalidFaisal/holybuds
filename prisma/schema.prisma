@@ -91,6 +91,7 @@ model SiteSettings {
   aiModel           String  @default("openrouter/free")
   openRouterApiKey  String?
   groqApiKey        String?
+  agentRouterApiKey String?
   loyaltyEnabled    Boolean @default(true)
   pointsPerDollar   Int     @default(1)
   signupBonus       Int     @default(50)

@@ -25,6 +25,31 @@ async function callGroq(model, messages, apiKey) {
   return await res.json();
 }
 
+async function callAgentRouter(model, messages, apiKey) {
+  if (!apiKey) throw new Error('AgentRouter API Key is missing');
+  const actualModel = model.replace('agentrouter/', '');
+
+  const res = await fetch('https://agentrouter.org/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: actualModel,
+      messages: messages
+    })
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    const error = new Error(`AgentRouter API error: ${res.status} ${errorText}`);
+    error.status = res.status;
+    throw error;
+  }
+  return await res.json();
+}
+
 async function callOpenRouter(model, messages, apiKey) {
   if (!apiKey) throw new Error('OPENROUTER_API_KEY is missing');
 
@@ -56,12 +81,17 @@ export async function callAI(messages, options = {}) {
   const openRouterApiKey = options.openRouterApiKey || settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
   const groqApiKey = options.groqApiKey || settings?.groqApiKey || process.env.GROQ_API_KEY;
 
+  const agentRouterApiKey = options.agentRouterApiKey || settings?.agentRouterApiKey || process.env.AGENTROUTER_API_KEY;
+
   const isPrimaryGroq = primaryModel.startsWith('groq-');
+  const isAgentRouter = primaryModel.startsWith('agentrouter/');
   
   try {
     // Attempt Primary Provider
     if (isPrimaryGroq) {
       return await callGroq(primaryModel, messages, groqApiKey);
+    } else if (isAgentRouter) {
+      return await callAgentRouter(primaryModel, messages, agentRouterApiKey);
     } else {
       return await callOpenRouter(primaryModel, messages, openRouterApiKey);
     }
