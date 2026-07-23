@@ -127,20 +127,22 @@ export default function ProductCard({ product }) {
 
         {/* Effects Badges */}
         {(() => {
+          let parsedEffects = [];
           try {
-            const parsedEffects = JSON.parse(product.effects || '[]');
-            if (parsedEffects.length > 0) {
-              return (
-                <div className="mb-3 flex flex-wrap gap-1">
-                  {parsedEffects.map(effect => (
-                    <span key={effect} className={`${getEffectColorClass(effect)} text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full`}>
-                      {effect}
-                    </span>
-                  ))}
-                </div>
-              );
-            }
+            parsedEffects = JSON.parse(product.effects || '[]');
           } catch (e) {}
+
+          if (parsedEffects.length > 0) {
+            return (
+              <div className="mb-3 flex flex-wrap gap-1">
+                {parsedEffects.map(effect => (
+                  <span key={effect} className={`${getEffectColorClass(effect)} text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full`}>
+                    {effect}
+                  </span>
+                ))}
+              </div>
+            );
+          }
           return null;
         })()}
 

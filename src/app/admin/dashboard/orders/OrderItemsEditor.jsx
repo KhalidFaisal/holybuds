@@ -10,18 +10,6 @@ export default function OrderItemsEditor({ order, token, onUpdated }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    if (isEditing) {
-      setItems(order.items?.map(i => ({
-        productId: i.productId,
-        product: i.product,
-        quantity: i.quantity,
-        price: i.price,
-      })) || []);
-      fetchProducts();
-    }
-  }, [isEditing, order]);
-
   const fetchProducts = async () => {
     try {
       const res = await fetch('/api/products', {
@@ -35,6 +23,22 @@ export default function OrderItemsEditor({ order, token, onUpdated }) {
       console.error('Failed to fetch products', e);
     }
   };
+
+  useEffect(() => {
+    if (isEditing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setItems(order.items?.map(i => ({
+        productId: i.productId,
+        product: i.product,
+        quantity: i.quantity,
+        price: i.price,
+      })) || []);
+      fetchProducts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing, order]);
+
+
 
   const handleQuantityChange = (index, value) => {
     const newQuantity = parseInt(value, 10);

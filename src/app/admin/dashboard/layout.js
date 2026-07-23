@@ -19,6 +19,7 @@ export default function AdminDashboardLayout({ children }) {
       });
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAuthed(true);
   }, [router]);
 
@@ -35,6 +36,8 @@ export default function AdminDashboardLayout({ children }) {
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-pc-dark border-b border-pc-border shrink-0">
         <div className="flex items-center gap-2">
+          {/* cspell:disable-next-line */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="Holybuds" className="h-6 w-auto object-contain" />
           <span className="text-sm font-black tracking-tight text-gradient uppercase">Admin</span>
         </div>

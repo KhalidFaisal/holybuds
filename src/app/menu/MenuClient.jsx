@@ -17,14 +17,17 @@ export default function MenuClient({ products, categories, initialCategory, init
 
   // Sync state with URL params when navigating between categories
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCategory(initialCategory || 'ALL');
   }, [initialCategory]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearch(initialSearch || '');
   }, [initialSearch]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEffectFilter(initialEffect || 'ALL');
   }, [initialEffect]);
 

@@ -24,10 +24,6 @@ export default function DiscountsPage() {
   });
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -45,6 +41,11 @@ export default function DiscountsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

@@ -2,6 +2,56 @@
 
 import { useState, useEffect } from 'react';
 
+const ImageUploadField = ({ name, label, initialValue }) => {
+  const [uploading, setUploading] = useState(false);
+  const [value, setValue] = useState(initialValue || '');
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.details || errData.error || `Upload failed with status ${res.status}`);
+      }
+      const data = await res.json();
+      setValue(data.url);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-pc-muted">{label}</label>
+      <div className="flex items-center gap-4">
+        {value && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={value} alt="Preview" className="h-16 w-16 object-cover rounded border border-pc-border" />
+        )}
+        <input type="hidden" name={name} value={value} />
+        <label className={`btn-secondary text-sm cursor-pointer ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+          {uploading ? 'Uploading...' : (value ? 'Change Image' : 'Upload Image')}
+          <input type="file" className="hidden" accept="image/*" onChange={handleUpload} />
+        </label>
+      </div>
+    </div>
+  );
+};
+
+
 export default function CategoriesClient() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -10,9 +60,6 @@ export default function CategoriesClient() {
   const [editingCategory, setEditingCategory] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
 
   const fetchCategories = async () => {
     try {
@@ -27,6 +74,11 @@ export default function CategoriesClient() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchCategories();
+  }, []);
 
   const handleEdit = (category) => {
     setEditingCategory(category);
@@ -80,53 +132,6 @@ export default function CategoriesClient() {
     }
   };
 
-  const ImageUploadField = ({ name, label, initialValue }) => {
-    const [uploading, setUploading] = useState(false);
-    const [value, setValue] = useState(initialValue || '');
-
-    const handleUpload = async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      setUploading(true);
-      const formData = new FormData();
-      formData.append('file', file);
-
-      try {
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.details || errData.error || `Upload failed with status ${res.status}`);
-        }
-        const data = await res.json();
-        setValue(data.url);
-      } catch (err) {
-        alert(err.message);
-      } finally {
-        setUploading(false);
-      }
-    };
-
-    return (
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-pc-muted">{label}</label>
-        <div className="flex items-center gap-4">
-          {value && (
-            <img src={value} alt="Preview" className="h-16 w-16 object-cover rounded border border-pc-border" />
-          )}
-          <input type="hidden" name={name} value={value} />
-          <label className={`btn-secondary text-sm cursor-pointer ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
-            {uploading ? 'Uploading...' : (value ? 'Change Image' : 'Upload Image')}
-            <input type="file" className="hidden" accept="image/*" onChange={handleUpload} />
-          </label>
-        </div>
-      </div>
-    );
-  };
 
   if (loading) return <div className="text-pc-muted animate-pulse">Loading categories...</div>;
   if (error) return <div className="text-red-500 bg-red-500/10 p-4 rounded-xl">{error}</div>;
@@ -217,6 +222,7 @@ export default function CategoriesClient() {
           <div key={category.id} className="glass-card p-4 flex flex-col md:flex-row items-center gap-6">
             <div className="w-full md:w-24 h-24 bg-pc-smoke rounded-xl overflow-hidden relative shrink-0">
               {category.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-pc-muted text-xs p-2 text-center">No Image</div>

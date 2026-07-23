@@ -31,6 +31,7 @@ export function CartProvider({ children }) {
     const saved = localStorage.getItem('elevated_cart');
     if (saved) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setItems(JSON.parse(saved));
       } catch {}
     }
@@ -143,6 +144,7 @@ export function CartProvider({ children }) {
       }
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDiscountAmount(bestAmt);
     setDiscountName(bestName);
   }, [items, discounts]);

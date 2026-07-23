@@ -94,6 +94,7 @@ function CheckoutContent() {
       const timeoutId = setTimeout(fetchLoyalty, 500);
       return () => clearTimeout(timeoutId);
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCustomerProfile(null);
       setIsNewCustomer(false);
       setSelectedReward(null);

@@ -31,7 +31,7 @@ export default function TermsPage() {
         </div>
 
         <h1 className="text-4xl font-black text-white mb-4">Terms of Service & Disclaimer</h1>
-        <p className="text-xl text-pc-muted mb-12">Keep scrolling to experience why we are New York's number one source.</p>
+        <p className="text-xl text-pc-muted mb-12">Keep scrolling to experience why we are New York&apos;s number one source.</p>
         
         <div className="glass-card p-8 md:p-12 space-y-8 text-pc-muted">
           <section>
@@ -52,7 +52,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-xl font-bold text-white mb-3">3. Shipping Restrictions</h2>
-            <p className="leading-relaxed">We do not ship THCa or other specific hemp-derived products to states where they are explicitly restricted or banned by local or state laws. It is your responsibility as the buyer to understand and comply with your local jurisdiction's laws regarding the purchase and possession of these products.</p>
+            <p className="leading-relaxed">We do not ship THCa or other specific hemp-derived products to states where they are explicitly restricted or banned by local or state laws. It is your responsibility as the buyer to understand and comply with your local jurisdiction&apos;s laws regarding the purchase and possession of these products.</p>
           </section>
 
           <section>

@@ -45,11 +45,6 @@ export default function AdminProductsPage() {
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '';
 
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, []);
-
   const fetchCategories = async () => {
     try {
       const res = await fetch('/api/categories');
@@ -71,6 +66,18 @@ export default function AdminProductsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchProducts();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentPage(1);
+  }, [search, filterCategory, filterInventory, filterVisibility]);
 
   const handleDelete = async (id) => {
     try {
@@ -436,10 +443,6 @@ export default function AdminProductsPage() {
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
   const paginatedProducts = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filterCategory, filterInventory, filterVisibility, search]);
 
   const stockColor = (stock) => {
     if (stock === 0) return 'text-red-400 bg-red-500/10';

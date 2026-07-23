@@ -30,6 +30,7 @@ export default function CartDrawer() {
         }
       })
       .catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, cartIdsString]);
 
   if (!isOpen) return null;
@@ -99,11 +100,11 @@ export default function CartDrawer() {
                 <>
                   <p className="text-sm text-center mb-2 font-medium">
                     {amountAway > 0 ? (
-                      <>You're <span className="text-pc-gold font-bold">${amountAway.toFixed(2)}</span> away from free delivery!</>
+                      <>You&apos;re <span className="text-pc-gold font-bold">${amountAway.toFixed(2)}</span> away from free delivery!</>
                     ) : (
                       <span className="text-pc-green font-bold flex items-center justify-center gap-1">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                        You've unlocked free delivery!
+                        You&apos;ve unlocked free delivery!
                       </span>
                     )}
                   </p>

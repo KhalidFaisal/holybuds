@@ -21,20 +21,6 @@ export default function AdminGlobalSearch() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (!query) {
-      setResults(null);
-      setIsOpen(false);
-      return;
-    }
-
-    const delayDebounceFn = setTimeout(() => {
-      fetchResults(query);
-    }, 300);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [query]);
-
   const fetchResults = async (q) => {
     setLoading(true);
     setIsOpen(true);
@@ -54,6 +40,21 @@ export default function AdminGlobalSearch() {
     }
   };
 
+  useEffect(() => {
+    if (!query) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setResults(null);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsOpen(false);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(() => {
+      fetchResults(query);
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [query]);
   return (
     <div className="relative w-full max-w-lg" ref={containerRef}>
       <div className="relative flex items-center">

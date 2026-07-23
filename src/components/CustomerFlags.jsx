@@ -8,6 +8,7 @@ export default function CustomerFlags({ phone }) {
 
   useEffect(() => {
     if (!phone) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }

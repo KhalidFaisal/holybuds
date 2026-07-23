@@ -7,9 +7,10 @@ import { useCart } from '@/components/CartProvider';
 export default function SessionTracker() {
   const pathname = usePathname();
   const { total, items } = useCart();
-  const lastActivityRef = useRef(Date.now());
+  const lastActivityRef = useRef(null);
 
   useEffect(() => {
+    lastActivityRef.current = Date.now();
     // Track user activity to prevent "zombie" background tabs from pinging forever
     const handleActivity = () => {
       lastActivityRef.current = Date.now();

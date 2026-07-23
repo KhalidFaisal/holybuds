@@ -180,7 +180,7 @@ export default function LoginForm() {
           </>
         ) : (
           <>
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <button onClick={() => setIsRegistering(true)} className="text-pc-green hover:underline focus:outline-none">
               Sign Up
             </button>
