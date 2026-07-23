@@ -628,10 +628,6 @@ export default function SettingsPage() {
                 <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
                 <option value="openai/gpt-5-mini">GPT-5 Mini</option>
                 <option value="agentrouter/gpt-5.5">AgentRouter (GPT-5.5)</option>
-                <option value="agentrouter/gpt-4o">AgentRouter (GPT-4o)</option>
-                <option value="agentrouter/claude-sonnet-4-5-20250929">AgentRouter (Claude Sonnet 3.5)</option>
-                <option value="agentrouter/gemini-2-0-pro">AgentRouter (Gemini 2.0 Pro)</option>
-                <option value="agentrouter/deepseek-r1">AgentRouter (DeepSeek R1)</option>
                 <option value="groq-llama-3.1-8b-instant">Groq LLaMA 3.1 8B (Free)</option>
                 <option value="groq-llama-3.3-70b-versatile">Groq LLaMA 3.3 70B (Free)</option>
                 <option value="groq-mixtral-8x7b-32768">Groq Mixtral 8x7B (Free)</option>
