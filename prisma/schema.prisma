@@ -88,7 +88,7 @@ model SiteSettings {
   adminPasswordHash String?
   timezone          String  @default("UTC")
   chatbotPrompt     String  @default("You are a helpful, friendly budtender at Elevated Dispensary. Recommend products from our inventory based on the user's needs. Be concise, polite, and use a chill tone.")
-  aiModel           String  @default("openrouter/free")
+  aiModel           String  @default("agentrouter/gpt-5.5")
   openRouterApiKey  String?
   groqApiKey        String?
   agentRouterApiKey String?

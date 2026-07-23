@@ -23,7 +23,7 @@ export default function SettingsPage() {
   const [messageTimezone, setMessageTimezone] = useState('');
 
   const [chatbotPrompt, setChatbotPrompt] = useState('');
-  const [aiModel, setAiModel] = useState('openrouter/free');
+  const [aiModel, setAiModel] = useState('agentrouter/gpt-5.5');
   const [openRouterApiKey, setOpenRouterApiKey] = useState('');
   const [groqApiKey, setGroqApiKey] = useState('');
   const [agentRouterApiKey, setAgentRouterApiKey] = useState('');
@@ -82,7 +82,7 @@ export default function SettingsPage() {
           if (data.chatbotPrompt) {
             setChatbotPrompt(data.chatbotPrompt);
           }
-          setAiModel(data.aiModel || 'openrouter/free');
+          setAiModel(data.aiModel || 'agentrouter/gpt-5.5');
           setOpenRouterApiKey(data.openRouterApiKey || '');
           setGroqApiKey(data.groqApiKey || '');
           setAgentRouterApiKey(data.agentRouterApiKey || '');

@@ -22,7 +22,7 @@ export async function POST(request) {
     }
 
     const data = await request.json();
-    const model = data.model || 'openrouter/free';
+    const model = data.model || 'agentrouter/gpt-5.5';
 
     const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
     

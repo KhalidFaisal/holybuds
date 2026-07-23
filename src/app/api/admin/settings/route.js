@@ -33,7 +33,7 @@ export async function GET(request) {
       sitePassword: settings.sitePassword,
       timezone: settings.timezone || 'UTC',
       chatbotPrompt: settings.chatbotPrompt || "You are a helpful, friendly budtender at Elevated Dispensary. Recommend products from our inventory based on the user's needs. Be concise, polite, and use a chill tone.",
-      aiModel: settings.aiModel || "openrouter/free",
+      aiModel: settings.aiModel || "agentrouter/gpt-5.5",
       openRouterApiKey: settings.openRouterApiKey ? '••••••••••••••••' : '', // Masked in response
       groqApiKey: settings.groqApiKey ? '••••••••••••••••' : '', // Masked in response
       agentRouterApiKey: settings.agentRouterApiKey ? '••••••••••••••••' : '', // Masked in response

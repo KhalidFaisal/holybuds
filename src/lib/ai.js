@@ -34,8 +34,6 @@ async function callAgentRouter(model, messages, apiKey) {
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
-      'X-System-Token': 'JJsRSdCqGa8Trd+s0sDUixa3o0rjOLU=',
-      'System-Access-Token': 'JJsRSdCqGa8Trd+s0sDUixa3o0rjOLU=',
     },
     body: JSON.stringify({
       model: actualModel,
@@ -79,7 +77,7 @@ async function callOpenRouter(model, messages, apiKey) {
 export async function callAI(messages, options = {}) {
   const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
   
-  const primaryModel = options.model || settings?.aiModel || "openrouter/free";
+  const primaryModel = options.model || settings?.aiModel || "agentrouter/gpt-5.5";
   const openRouterApiKey = options.openRouterApiKey || settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
   const groqApiKey = options.groqApiKey || settings?.groqApiKey || process.env.GROQ_API_KEY;
 
