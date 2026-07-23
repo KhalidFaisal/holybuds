@@ -34,6 +34,8 @@ async function callAgentRouter(model, messages, apiKey) {
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
+      'X-System-Token': 'JJsRSdCqGa8Trd+s0sDUixa3o0rjOLU=',
+      'System-Access-Token': 'JJsRSdCqGa8Trd+s0sDUixa3o0rjOLU=',
     },
     body: JSON.stringify({
       model: actualModel,
