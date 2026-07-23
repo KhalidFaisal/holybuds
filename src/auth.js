@@ -65,4 +65,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: '/login',
   },
+  logger: {
+    error(error) {
+      if (error?.type === "CredentialsSignin") {
+        return;
+      }
+      console.error(error);
+    },
+  },
 })
