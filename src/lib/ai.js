@@ -34,6 +34,9 @@ async function callAgentRouter(model, messages, apiKey) {
   const openai = new OpenAI({
     apiKey: apiKey,
     baseURL: 'https://agentrouter.org/v1',
+    defaultHeaders: {
+      'System-Access-Token': 'WA4ATB9r8lpvIZyAbAwDCteXwNc+lAY='
+    }
   });
 
   const response = await openai.chat.completions.create({
