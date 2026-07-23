@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
+import { auth } from '@/auth';
 
 function generateOrderNumber() {
   const prefix = 'ELV';
@@ -40,6 +41,9 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    const session = await auth();
+    const userId = session?.user?.id || null;
+
     const data = await request.json();
 
     if (!data.customerName || !data.customerPhone || !data.items?.length) {
@@ -200,9 +204,7 @@ export async function POST(request) {
       let customer = await tx.customer.findUnique({ where: { phone: sanitizedPhone } });
       
       // If logged in, grab the user to link if creating
-      const { auth } = require('@/auth');
-      const session = await auth();
-      const userId = session?.user?.id || null;
+      // userId is retrieved at the start of the request
 
       if (!customer) {
         const generatedReferralCode = 'HOLY-' + Math.random().toString(36).substring(2, 7).toUpperCase();
