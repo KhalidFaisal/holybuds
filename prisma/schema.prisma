@@ -110,7 +110,9 @@ model Category {
 model Customer {
   id              String   @id @default(cuid())
   phone           String   @unique
+  phoneVerified   Boolean  @default(false)
   name            String
+  address         String?
   points          Int      @default(0)
   totalOrders     Int      @default(0)
   referralCode    String?  @unique

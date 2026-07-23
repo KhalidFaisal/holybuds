@@ -32,7 +32,7 @@ export default function PrivacyPage() {
               <ul className="list-disc pl-6 mb-6 text-pc-muted space-y-2">
                 <li>Process and fulfill your orders, including delivery.</li>
                 <li>Manage your account and loyalty points.</li>
-                <li>Send you transactional emails, order updates, and marketing communications (if you've opted in).</li>
+                <li>Send you transactional emails, order updates, and marketing communications (if you&apos;ve opted in).</li>
                 <li>Improve our website, services, and customer experience.</li>
               </ul>
 

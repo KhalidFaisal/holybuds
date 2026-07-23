@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from './CartProvider';
 import { useState, useEffect, useRef } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 
 function SearchDropdown({ query, onSelect }) {
   const [results, setResults] = useState([]);
@@ -81,6 +82,9 @@ export default function Navbar() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
+  const { data: session, status } = useSession();
+  const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
+  const accountRef = useRef(null);
   
   useEffect(() => {
     fetch('/api/categories')
@@ -97,6 +101,9 @@ export default function Navbar() {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
         setSearchQuery('');
         setMobileSearchOpen(false);
+      }
+      if (accountRef.current && !accountRef.current.contains(event.target)) {
+        setAccountDropdownOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -173,15 +180,43 @@ export default function Navbar() {
               </button>
             )}
 
-            {/* Account Link */}
-            <Link
-              href="/account"
-              className="p-2 text-pc-muted hover:text-white transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-              </svg>
-            </Link>
+            {/* Account Link / Dropdown */}
+            {status === 'authenticated' ? (
+              <div className="relative" ref={accountRef}>
+                <button
+                  onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
+                  className="p-2 text-pc-muted hover:text-white transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                  </svg>
+                </button>
+                {accountDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-pc-dark border border-pc-border rounded-xl shadow-2xl py-2 z-50 animate-scale-in">
+                    <Link href="/account?tab=profile" onClick={() => setAccountDropdownOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-pc-card transition-colors">Profile</Link>
+                    <Link href="/account?tab=orders" onClick={() => setAccountDropdownOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-pc-card transition-colors">Orders</Link>
+                    <Link href="/account?tab=favorites" onClick={() => setAccountDropdownOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-pc-card transition-colors">Favorites</Link>
+                    <Link href="/account?tab=rewards" onClick={() => setAccountDropdownOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-pc-card transition-colors">Rewards & Referrals</Link>
+                    <div className="border-t border-pc-border my-1"></div>
+                    <button 
+                      onClick={() => { setAccountDropdownOpen(false); signOut({ callbackUrl: '/login' }); }} 
+                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-pc-card transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/account"
+                className="p-2 text-pc-muted hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+              </Link>
+            )}
 
             <button
               onClick={() => setIsOpen(true)}

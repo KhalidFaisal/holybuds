@@ -39,6 +39,30 @@ export default function CustomersTable({ initialCustomers }) {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this customer? This will also delete their web account if they have one. This cannot be undone.')) return;
+    
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/customers/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        }
+      });
+      
+      if (res.ok) {
+        setCustomers(customers.filter(c => c.id !== id));
+      } else {
+        alert('Failed to delete customer');
+      }
+    } catch (err) {
+      alert('Error deleting customer');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleMigrate = async () => {
     if (!confirm('Are you sure you want to scan all past orders and reward points to customers? This may take a moment.')) return;
     
@@ -129,12 +153,21 @@ export default function CustomersTable({ initialCustomers }) {
                       </button>
                     </div>
                   ) : (
-                    <button 
-                      onClick={() => handleEdit(customer)}
-                      className="text-pc-muted hover:text-pc-green transition-colors"
-                    >
-                      Edit Points
-                    </button>
+                    <div className="flex justify-end gap-3">
+                      <button 
+                        onClick={() => handleEdit(customer)}
+                        className="text-pc-muted hover:text-pc-green transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(customer.id)}
+                        disabled={saving}
+                        className="text-pc-muted hover:text-red-500 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
@@ -9,13 +9,119 @@ import ProductCard from '@/components/ProductCard';
 import { getFavoriteProducts } from './actions';
 import { LOYALTY_REWARDS } from '@/lib/loyalty';
 import { useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+function ProfileTab({ customerProfile, setCustomerProfile }) {
+  const [editing, setEditing] = useState(false);
+  const [formData, setFormData] = useState({ name: '', phone: '', address: '' });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (customerProfile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFormData({
+        name: customerProfile.name || '',
+        phone: customerProfile.phone || '',
+        address: customerProfile.address || ''
+      });
+    }
+  }, [customerProfile]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    
+    try {
+      const res = await fetch('/api/account/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        setCustomerProfile(data.customer);
+        setEditing(false);
+      } else {
+        setError(data.error || 'Failed to update profile');
+      }
+    } catch (err) {
+      setError('An error occurred');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!customerProfile) return null;
+
+  return (
+    <div className="glass-card p-8 w-full max-w-2xl">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-white">Profile Information</h2>
+        {!editing && (
+          <button onClick={() => setEditing(true)} className="text-pc-green hover:text-white transition-colors">
+            Edit
+          </button>
+        )}
+      </div>
+
+      {error && <div className="text-red-400 text-sm mb-4 bg-red-400/10 p-3 rounded">{error}</div>}
+
+      {editing ? (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm text-pc-muted mb-1">Name</label>
+            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-pc-black border border-pc-border rounded-lg px-4 py-2 text-white focus:border-pc-green focus:outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm text-pc-muted mb-1">Phone</label>
+            <input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-pc-black border border-pc-border rounded-lg px-4 py-2 text-white focus:border-pc-green focus:outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm text-pc-muted mb-1">Address</label>
+            <textarea value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-pc-black border border-pc-border rounded-lg px-4 py-2 text-white focus:border-pc-green focus:outline-none h-24"></textarea>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <button type="button" onClick={() => setEditing(false)} className="px-4 py-2 text-pc-muted hover:text-white transition-colors">Cancel</button>
+            <button type="submit" disabled={saving} className="btn-primary px-6 py-2">{saving ? 'Saving...' : 'Save Changes'}</button>
+          </div>
+        </form>
+      ) : (
+        <div className="space-y-6">
+          <div>
+            <p className="text-sm text-pc-muted">Name</p>
+            <p className="text-lg text-white font-medium">{customerProfile.name || 'Not set'}</p>
+          </div>
+          <div>
+            <p className="text-sm text-pc-muted flex justify-between items-center">
+              Phone
+              {customerProfile.phone && (
+                <span className={`text-xs px-2 py-1 rounded-full ${customerProfile.phoneVerified ? 'bg-pc-green/20 text-pc-green' : 'bg-yellow-500/20 text-yellow-500'}`}>
+                  {customerProfile.phoneVerified ? 'Verified' : 'Unverified'}
+                </span>
+              )}
+            </p>
+            <p className="text-lg text-white font-medium">{customerProfile.phone || 'Not set'}</p>
+          </div>
+          <div>
+            <p className="text-sm text-pc-muted">Address</p>
+            <p className="text-lg text-white font-medium">{customerProfile.address || 'Not set'}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function AccountContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
 
-  const [activeTab, setActiveTab] = useState('orders');
+  const [activeTab, setActiveTab] = useState(tabParam || 'profile');
   const [recentOrders, setRecentOrders] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [loadingFavs, setLoadingFavs] = useState(false);
@@ -34,6 +140,19 @@ function AccountContent() {
       router.push('/login');
     }
   }, [status, router]);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (tabParam) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -60,12 +179,6 @@ function AccountContent() {
     }
   }, [status]);
 
-  useEffect(() => {
-    if (activeTab === 'favorites') {
-      loadFavs();
-    }
-  }, [activeTab]);
-
   const loadFavs = async () => {
     setLoadingFavs(true);
     try {
@@ -81,6 +194,13 @@ function AccountContent() {
       setLoadingFavs(false);
     }
   };
+
+  useEffect(() => {
+    if (activeTab === 'favorites') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadFavs();
+    }
+  }, [activeTab]);
 
   const handlePhoneSubmit = async (e) => {
     e.preventDefault();
@@ -213,29 +333,11 @@ function AccountContent() {
             </button>
           </div>
 
-          {/* Tabs */}
-          <div className="flex items-center gap-4 border-b border-pc-border mb-8 overflow-x-auto hide-scrollbar">
-            <button 
-              onClick={() => setActiveTab('orders')}
-              className={`pb-4 px-2 whitespace-nowrap text-lg font-bold border-b-2 transition-colors ${activeTab === 'orders' ? 'border-pc-green text-pc-green' : 'border-transparent text-pc-muted hover:text-white'}`}
-            >
-              Recent Orders
-            </button>
-            <button 
-              onClick={() => setActiveTab('favorites')}
-              className={`pb-4 px-2 whitespace-nowrap text-lg font-bold border-b-2 transition-colors ${activeTab === 'favorites' ? 'border-pc-green text-pc-green' : 'border-transparent text-pc-muted hover:text-white'}`}
-            >
-              Favorites
-            </button>
-            <button 
-              onClick={() => setActiveTab('rewards')}
-              className={`pb-4 px-2 whitespace-nowrap text-lg font-bold border-b-2 transition-colors ${activeTab === 'rewards' ? 'border-pc-green text-pc-green' : 'border-transparent text-pc-muted hover:text-white'}`}
-            >
-              Rewards & Referrals
-            </button>
-          </div>
-
           {/* Content */}
+          {activeTab === 'profile' && (
+            <ProfileTab customerProfile={customerProfile} setCustomerProfile={setCustomerProfile} />
+          )}
+
           {activeTab === 'orders' && (
             <div>
               {recentOrders.length === 0 ? (
@@ -269,7 +371,10 @@ function AccountContent() {
                           <div key={i} className="flex items-center gap-4 bg-pc-dark/50 p-4 rounded-xl">
                             <div className="w-16 h-16 bg-pc-smoke rounded-lg overflow-hidden shrink-0">
                               {item.product?.image && (
-                                <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                                <>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                                </>
                               )}
                             </div>
                             <div>
@@ -292,7 +397,7 @@ function AccountContent() {
                 <div className="text-center py-12 text-pc-muted">Loading favorites...</div>
               ) : favorites.length === 0 ? (
                 <div className="glass-card p-12 text-center">
-                  <p className="text-pc-muted mb-4">You haven't saved any favorites yet.</p>
+                  <p className="text-pc-muted mb-4">You haven&apos;t saved any favorites yet.</p>
                   <p className="text-sm text-pc-muted/60 mb-6">Click the heart icon on any product to save it here for later.</p>
                   <Link href="/menu" className="btn-primary inline-block">Browse Menu</Link>
                 </div>
@@ -431,7 +536,9 @@ function AccountContent() {
 export default function AccountPage() {
   return (
     <CartProvider>
-      <AccountContent />
+      <Suspense fallback={<div className="min-h-screen pt-24 text-center text-white">Loading...</div>}>
+        <AccountContent />
+      </Suspense>
     </CartProvider>
   );
 }

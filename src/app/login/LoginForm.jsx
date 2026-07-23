@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginForm() {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -76,8 +77,15 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="glass-card p-8 rounded-2xl w-full border border-pc-border animate-scale-in">
-      <div className="text-center mb-8">
+    <div className="glass-card p-8 rounded-2xl w-full border border-pc-border animate-scale-in relative">
+      <Link href="/" className="absolute top-4 left-4 text-pc-muted hover:text-white transition-colors flex items-center gap-1 text-sm font-medium">
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Back
+      </Link>
+      
+      <div className="text-center mb-8 mt-4">
         <h1 className="text-3xl font-black text-white mb-2">
           {isRegistering ? 'Create Account' : 'Welcome Back'}
         </h1>
