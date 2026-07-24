@@ -2,6 +2,7 @@ import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import HomeClient from './HomeClient';
 import { withProductDiscounts } from '@/lib/discounts';
+import AIUpdaterTrigger from '@/components/AIUpdaterTrigger';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,14 +91,27 @@ export default async function HomePage() {
     orderBy: { order: 'asc' },
   });
 
+  const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
+  
+  let needsAiUpdate = false;
+  if (settings?.aiStaffPicksEnabled) {
+    const lastUpdate = settings.aiStaffPicksLastUpdate;
+    if (!lastUpdate || (new Date() - new Date(lastUpdate)) / (1000 * 60 * 60 * 24) >= 7) {
+      needsAiUpdate = true;
+    }
+  }
+
   return (
-    <HomeClient
-      deals={JSON.parse(JSON.stringify(deals))}
-      staffPicks={JSON.parse(JSON.stringify(staffPicks))}
-      newArrivals={JSON.parse(JSON.stringify(newArrivals))}
-      bestSellers={JSON.parse(JSON.stringify(bestSellers))}
-      categories={JSON.parse(JSON.stringify(categories))}
-      banners={JSON.parse(JSON.stringify(activeBanners))}
-    />
+    <>
+      {needsAiUpdate && <AIUpdaterTrigger />}
+      <HomeClient
+        deals={JSON.parse(JSON.stringify(deals))}
+        staffPicks={JSON.parse(JSON.stringify(staffPicks))}
+        newArrivals={JSON.parse(JSON.stringify(newArrivals))}
+        bestSellers={JSON.parse(JSON.stringify(bestSellers))}
+        categories={JSON.parse(JSON.stringify(categories))}
+        banners={JSON.parse(JSON.stringify(activeBanners))}
+      />
+    </>
   );
 }

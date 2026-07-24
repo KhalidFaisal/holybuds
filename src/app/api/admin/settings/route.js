@@ -38,7 +38,9 @@ export async function GET(request) {
       groqApiKey: settings.groqApiKey ? '••••••••••••••••' : '', // Masked in response
       loyaltyEnabled: settings.loyaltyEnabled ?? true,
       pointsPerDollar: settings.pointsPerDollar ?? 1,
-      signupBonus: settings.signupBonus ?? 50
+      signupBonus: settings.signupBonus ?? 50,
+      aiStaffPicksEnabled: settings.aiStaffPicksEnabled ?? false,
+      aiStaffPicksLastUpdate: settings.aiStaffPicksLastUpdate || null
     });
   } catch (error) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -108,6 +110,10 @@ export async function POST(request) {
 
     if (data.signupBonus !== undefined) {
       updateData.signupBonus = parseInt(data.signupBonus, 10);
+    }
+
+    if (data.aiStaffPicksEnabled !== undefined) {
+      updateData.aiStaffPicksEnabled = Boolean(data.aiStaffPicksEnabled);
     }
 
     if (Object.keys(updateData).length === 0) {

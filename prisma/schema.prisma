@@ -91,9 +91,11 @@ model SiteSettings {
   aiModel           String  @default("openai/gpt-4o-mini")
   openRouterApiKey  String?
   groqApiKey        String?
-  loyaltyEnabled    Boolean @default(true)
-  pointsPerDollar   Int     @default(1)
-  signupBonus       Int     @default(50)
+  loyaltyEnabled        Boolean @default(true)
+  pointsPerDollar       Int     @default(1)
+  signupBonus           Int     @default(50)
+  aiStaffPicksEnabled   Boolean @default(false)
+  aiStaffPicksLastUpdate DateTime?
 }
 
 model Category {

@@ -38,6 +38,11 @@ export default function SettingsPage() {
   const [testingModel, setTestingModel] = useState(false);
   const [testMessage, setTestMessage] = useState('');
 
+  const [aiStaffPicksEnabled, setAiStaffPicksEnabled] = useState(false);
+  const [loadingAiPicks, setLoadingAiPicks] = useState(false);
+  const [messageAiPicks, setMessageAiPicks] = useState('');
+  const [generatingAiPicks, setGeneratingAiPicks] = useState(false);
+
   const timezones = useMemo(() => {
     if (typeof Intl === 'undefined' || !Intl.supportedValuesOf) return [];
     const tzs = Intl.supportedValuesOf('timeZone');
@@ -88,6 +93,7 @@ export default function SettingsPage() {
           if (data.loyaltyEnabled !== undefined) setLoyaltyEnabled(data.loyaltyEnabled);
           if (data.pointsPerDollar !== undefined) setPointsPerDollar(data.pointsPerDollar);
           if (data.signupBonus !== undefined) setSignupBonus(data.signupBonus);
+          if (data.aiStaffPicksEnabled !== undefined) setAiStaffPicksEnabled(data.aiStaffPicksEnabled);
         }
       } catch (e) {
         console.error(e);
@@ -301,6 +307,57 @@ export default function SettingsPage() {
       setMessageLoyalty('An error occurred.');
     } finally {
       setLoadingLoyalty(false);
+    }
+  };
+
+  const handleAiPicksSubmit = async (e) => {
+    e.preventDefault();
+    setLoadingAiPicks(true);
+    setMessageAiPicks('');
+
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        },
+        body: JSON.stringify({ aiStaffPicksEnabled }),
+      });
+
+      if (res.ok) {
+        setMessageAiPicks('AI Staff Picks settings updated successfully.');
+      } else {
+        const data = await res.json();
+        setMessageAiPicks(data.error || 'Failed to update settings.');
+      }
+    } catch (err) {
+      setMessageAiPicks('An error occurred.');
+    } finally {
+      setLoadingAiPicks(false);
+    }
+  };
+
+  const handleGenerateAiPicks = async () => {
+    setGeneratingAiPicks(true);
+    setMessageAiPicks('');
+    try {
+      const res = await fetch('/api/admin/ai-staff-picks', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        }
+      });
+      if (res.ok) {
+        setMessageAiPicks('Successfully generated 10 new Staff Picks!');
+      } else {
+        const data = await res.json();
+        setMessageAiPicks(data.error || 'Failed to generate picks.');
+      }
+    } catch (err) {
+      setMessageAiPicks('An error occurred while generating picks.');
+    } finally {
+      setGeneratingAiPicks(false);
     }
   };
 
@@ -520,6 +577,56 @@ export default function SettingsPage() {
           >
             {loadingTimezone ? 'Saving...' : 'Update Timezone'}
           </button>
+        </form>
+      </div>
+
+      {/* AI Staff Picks Section */}
+      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 lg:col-span-2">
+        <h2 className="text-xl font-semibold text-white mb-4">🚀 AI Auto-Select Staff Picks</h2>
+        <p className="text-pc-muted mb-6 text-sm">
+          Let AI automatically pick 10 exciting, diverse products to feature as &quot;Staff Picks&quot; on your homepage. 
+          When enabled, the picks will automatically update once a week.
+        </p>
+
+        <form onSubmit={handleAiPicksSubmit} className="space-y-6">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <div className="relative">
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={aiStaffPicksEnabled}
+                onChange={(e) => setAiStaffPicksEnabled(e.target.checked)}
+              />
+              <div className={`block w-14 h-8 rounded-full transition-colors ${aiStaffPicksEnabled ? 'bg-pc-green' : 'bg-pc-black border border-pc-border'}`}></div>
+              <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${aiStaffPicksEnabled ? 'translate-x-6' : ''}`}></div>
+            </div>
+            <span className="text-white font-medium">Enable AI Auto-Select</span>
+          </label>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              type="submit"
+              disabled={loadingAiPicks}
+              className="btn-primary flex-1 py-3"
+            >
+              {loadingAiPicks ? 'Saving...' : 'Save Settings'}
+            </button>
+            
+            <button
+              type="button"
+              onClick={handleGenerateAiPicks}
+              disabled={generatingAiPicks}
+              className="btn-secondary flex-1 py-3"
+            >
+              {generatingAiPicks ? 'Generating...' : 'Generate Picks Now'}
+            </button>
+          </div>
+
+          {messageAiPicks && (
+            <div className={`p-3 rounded-lg text-sm ${messageAiPicks.includes('uccess') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+              {messageAiPicks}
+            </div>
+          )}
         </form>
       </div>
 
