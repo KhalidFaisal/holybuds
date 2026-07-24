@@ -8,6 +8,9 @@ export default function CustomersTable({ initialCustomers }) {
   const [editPoints, setEditPoints] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   const handleEdit = (customer) => {
     setEditingId(customer.id);
     setEditPoints(customer.points.toString());
@@ -88,6 +91,9 @@ export default function CustomersTable({ initialCustomers }) {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil(customers.length / itemsPerPage));
+  const currentCustomers = customers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
@@ -106,6 +112,7 @@ export default function CustomersTable({ initialCustomers }) {
           <thead className="bg-pc-dark/50 text-pc-muted border-b border-pc-border">
             <tr>
               <th className="px-6 py-4 font-medium">Name</th>
+              <th className="px-6 py-4 font-medium">Email</th>
               <th className="px-6 py-4 font-medium">Phone</th>
               <th className="px-6 py-4 font-medium">Points</th>
               <th className="px-6 py-4 font-medium">Orders</th>
@@ -114,9 +121,12 @@ export default function CustomersTable({ initialCustomers }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-pc-border/50">
-            {customers.map((customer) => (
+            {currentCustomers.map((customer) => (
               <tr key={customer.id} className="hover:bg-white/5 transition-colors">
                 <td className="px-6 py-4 font-medium text-white">{customer.name}</td>
+                <td className="px-6 py-4 text-pc-muted">
+                  {customer.email ? customer.email : <span className="text-pc-muted/50">Guest</span>}
+                </td>
                 <td className="px-6 py-4 text-pc-muted">{customer.phone}</td>
                 <td className="px-6 py-4 text-pc-green font-bold">
                   {editingId === customer.id ? (
@@ -174,15 +184,42 @@ export default function CustomersTable({ initialCustomers }) {
             ))}
             {customers.length === 0 && (
               <tr>
-                <td colSpan="6" className="px-6 py-12 text-center text-pc-muted">
+                <td colSpan="7" className="px-6 py-12 text-center text-pc-muted">
                   No customers found.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+        </div>
       </div>
-    </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6 px-4">
+          <p className="text-sm text-pc-muted">
+            Showing <span className="font-medium text-white">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium text-white">{Math.min(currentPage * itemsPerPage, customers.length)}</span> of <span className="font-medium text-white">{customers.length}</span> customers
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded-lg border border-pc-border bg-pc-dark text-pc-muted hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            <div className="text-sm text-pc-muted font-medium px-2">
+              Page {currentPage} of {totalPages}
+            </div>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded-lg border border-pc-border bg-pc-dark text-pc-muted hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,11 +6,14 @@ export const dynamic = 'force-dynamic';
 export default async function CustomersPage() {
   const rawCustomers = await prisma.customer.findMany({
     orderBy: { totalOrders: 'desc' },
+    include: { user: true },
   });
 
   // Serialize Date objects for the client component
   const customers = rawCustomers.map(customer => ({
     ...customer,
+    email: customer.user?.email || null,
+    user: undefined, // remove full user object to avoid serialization issues
     createdAt: customer.createdAt.toISOString(),
     updatedAt: customer.updatedAt.toISOString(),
   }));
