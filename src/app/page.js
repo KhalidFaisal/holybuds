@@ -46,17 +46,18 @@ export default async function HomePage() {
     by: ['productId'],
     _sum: { quantity: true },
     orderBy: { _sum: { quantity: 'desc' } },
-    take: 12,
+    take: 50,
   });
   
   const bestSellerIds = topOrderItems.map(i => i.productId);
   let bestSellers = bestSellerIds
     .map(id => enrichedProducts.find(p => p.id === id))
-    .filter(Boolean);
+    .filter(Boolean)
+    .slice(0, 10);
 
   // Backfill best sellers if we don't have enough data
-  if (bestSellers.length < 12) {
-    const missing = 12 - bestSellers.length;
+  if (bestSellers.length < 10) {
+    const missing = 10 - bestSellers.length;
     const backfill = enrichedProducts.filter(p => !bestSellerIds.includes(p.id)).slice(0, missing);
     bestSellers.push(...backfill);
   }
