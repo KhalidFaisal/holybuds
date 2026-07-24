@@ -130,14 +130,6 @@ function ProductSection({ title, subtitle, products, viewAllHref, icon }) {
           <p className="section-subtitle">{subtitle}</p>
         </div>
         <div className="hidden sm:flex items-center gap-4">
-          <div className="flex items-center gap-2 mr-4 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={() => scroll('left')} className="p-2 rounded-full bg-pc-dark border border-pc-border hover:bg-white/10 text-white transition-colors" aria-label="Scroll left">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <button onClick={() => scroll('right')} className="p-2 rounded-full bg-pc-dark border border-pc-border hover:bg-white/10 text-white transition-colors" aria-label="Scroll right">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-            </button>
-          </div>
           <Link
             href={viewAllHref}
             className="text-pc-green hover:text-pc-green-light font-medium text-sm transition-colors"
@@ -147,15 +139,32 @@ function ProductSection({ title, subtitle, products, viewAllHref, icon }) {
         </div>
       </div>
 
-      <div 
-        ref={scrollRef}
-        className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-6 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar"
-      >
-        {products.map((product) => (
-          <div key={product.id} className="w-[180px] sm:w-[220px] lg:w-[260px] shrink-0 snap-start">
-            <ProductCard product={product} />
-          </div>
-        ))}
+      <div className="relative group/slider">
+        <div 
+          ref={scrollRef}
+          className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-6 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar"
+        >
+          {products.map((product) => (
+            <div key={product.id} className="w-[180px] sm:w-[220px] lg:w-[260px] shrink-0 snap-start">
+              <ProductCard product={product} />
+            </div>
+          ))}
+        </div>
+
+        <button 
+          onClick={() => scroll('left')} 
+          className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-12 h-12 items-center justify-center rounded-full bg-pc-dark/90 backdrop-blur-sm border border-pc-border shadow-[0_4px_20px_rgba(0,0,0,0.5)] hover:bg-white/10 hover:text-white hover:border-pc-green/50 text-pc-muted opacity-0 group-hover/slider:opacity-100 transition-all duration-300"
+          aria-label="Scroll left"
+        >
+          <svg className="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <button 
+          onClick={() => scroll('right')} 
+          className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-12 h-12 items-center justify-center rounded-full bg-pc-dark/90 backdrop-blur-sm border border-pc-border shadow-[0_4px_20px_rgba(0,0,0,0.5)] hover:bg-white/10 hover:text-white hover:border-pc-green/50 text-pc-muted opacity-0 group-hover/slider:opacity-100 transition-all duration-300"
+          aria-label="Scroll right"
+        >
+          <svg className="w-6 h-6 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+        </button>
       </div>
 
       <div className="text-center mt-8 sm:hidden">
