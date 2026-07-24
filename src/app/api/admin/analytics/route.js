@@ -155,6 +155,7 @@ export async function GET(request) {
               id: product.id,
               name: product.name,
               category: product.category,
+              stock: product.stock,
               quantity: 0,
               revenue: 0
             };
@@ -173,7 +174,10 @@ export async function GET(request) {
     stats.trends.last30Days = Array.from(trendMap.values());
     
     // Sort and convert object maps to arrays
-    const topProductsArr = Object.values(stats.topProducts).sort((a, b) => b.quantity - a.quantity).slice(0, 10);
+    const topProductsArr = Object.values(stats.topProducts)
+      .filter(p => p.stock > 0)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 10);
     const topDiscountsArr = Object.entries(stats.discounts)
       .map(([name, data]) => ({ name, ...data }))
       .sort((a, b) => b.count - a.count);
