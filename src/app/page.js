@@ -39,7 +39,7 @@ export default async function HomePage() {
   const staffPicks = shuffleHourly([...allStaffPicks]).slice(0, 12);
 
   // 3. New Arrivals
-  const newArrivals = enrichedProducts.slice(0, 12);
+  const newArrivals = enrichedProducts.slice(0, 10);
 
   // 4. Best Sellers
   const topOrderItems = await prisma.orderItem.groupBy({
