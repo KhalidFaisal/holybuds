@@ -8,7 +8,7 @@ import ProductCard from '@/components/ProductCard';
 import { CartProvider } from '@/components/CartProvider';
 import CannabisIcon from '@/components/icons/CannabisIcon';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 function BannerCarousel({ banners }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -109,10 +109,19 @@ function HeroSection() {
 }
 
 function ProductSection({ title, subtitle, products, viewAllHref, icon }) {
+  const scrollRef = useRef(null);
+
   if (!products || products.length === 0) return null;
 
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const scrollAmount = window.innerWidth > 1024 ? 800 : 400;
+      scrollRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative group">
       <div className="flex items-end justify-between mb-10">
         <div>
           <h2 className="section-title flex items-center gap-3">
@@ -120,15 +129,28 @@ function ProductSection({ title, subtitle, products, viewAllHref, icon }) {
           </h2>
           <p className="section-subtitle">{subtitle}</p>
         </div>
-        <Link
-          href={viewAllHref}
-          className="text-pc-green hover:text-pc-green-light font-medium text-sm transition-colors hidden sm:block"
-        >
-          View All →
-        </Link>
+        <div className="hidden sm:flex items-center gap-4">
+          <div className="flex items-center gap-2 mr-4 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={() => scroll('left')} className="p-2 rounded-full bg-pc-dark border border-pc-border hover:bg-white/10 text-white transition-colors" aria-label="Scroll left">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <button onClick={() => scroll('right')} className="p-2 rounded-full bg-pc-dark border border-pc-border hover:bg-white/10 text-white transition-colors" aria-label="Scroll right">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+          <Link
+            href={viewAllHref}
+            className="text-pc-green hover:text-pc-green-light font-medium text-sm transition-colors"
+          >
+            View All →
+          </Link>
+        </div>
       </div>
 
-      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-6 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar">
+      <div 
+        ref={scrollRef}
+        className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-6 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar"
+      >
         {products.map((product) => (
           <div key={product.id} className="w-[180px] sm:w-[220px] lg:w-[260px] shrink-0 snap-start">
             <ProductCard product={product} />
