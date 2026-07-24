@@ -24,7 +24,7 @@ export async function PUT(request, { params }) {
         minOrderValue: parseFloat(data.minOrderValue || 0),
         targetType: data.targetType,
         targetCategory: data.targetCategory || null,
-        targetProductIds: data.targetProductIds ? JSON.stringify(data.targetProductIds) : null,
+        targetProductIds: data.targetProductIds || null,
         isActive: data.isActive,
       },
     });

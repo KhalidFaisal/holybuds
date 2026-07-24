@@ -70,7 +70,10 @@ export default function DiscountsPage() {
     let targetIds = [];
     if (discount.targetProductIds) {
       try {
-        const parsed = JSON.parse(discount.targetProductIds);
+        let parsed = JSON.parse(discount.targetProductIds);
+        if (typeof parsed === 'string') {
+          parsed = JSON.parse(parsed); // recover double-stringified legacy data
+        }
         if (Array.isArray(parsed)) {
           targetIds = parsed;
         }
