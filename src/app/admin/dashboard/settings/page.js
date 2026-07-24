@@ -373,7 +373,7 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
       {/* Loyalty & Rewards Section */}
-      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 lg:col-span-2">
+      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
         <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-yellow-500"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
           Loyalty & Rewards
@@ -382,17 +382,17 @@ export default function SettingsPage() {
           Configure the points system and sign-up bonuses. Turn it off if you do not wish to offer rewards.
         </p>
 
-        <form onSubmit={handleLoyaltySubmit} className="space-y-4">
-          <div className="flex items-center gap-3 mb-6 bg-pc-black border border-pc-border p-4 rounded-xl">
-            <input 
-              type="checkbox" 
-              id="loyaltyEnabled" 
-              checked={loyaltyEnabled}
-              onChange={(e) => setLoyaltyEnabled(e.target.checked)}
-              className="w-5 h-5 accent-pc-green rounded cursor-pointer"
-            />
-            <label htmlFor="loyaltyEnabled" className="text-white font-medium cursor-pointer">
-              Enable Loyalty Program
+        <form onSubmit={handleLoyaltySubmit} className="space-y-4 flex flex-col flex-grow">
+          <div className="flex items-center justify-between mb-6 bg-pc-black border border-pc-border p-4 rounded-xl">
+            <span className="text-white font-medium">Enable Loyalty Program</span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={loyaltyEnabled}
+                onChange={(e) => setLoyaltyEnabled(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pc-green"></div>
             </label>
           </div>
 
@@ -430,13 +430,67 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loadingLoyalty}
-            className="btn-primary w-full py-3 mt-4"
-          >
-            {loadingLoyalty ? 'Saving...' : 'Update Loyalty Settings'}
-          </button>
+          <div className="mt-auto pt-4">
+            <button
+              type="submit"
+              disabled={loadingLoyalty}
+              className="btn-primary w-full py-3"
+            >
+              {loadingLoyalty ? 'Saving...' : 'Update Loyalty Settings'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* AI Staff Picks Section */}
+      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
+        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-purple-400"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 3.86-12A2 2 0 0 1 15 2a22 22 0 0 1 12 3.86c0 1.22-.78 2.36-1.93 2.53A22 22 0 0 1 15 12z"/><path d="M16 11c1.5 0 3-.5 3-3s-1.5-3-3-3-3 1.5-3 3 1.5 3 3 3z"/></svg>
+          AI Auto-Select Staff Picks
+        </h2>
+        <p className="text-pc-muted mb-6 text-sm">
+          Let AI automatically pick 10 exciting, diverse products to feature as &quot;Staff Picks&quot; on your homepage. 
+          When enabled, the picks will automatically update once a week.
+        </p>
+
+        <form onSubmit={handleAiPicksSubmit} className="space-y-4 flex flex-col flex-grow">
+          <div className="flex items-center justify-between mb-6 bg-pc-black border border-pc-border p-4 rounded-xl">
+            <span className="text-white font-medium">Enable AI Auto-Select</span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={aiStaffPicksEnabled}
+                onChange={(e) => setAiStaffPicksEnabled(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pc-green"></div>
+            </label>
+          </div>
+
+          <div className="mt-auto pt-4 flex flex-col sm:flex-row gap-4">
+            <button
+              type="submit"
+              disabled={loadingAiPicks}
+              className="btn-primary flex-1 py-3"
+            >
+              {loadingAiPicks ? 'Saving...' : 'Save Settings'}
+            </button>
+            
+            <button
+              type="button"
+              onClick={handleGenerateAiPicks}
+              disabled={generatingAiPicks}
+              className="btn-secondary flex-1 py-3"
+            >
+              {generatingAiPicks ? 'Generating...' : 'Generate Picks Now'}
+            </button>
+          </div>
+
+          {messageAiPicks && (
+            <div className={`p-3 rounded-lg text-sm mt-4 ${messageAiPicks.includes('uccess') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+              {messageAiPicks}
+            </div>
+          )}
         </form>
       </div>
 
@@ -583,57 +637,7 @@ export default function SettingsPage() {
         </form>
       </div>
 
-      {/* AI Staff Picks Section */}
-      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 lg:col-span-2">
-        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-purple-400"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 3.86-12A2 2 0 0 1 15 2a22 22 0 0 1 12 3.86c0 1.22-.78 2.36-1.93 2.53A22 22 0 0 1 15 12z"/><path d="M16 11c1.5 0 3-.5 3-3s-1.5-3-3-3-3 1.5-3 3 1.5 3 3 3z"/></svg>
-          AI Auto-Select Staff Picks
-        </h2>
-        <p className="text-pc-muted mb-6 text-sm">
-          Let AI automatically pick 10 exciting, diverse products to feature as &quot;Staff Picks&quot; on your homepage. 
-          When enabled, the picks will automatically update once a week.
-        </p>
 
-        <form onSubmit={handleAiPicksSubmit} className="space-y-4">
-          <div className="flex items-center gap-3 mb-6 bg-pc-black border border-pc-border p-4 rounded-xl">
-            <input 
-              type="checkbox" 
-              id="aiStaffPicksEnabled" 
-              checked={aiStaffPicksEnabled}
-              onChange={(e) => setAiStaffPicksEnabled(e.target.checked)}
-              className="w-5 h-5 accent-pc-green rounded cursor-pointer"
-            />
-            <label htmlFor="aiStaffPicksEnabled" className="text-white font-medium cursor-pointer">
-              Enable AI Auto-Select
-            </label>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              type="submit"
-              disabled={loadingAiPicks}
-              className="btn-primary flex-1 py-3"
-            >
-              {loadingAiPicks ? 'Saving...' : 'Save Settings'}
-            </button>
-            
-            <button
-              type="button"
-              onClick={handleGenerateAiPicks}
-              disabled={generatingAiPicks}
-              className="btn-secondary flex-1 py-3"
-            >
-              {generatingAiPicks ? 'Generating...' : 'Generate Picks Now'}
-            </button>
-          </div>
-
-          {messageAiPicks && (
-            <div className={`p-3 rounded-lg text-sm ${messageAiPicks.includes('uccess') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-              {messageAiPicks}
-            </div>
-          )}
-        </form>
-      </div>
 
       {/* AI Settings Section */}
       <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 lg:col-span-2">
