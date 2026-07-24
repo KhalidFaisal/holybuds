@@ -70,19 +70,22 @@ export default function DiscountsPage() {
     let targetIds = [];
     if (discount.targetProductIds) {
       try {
-        targetIds = JSON.parse(discount.targetProductIds);
+        const parsed = JSON.parse(discount.targetProductIds);
+        if (Array.isArray(parsed)) {
+          targetIds = parsed;
+        }
       } catch (e) {}
     }
 
     setForm({
       name: discount.name,
       type: discount.type,
-      value: discount.value.toString(),
-      minOrderValue: discount.minOrderValue.toString(),
+      value: discount.value?.toString() || '',
+      minOrderValue: discount.minOrderValue?.toString() || '0',
       targetType: discount.targetType,
       targetCategory: discount.targetCategory || '',
       targetProductIds: targetIds,
-      isActive: discount.isActive,
+      isActive: discount.isActive ?? true,
     });
   };
 
