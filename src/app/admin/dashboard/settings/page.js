@@ -374,7 +374,10 @@ export default function SettingsPage() {
 
       {/* Loyalty & Rewards Section */}
       <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 lg:col-span-2">
-        <h2 className="text-xl font-semibold text-white mb-4">🏆 Loyalty & Rewards</h2>
+        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-yellow-500"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+          Loyalty & Rewards
+        </h2>
         <p className="text-pc-muted mb-6 text-sm">
           Configure the points system and sign-up bonuses. Turn it off if you do not wish to offer rewards.
         </p>
@@ -582,26 +585,28 @@ export default function SettingsPage() {
 
       {/* AI Staff Picks Section */}
       <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 lg:col-span-2">
-        <h2 className="text-xl font-semibold text-white mb-4">🚀 AI Auto-Select Staff Picks</h2>
+        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-purple-400"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 3.86-12A2 2 0 0 1 15 2a22 22 0 0 1 12 3.86c0 1.22-.78 2.36-1.93 2.53A22 22 0 0 1 15 12z"/><path d="M16 11c1.5 0 3-.5 3-3s-1.5-3-3-3-3 1.5-3 3 1.5 3 3 3z"/></svg>
+          AI Auto-Select Staff Picks
+        </h2>
         <p className="text-pc-muted mb-6 text-sm">
           Let AI automatically pick 10 exciting, diverse products to feature as &quot;Staff Picks&quot; on your homepage. 
           When enabled, the picks will automatically update once a week.
         </p>
 
-        <form onSubmit={handleAiPicksSubmit} className="space-y-6">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <div className="relative">
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={aiStaffPicksEnabled}
-                onChange={(e) => setAiStaffPicksEnabled(e.target.checked)}
-              />
-              <div className={`block w-14 h-8 rounded-full transition-colors ${aiStaffPicksEnabled ? 'bg-pc-green' : 'bg-pc-black border border-pc-border'}`}></div>
-              <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${aiStaffPicksEnabled ? 'translate-x-6' : ''}`}></div>
-            </div>
-            <span className="text-white font-medium">Enable AI Auto-Select</span>
-          </label>
+        <form onSubmit={handleAiPicksSubmit} className="space-y-4">
+          <div className="flex items-center gap-3 mb-6 bg-pc-black border border-pc-border p-4 rounded-xl">
+            <input 
+              type="checkbox" 
+              id="aiStaffPicksEnabled" 
+              checked={aiStaffPicksEnabled}
+              onChange={(e) => setAiStaffPicksEnabled(e.target.checked)}
+              className="w-5 h-5 accent-pc-green rounded cursor-pointer"
+            />
+            <label htmlFor="aiStaffPicksEnabled" className="text-white font-medium cursor-pointer">
+              Enable AI Auto-Select
+            </label>
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
             <button
@@ -632,7 +637,10 @@ export default function SettingsPage() {
 
       {/* AI Settings Section */}
       <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 lg:col-span-2">
-        <h2 className="text-xl font-semibold text-white mb-4">✨ AI Budtender Settings</h2>
+        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-blue-400"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+          AI Budtender Settings
+        </h2>
         <p className="text-pc-muted mb-6 text-sm">
           Customize the instructions given to the AI Chatbot on your storefront. Train it to use specific slang, recommend certain products, or adopt a unique persona.
         </p>
@@ -644,7 +652,10 @@ export default function SettingsPage() {
             <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key. Add your own key to bypass free limits or use paid models.</p>
             {openRouterApiKey === '••••••••••••••••' ? (
               <div className="flex items-center gap-4 bg-pc-black border border-pc-border rounded-xl px-4 py-2 mb-4">
-                <span className="text-pc-green font-bold">✅ Configured</span>
+                <span className="text-pc-green font-bold flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M20 6 9 17l-5-5"/></svg>
+                  Configured
+                </span>
                 <span className="text-pc-muted flex-1 text-right tracking-widest">{openRouterApiKey}</span>
                 <button
                   type="button"
@@ -671,7 +682,10 @@ export default function SettingsPage() {
             <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key. Add your own key to bypass free limits or use paid models.</p>
             {groqApiKey === '••••••••••••••••' ? (
               <div className="flex items-center gap-4 bg-pc-black border border-pc-border rounded-xl px-4 py-2 mb-4">
-                <span className="text-pc-green font-bold">✅ Configured</span>
+                <span className="text-pc-green font-bold flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M20 6 9 17l-5-5"/></svg>
+                  Configured
+                </span>
                 <span className="text-pc-muted flex-1 text-right tracking-widest">{groqApiKey}</span>
                 <button
                   type="button"
