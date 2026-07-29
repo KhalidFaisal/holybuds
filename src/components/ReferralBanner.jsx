@@ -48,7 +48,7 @@ export default function ReferralBanner() {
   if (!visible) return null;
 
   return (
-    <div className="bg-pc-green text-black text-center py-2 px-4 text-sm font-semibold tracking-wide">
+    <div className="fixed top-16 md:top-20 left-0 right-0 z-[40] bg-pc-green text-black text-center py-2 px-4 text-sm font-semibold tracking-wide shadow-lg animate-fade-in">
       🎉 You've unlocked ${discountAmount?.toFixed(2)} off your first order from {driverName}!
       <button 
         onClick={() => setVisible(false)}
