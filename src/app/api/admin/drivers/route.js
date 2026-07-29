@@ -99,14 +99,24 @@ export async function PATCH(request) {
     if (!id) return NextResponse.json({ error: 'Driver ID required' }, { status: 400 });
 
     if (action === 'PAYOUT') {
-      const { amount } = data;
-      // Mark pending payout as 0 or decrement by amount
-      const driver = await prisma.driver.update({
-        where: { id },
-        data: { 
-          pendingPayout: amount ? { decrement: parseFloat(amount) } : 0 
-        }
-      });
+      const amount = data.amount;
+      if (!amount || amount <= 0) {
+        return NextResponse.json({ error: 'Valid payout amount required' }, { status: 400 });
+      }
+
+      const [driver, payout] = await prisma.$transaction([
+        prisma.driver.update({
+          where: { id },
+          data: { pendingPayout: { decrement: parseFloat(amount) } }
+        }),
+        prisma.driverPayout.create({
+          data: {
+            driverId: id,
+            amount: parseFloat(amount)
+          }
+        })
+      ]);
+
       return NextResponse.json(driver);
     }
 
@@ -114,7 +124,7 @@ export async function PATCH(request) {
     // If empty string, convert to null
     if (updateData.email === '') updateData.email = null;
     if (updateData.phone === '') updateData.phone = null;
-    
+
     // Ensure we don't nullify both
     if (updateData.phone === null && updateData.email === null) {
       return NextResponse.json({ error: 'Either phone or email is required' }, { status: 400 });

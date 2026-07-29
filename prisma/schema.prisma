@@ -158,6 +158,7 @@ model Driver {
   updatedAt    DateTime         @updatedAt
   referrals    DriverReferral[]
   bonuses      DriverBonus[]
+  payouts      DriverPayout[]
 }
 
 model DriverReferral {
@@ -177,6 +178,14 @@ model DriverBonus {
   bonusAmount   Float
   referralCount Int
   createdAt     DateTime @default(now())
+}
+
+model DriverPayout {
+  id        String   @id @default(cuid())
+  driverId  String
+  driver    Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  amount    Float
+  createdAt DateTime @default(now())
 }
 
 // NextAuth Models

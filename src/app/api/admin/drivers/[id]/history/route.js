@@ -1,0 +1,77 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { authenticateAdmin } from '@/lib/auth';
+
+export async function GET(request, { params }) {
+  const admin = await authenticateAdmin(request);
+  if (!admin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = params;
+  if (!id) {
+    return NextResponse.json({ error: 'Driver ID required' }, { status: 400 });
+  }
+
+  try {
+    const driver = await prisma.driver.findUnique({
+      where: { id },
+      include: {
+        referrals: {
+          orderBy: { createdAt: 'desc' }
+        },
+        bonuses: {
+          orderBy: { createdAt: 'desc' }
+        },
+        payouts: {
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    if (!driver) {
+      return NextResponse.json({ error: 'Driver not found' }, { status: 404 });
+    }
+
+    // Unify and sort the timeline
+    const timeline = [];
+
+    driver.referrals.forEach(ref => {
+      timeline.push({
+        type: 'REFERRAL',
+        id: ref.id,
+        amount: ref.rewardAmount,
+        date: ref.createdAt,
+        orderId: ref.orderId,
+        customerId: ref.customerId
+      });
+    });
+
+    driver.bonuses.forEach(bonus => {
+      timeline.push({
+        type: 'BONUS',
+        id: bonus.id,
+        amount: bonus.bonusAmount,
+        date: bonus.createdAt,
+        referralCount: bonus.referralCount
+      });
+    });
+
+    driver.payouts.forEach(payout => {
+      timeline.push({
+        type: 'PAYOUT',
+        id: payout.id,
+        amount: payout.amount,
+        date: payout.createdAt
+      });
+    });
+
+    // Sort descending by date
+    timeline.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    return NextResponse.json(timeline);
+  } catch (error) {
+    console.error('Error fetching driver history:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

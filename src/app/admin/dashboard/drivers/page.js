@@ -20,10 +20,17 @@ export default function DriversPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editDriverId, setEditDriverId] = useState(null);
   
+  // Payout State
   const [isPayoutOpen, setIsPayoutOpen] = useState(false);
   const [payoutDriver, setPayoutDriver] = useState(null);
   const [payoutAmount, setPayoutAmount] = useState('');
   const [payoutLoading, setPayoutLoading] = useState(false);
+
+  // History State
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [historyDriver, setHistoryDriver] = useState(null);
+  const [historyData, setHistoryData] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   // Auto-gen suffix for referral codes
   const [randomSuffix, setRandomSuffix] = useState('');
@@ -109,6 +116,25 @@ export default function DriversPage() {
       alert(err.message);
     } finally {
       setPayoutLoading(false);
+    }
+  };
+
+  const openHistoryModal = async (driver) => {
+    setHistoryDriver(driver);
+    setHistoryData([]);
+    setIsHistoryOpen(true);
+    setHistoryLoading(true);
+    try {
+      const res = await fetch(`/api/admin/drivers/${driver.id}/history`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      });
+      if (!res.ok) throw new Error('Failed to load history');
+      const data = await res.json();
+      setHistoryData(data);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -283,6 +309,12 @@ export default function DriversPage() {
                             Payout
                           </button>
                         )}
+                        <button
+                          onClick={() => openHistoryModal(driver)}
+                          className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded hover:bg-blue-500 hover:text-white transition-colors text-sm font-medium"
+                        >
+                          History
+                        </button>
                         <button
                           onClick={() => openEditModal(driver)}
                           className="px-3 py-1 bg-pc-border text-pc-muted rounded hover:bg-pc-border/80 hover:text-white transition-colors text-sm font-medium"
@@ -570,6 +602,77 @@ export default function DriversPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* History Modal */}
+      {isHistoryOpen && historyDriver && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-pc-dark border border-pc-border rounded-2xl w-full max-w-2xl p-6 max-h-[85vh] flex flex-col animate-scale-in">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-white">History: {historyDriver.name}</h2>
+                <p className="text-sm text-pc-muted">Referrals, Bonuses, and Payouts timeline</p>
+              </div>
+              <button onClick={() => setIsHistoryOpen(false)} className="text-pc-muted hover:text-white">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4 pb-4">
+              {historyLoading ? (
+                <div className="text-center text-pc-muted py-8">Loading history...</div>
+              ) : historyData.length === 0 ? (
+                <div className="text-center text-pc-muted py-8">No history recorded yet.</div>
+              ) : (
+                <div className="relative border-l-2 border-pc-border ml-4 space-y-8">
+                  {historyData.map((item, i) => (
+                    <div key={item.id + i} className="relative pl-6">
+                      {/* Timeline Dot */}
+                      <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-pc-dark ${
+                        item.type === 'PAYOUT' ? 'bg-yellow-400' :
+                        item.type === 'BONUS' ? 'bg-purple-500' : 'bg-pc-green'
+                      }`} />
+                      
+                      <div className="bg-pc-black border border-pc-border rounded-xl p-4">
+                        <div className="flex justify-between items-start mb-1">
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                            item.type === 'PAYOUT' ? 'bg-yellow-400/10 text-yellow-400' :
+                            item.type === 'BONUS' ? 'bg-purple-500/10 text-purple-400' : 'bg-pc-green/10 text-pc-green'
+                          }`}>
+                            {item.type}
+                          </span>
+                          <span className="text-xs text-pc-muted">
+                            {new Date(item.date).toLocaleString()}
+                          </span>
+                        </div>
+                        
+                        <div className="mt-2 flex justify-between items-end">
+                          <div>
+                            {item.type === 'REFERRAL' && (
+                              <p className="text-white text-sm">Customer Order Referral</p>
+                            )}
+                            {item.type === 'BONUS' && (
+                              <p className="text-white text-sm">Unlocked {item.referralCount}-referral bonus</p>
+                            )}
+                            {item.type === 'PAYOUT' && (
+                              <p className="text-white text-sm">Admin payout processed</p>
+                            )}
+                          </div>
+                          
+                          <div className={`text-lg font-bold ${
+                            item.type === 'PAYOUT' ? 'text-white' : 'text-pc-green'
+                          }`}>
+                            {item.type === 'PAYOUT' ? '-' : '+'}${item.amount.toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
