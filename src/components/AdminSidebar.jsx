@@ -50,6 +50,15 @@ const navItems = [
     ),
   },
   {
+    label: 'Drivers',
+    href: '/admin/dashboard/drivers',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.25 15.65c.66.66 1.48 1.15 2.37 1.42 2.7.83 5.42-1 6.25-3.7.83-2.7-1-5.42-3.7-6.25-2.7-.83-5.42 1-6.25 3.7-.17.56-.25 1.15-.22 1.74l-6.1 6.1c-.2.2-.4.45-.55.7l-1.9 3.2c-.3.5.2 1 .7.7l3.2-1.9c.25-.15.5-.35.7-.55l5.5-5.46M17 9c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1Z" />
+      </svg>
+    ),
+  },
+  {
     label: 'Orders',
     href: '/admin/dashboard/orders',
     icon: (
