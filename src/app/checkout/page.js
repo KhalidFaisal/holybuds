@@ -62,6 +62,38 @@ function CheckoutContent() {
   const [selectedReward, setSelectedReward] = useState(null);
   const [showFullLoyaltyPanel, setShowFullLoyaltyPanel] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [driverReferralDiscount, setDriverReferralDiscount] = useState(0);
+
+  // Initialize referredByCode from localStorage
+  useEffect(() => {
+    const code = localStorage.getItem('driver_referral_code');
+    if (code) {
+      setForm(prev => ({ ...prev, referredByCode: code }));
+    }
+  }, []);
+
+  // Fetch driver referral discount if applicable
+  useEffect(() => {
+    if (isNewCustomer && form.referredByCode) {
+      const fetchDiscount = async () => {
+        try {
+          const res = await fetch(`/api/referral?code=${form.referredByCode}`);
+          if (res.ok) {
+            const data = await res.json();
+            setDriverReferralDiscount(data.discountAmount);
+          } else {
+            setDriverReferralDiscount(0);
+          }
+        } catch (e) {
+          setDriverReferralDiscount(0);
+        }
+      };
+      const timeoutId = setTimeout(fetchDiscount, 500);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setDriverReferralDiscount(0);
+    }
+  }, [isNewCustomer, form.referredByCode]);
 
   // Phone lookup
   useEffect(() => {
@@ -121,11 +153,12 @@ function CheckoutContent() {
 
   // If a reward is selected, calculate its discount
   const rewardDiscount = calcRewardDiscount(selectedReward, items);
+  const appliedDriverDiscount = driverReferralDiscount;
   
   // To avoid double dipping, if a standard promo code discount exists, we just sum them.
   // Wait, let's just make the final total subtract both.
   const isDelivery = form.deliveryMethod === 'DELIVERY';
-  const effectiveTotal = total - rewardDiscount;
+  const effectiveTotal = total - rewardDiscount - appliedDriverDiscount;
   const deliveryFee = isDelivery && effectiveTotal < 100 ? 10 : 0;
   const finalTotal = Math.max(0, effectiveTotal) + deliveryFee;
 
@@ -584,6 +617,12 @@ function CheckoutContent() {
                   <div className="flex justify-between text-pc-green">
                     <span>Reward: {selectedReward?.label}</span>
                     <span>-${rewardDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+                {appliedDriverDiscount > 0 && (
+                  <div className="flex justify-between text-pc-green">
+                    <span>Referral Discount</span>
+                    <span>-${appliedDriverDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 {deliveryFee > 0 && (
