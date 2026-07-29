@@ -46,10 +46,11 @@ export async function POST(request) {
 
     const settings = await prisma.siteSettings.findUnique({
       where: { id: 'global' },
-      select: { driverBonusThreshold: true }
+      select: { driverBonusThreshold: true, driverBonusAmount: true }
     });
     
     const threshold = settings?.driverBonusThreshold || 10;
+    const bonusAmount = settings?.driverBonusAmount || 100.0;
     const progressToBonus = totalReferrals % threshold;
 
     return NextResponse.json({
@@ -61,6 +62,7 @@ export async function POST(request) {
       totalBonuses,
       progressToBonus,
       bonusThreshold: threshold,
+      bonusAmount: bonusAmount,
       recentReferrals: driver.referrals.map(r => ({
         id: r.id,
         date: r.createdAt,

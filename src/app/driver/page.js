@@ -191,7 +191,7 @@ export default function DriverPortal() {
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <svg className="w-24 h-24 text-pc-green" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
           </div>
-          <h2 className="text-lg font-bold text-white mb-2 relative z-10">Next $100 Bonus Progress</h2>
+          <h2 className="text-lg font-bold text-white mb-2 relative z-10">Next ${driver.bonusAmount || 100} Bonus Progress</h2>
           <p className="text-pc-muted text-sm mb-4 relative z-10">
             You have {driver.progressToBonus} out of {driver.bonusThreshold} referrals needed for your next bonus.
           </p>
