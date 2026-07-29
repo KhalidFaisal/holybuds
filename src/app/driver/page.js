@@ -116,7 +116,25 @@ export default function DriverPortal() {
 
   // Dashboard View
   const referralLink = typeof window !== 'undefined' ? `${window.location.origin}?ref=${driver.referralCode}` : '';
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(referralLink)}&color=00ff00&bgcolor=000000`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(referralLink)}`;
+
+  const downloadQRCode = async () => {
+    try {
+      const response = await fetch(qrCodeUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Holybuds-Referral-${driver.referralCode}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download QR code', err);
+      window.open(qrCodeUrl, '_blank');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-pc-black p-4 sm:p-8">
@@ -183,9 +201,21 @@ export default function DriverPortal() {
           <h2 className="text-lg font-bold text-white">Your Referral QR Code</h2>
           <p className="text-pc-muted text-sm">Have customers scan this to automatically apply your referral code and get their discount!</p>
           
-          <div className="inline-block bg-black p-4 rounded-xl border-4 border-pc-green">
+          <div className="inline-block bg-white p-4 rounded-xl">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48" />
+          </div>
+
+          <div>
+            <button 
+              onClick={downloadQRCode}
+              className="px-6 py-2 bg-pc-green text-black rounded-lg text-sm font-bold hover:bg-pc-green/90 transition-colors inline-flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download QR Code
+            </button>
           </div>
 
           <div>
