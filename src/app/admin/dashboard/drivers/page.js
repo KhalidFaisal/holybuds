@@ -236,7 +236,7 @@ export default function DriversPage() {
                   <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider">Code</th>
                   <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider">Referrals / Bonuses</th>
                   <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider">Total Earned</th>
-                  <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider">Paid</th>
+                  <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider">Total Paid</th>
                   <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider">Pending</th>
                   <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider text-right">Actions</th>
                 </tr>
