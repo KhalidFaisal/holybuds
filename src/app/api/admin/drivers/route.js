@@ -45,21 +45,23 @@ export async function POST(request) {
 
   try {
     const data = await request.json();
-    const { name, phone, referralCode, pin } = data;
+    const { name, phone, email, referralCode, pin } = data;
 
     if (!name || !phone || !referralCode) {
       return NextResponse.json({ error: 'Name, phone, and referral code are required' }, { status: 400 });
     }
 
-    // Check if phone or referral code exists
+    // Check if phone, email, or referral code exists
+    const conditions = [{ phone }, { referralCode }];
+    if (email) conditions.push({ email });
+    
     const existing = await prisma.driver.findFirst({
-      where: {
-        OR: [{ phone }, { referralCode }]
-      }
+      where: { OR: conditions }
     });
 
     if (existing) {
       if (existing.phone === phone) return NextResponse.json({ error: 'Phone number already exists' }, { status: 400 });
+      if (email && existing.email === email) return NextResponse.json({ error: 'Email already exists' }, { status: 400 });
       if (existing.referralCode === referralCode) return NextResponse.json({ error: 'Referral code already exists' }, { status: 400 });
     }
 
@@ -67,6 +69,7 @@ export async function POST(request) {
       data: {
         name,
         phone,
+        email: email || null,
         referralCode: referralCode.toUpperCase(),
         pin: pin || '0000',
         isActive: true,
@@ -104,6 +107,9 @@ export async function PATCH(request) {
     }
 
     // Normal update
+    // If email is empty string, convert to null
+    if (updateData.email === '') updateData.email = null;
+    
     const driver = await prisma.driver.update({
       where: { id },
       data: updateData

@@ -7,11 +7,18 @@ export async function POST(request) {
     const { phone, pin } = data;
 
     if (!phone || !pin) {
-      return NextResponse.json({ error: 'Phone and PIN required' }, { status: 400 });
+      return NextResponse.json({ error: 'Phone/Email and PIN required' }, { status: 400 });
     }
 
-    const driver = await prisma.driver.findUnique({
-      where: { phone },
+    const driver = await prisma.driver.findFirst({
+      where: {
+        OR: [
+          { phone },
+          { email: phone }
+        ],
+        pin,
+        isActive: true
+      },
       include: {
         referrals: {
           orderBy: { createdAt: 'desc' },

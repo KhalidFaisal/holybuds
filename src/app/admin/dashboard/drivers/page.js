@@ -11,6 +11,7 @@ export default function DriversPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
+  const [newEmail, setNewEmail] = useState('');
   const [newCode, setNewCode] = useState('');
   const [newPin, setNewPin] = useState('0000');
   const [addLoading, setAddLoading] = useState(false);
@@ -55,7 +56,7 @@ export default function DriversPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
         },
-        body: JSON.stringify({ name: newName, phone: newPhone, referralCode: newCode, pin: newPin })
+        body: JSON.stringify({ name: newName, phone: newPhone, email: newEmail, referralCode: newCode, pin: newPin })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create driver');
@@ -63,6 +64,7 @@ export default function DriversPage() {
       setIsAddOpen(false);
       setNewName('');
       setNewPhone('');
+      setNewEmail('');
       setNewCode('');
       setNewPin('0000');
       fetchDrivers(); // Refresh list
@@ -108,6 +110,7 @@ export default function DriversPage() {
     setEditDriverId(driver.id);
     setNewName(driver.name);
     setNewPhone(driver.phone);
+    setNewEmail(driver.email || '');
     setNewCode(driver.referralCode);
     setNewPin(driver.pin);
     setIsEditOpen(true);
@@ -124,7 +127,7 @@ export default function DriversPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
         },
-        body: JSON.stringify({ id: editDriverId, name: newName, phone: newPhone, referralCode: newCode, pin: newPin })
+        body: JSON.stringify({ id: editDriverId, name: newName, phone: newPhone, email: newEmail, referralCode: newCode, pin: newPin })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to update driver');
@@ -133,6 +136,7 @@ export default function DriversPage() {
       setEditDriverId(null);
       setNewName('');
       setNewPhone('');
+      setNewEmail('');
       setNewCode('');
       setNewPin('0000');
       fetchDrivers();
@@ -219,7 +223,8 @@ export default function DriversPage() {
                   <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider">Code</th>
                   <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider">Referrals / Bonuses</th>
                   <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider">Total Earned</th>
-                  <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider">Pending Payout</th>
+                  <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider">Paid</th>
+                  <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider">Pending</th>
                   <th className="p-4 text-xs font-semibold text-pc-muted uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
@@ -231,7 +236,7 @@ export default function DriversPage() {
                         <div className={`w-2 h-2 rounded-full ${driver.isActive ? 'bg-pc-green' : 'bg-red-500'}`} />
                         <div>
                           <div className="font-medium text-white">{driver.name}</div>
-                          <div className="text-xs text-pc-muted">{driver.phone} • PIN: {driver.pin}</div>
+                          <div className="text-xs text-pc-muted">{driver.phone} {driver.email ? `• ${driver.email}` : ''} • PIN: {driver.pin}</div>
                         </div>
                       </div>
                     </td>
@@ -246,6 +251,9 @@ export default function DriversPage() {
                     </td>
                     <td className="p-4">
                       <div className="text-white font-medium">${driver.totalEarned.toFixed(2)}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-pc-green font-medium">${(driver.totalEarned - driver.pendingPayout).toFixed(2)}</div>
                     </td>
                     <td className="p-4">
                       <div className={`font-bold ${driver.pendingPayout > 0 ? 'text-yellow-400' : 'text-pc-muted'}`}>
@@ -331,6 +339,17 @@ export default function DriversPage() {
               </div>
               
               <div>
+                <label className="block text-sm font-medium text-pc-muted mb-1">Email Address (Optional Login)</label>
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={e => setNewEmail(e.target.value)}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:border-pc-green focus:outline-none"
+                  placeholder="e.g. mike@example.com"
+                />
+              </div>
+              
+              <div>
                 <label className="block text-sm font-medium text-pc-muted mb-1">Unique Referral Code</label>
                 <input
                   type="text"
@@ -411,6 +430,17 @@ export default function DriversPage() {
                   onChange={e => setNewPhone(e.target.value)}
                   className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:border-pc-green focus:outline-none"
                   placeholder="e.g. 555-0123"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-pc-muted mb-1">Email Address (Optional Login)</label>
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={e => setNewEmail(e.target.value)}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:border-pc-green focus:outline-none"
+                  placeholder="e.g. mike@example.com"
                 />
               </div>
               

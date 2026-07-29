@@ -82,14 +82,14 @@ export default function DriverPortal() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-pc-muted mb-1">Phone Number</label>
+              <label className="block text-sm font-medium text-pc-muted mb-1">Phone or Email</label>
               <input
-                type="tel"
+                type="text"
                 required
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
-                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pc-green"
-                placeholder="Enter your phone number"
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-3 text-white focus:border-pc-green focus:outline-none focus:ring-1 focus:ring-pc-green transition-all"
+                placeholder="e.g. 555-0123 or me@example.com"
               />
             </div>
             
