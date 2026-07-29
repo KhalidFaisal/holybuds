@@ -8,7 +8,8 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = params;
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
   if (!id) {
     return NextResponse.json({ error: 'Driver ID required' }, { status: 400 });
   }
