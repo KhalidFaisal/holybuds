@@ -92,10 +92,13 @@ export async function PATCH(request) {
     if (!id) return NextResponse.json({ error: 'Driver ID required' }, { status: 400 });
 
     if (action === 'PAYOUT') {
-      // Mark pending payout as 0, but keep totalEarned
+      const { amount } = data;
+      // Mark pending payout as 0 or decrement by amount
       const driver = await prisma.driver.update({
         where: { id },
-        data: { pendingPayout: 0 }
+        data: { 
+          pendingPayout: amount ? { decrement: parseFloat(amount) } : 0 
+        }
       });
       return NextResponse.json(driver);
     }
@@ -110,5 +113,31 @@ export async function PATCH(request) {
   } catch (error) {
     console.error('Error updating driver:', error);
     return NextResponse.json({ error: 'Failed to update driver' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  if (!authenticateAdmin(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) return NextResponse.json({ error: 'Driver ID required' }, { status: 400 });
+
+    // First delete any relations if needed, but Prisma handles it if cascade is set.
+    // If not, we might need to delete driverReferral and driverBonus. Let's assume Prisma handles or we just delete driver.
+    // Actually, referrals are linked to orders. We probably shouldn't hard-delete drivers if they have history. 
+    // It's safer to just let Prisma fail if cascade isn't set, or we wrap it.
+    await prisma.driver.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting driver:', error);
+    return NextResponse.json({ error: 'Failed to delete driver (they might have existing referrals)' }, { status: 500 });
   }
 }

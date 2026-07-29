@@ -15,6 +15,16 @@ export default function DriversPage() {
   const [newPin, setNewPin] = useState('0000');
   const [addLoading, setAddLoading] = useState(false);
 
+  // Edit State
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editDriverId, setEditDriverId] = useState(null);
+  
+  // Payout State
+  const [isPayoutOpen, setIsPayoutOpen] = useState(false);
+  const [payoutDriver, setPayoutDriver] = useState(null);
+  const [payoutAmount, setPayoutAmount] = useState('');
+  const [payoutLoading, setPayoutLoading] = useState(false);
+
   useEffect(() => {
     fetchDrivers();
   }, []);
@@ -63,8 +73,10 @@ export default function DriversPage() {
     }
   };
 
-  const handlePayout = async (id) => {
-    if (!confirm('Are you sure you want to mark this driver as paid? This will reset their pending payout to $0.')) return;
+  const handlePayout = async (e) => {
+    e.preventDefault();
+    if (!payoutDriver) return;
+    setPayoutLoading(true);
     
     try {
       const res = await fetch('/api/admin/drivers', {
@@ -73,9 +85,73 @@ export default function DriversPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
         },
-        body: JSON.stringify({ id, action: 'PAYOUT' })
+        body: JSON.stringify({ 
+          id: payoutDriver.id, 
+          action: 'PAYOUT',
+          amount: parseFloat(payoutAmount) || payoutDriver.pendingPayout
+        })
       });
       if (!res.ok) throw new Error('Failed to payout driver');
+      
+      setIsPayoutOpen(false);
+      setPayoutDriver(null);
+      setPayoutAmount('');
+      fetchDrivers();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setPayoutLoading(false);
+    }
+  };
+
+  const openEditModal = (driver) => {
+    setEditDriverId(driver.id);
+    setNewName(driver.name);
+    setNewPhone(driver.phone);
+    setNewCode(driver.referralCode);
+    setNewPin(driver.pin);
+    setIsEditOpen(true);
+  };
+
+  const handleEditDriver = async (e) => {
+    e.preventDefault();
+    setAddLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/drivers', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        },
+        body: JSON.stringify({ id: editDriverId, name: newName, phone: newPhone, referralCode: newCode, pin: newPin })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update driver');
+      
+      setIsEditOpen(false);
+      setEditDriverId(null);
+      setNewName('');
+      setNewPhone('');
+      setNewCode('');
+      setNewPin('0000');
+      fetchDrivers();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to completely delete this driver? This might fail if they have past referrals.')) return;
+    try {
+      const res = await fetch(`/api/admin/drivers?id=${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete driver');
       fetchDrivers();
     } catch (err) {
       alert(err.message);
@@ -177,24 +253,38 @@ export default function DriversPage() {
                       </div>
                     </td>
                     <td className="p-4 text-right space-x-2">
-                      {driver.pendingPayout > 0 && (
+                      <div className="flex justify-end gap-2">
+                        {driver.pendingPayout > 0 && (
+                          <button
+                            onClick={() => { setPayoutDriver(driver); setPayoutAmount(driver.pendingPayout); setIsPayoutOpen(true); }}
+                            className="px-3 py-1 bg-pc-green/20 text-pc-green rounded hover:bg-pc-green hover:text-black transition-colors text-sm font-medium"
+                          >
+                            Payout
+                          </button>
+                        )}
                         <button
-                          onClick={() => handlePayout(driver.id)}
-                          className="px-3 py-1 bg-pc-green/20 text-pc-green rounded hover:bg-pc-green hover:text-black transition-colors text-sm font-medium"
+                          onClick={() => openEditModal(driver)}
+                          className="px-3 py-1 bg-pc-border text-pc-muted rounded hover:bg-pc-border/80 hover:text-white transition-colors text-sm font-medium"
                         >
-                          Mark Paid
+                          Edit
                         </button>
-                      )}
-                      <button
-                        onClick={() => handleToggleActive(driver.id, driver.isActive)}
-                        className={`px-3 py-1 rounded transition-colors text-sm font-medium ${
-                          driver.isActive 
-                            ? 'bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white' 
-                            : 'bg-pc-border text-pc-muted hover:text-white'
-                        }`}
-                      >
-                        {driver.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
+                        <button
+                          onClick={() => handleToggleActive(driver.id, driver.isActive)}
+                          className={`px-3 py-1 rounded transition-colors text-sm font-medium ${
+                            driver.isActive 
+                              ? 'bg-orange-500/10 text-orange-400 hover:bg-orange-500 hover:text-white' 
+                              : 'bg-pc-border text-pc-muted hover:text-white'
+                          }`}
+                        >
+                          {driver.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(driver.id)}
+                          className="px-3 py-1 bg-red-500/10 text-red-400 rounded hover:bg-red-500 hover:text-white transition-colors text-sm font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -281,6 +371,144 @@ export default function DriversPage() {
                   className="flex-1 btn-primary"
                 >
                   {addLoading ? 'Adding...' : 'Add Driver'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {isEditOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-pc-dark border border-pc-border rounded-2xl w-full max-w-md p-6 animate-scale-in">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-white">Edit Driver</h2>
+              <button onClick={() => setIsEditOpen(false)} className="text-pc-muted hover:text-white">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditDriver} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-pc-muted mb-1">Driver Name</label>
+                <input
+                  type="text"
+                  required
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:border-pc-green focus:outline-none"
+                  placeholder="e.g. Mike Smith"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-pc-muted mb-1">Phone Number (For Login)</label>
+                <input
+                  type="tel"
+                  required
+                  value={newPhone}
+                  onChange={e => setNewPhone(e.target.value)}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:border-pc-green focus:outline-none"
+                  placeholder="e.g. 555-0123"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-pc-muted mb-1">Unique Referral Code</label>
+                <input
+                  type="text"
+                  required
+                  value={newCode}
+                  onChange={e => setNewCode(e.target.value.toUpperCase())}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:border-pc-green focus:outline-none font-mono"
+                  placeholder="e.g. MIKE10"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-pc-muted mb-1">4-Digit Login PIN</label>
+                <input
+                  type="text"
+                  required
+                  pattern="[0-9]{4}"
+                  value={newPin}
+                  onChange={e => setNewPin(e.target.value)}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:border-pc-green focus:outline-none font-mono"
+                  placeholder="0000"
+                  maxLength={4}
+                />
+              </div>
+              
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsEditOpen(false)}
+                  className="flex-1 btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addLoading}
+                  className="flex-1 btn-primary"
+                >
+                  {addLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Payout Modal */}
+      {isPayoutOpen && payoutDriver && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-pc-dark border border-pc-border rounded-2xl w-full max-w-sm p-6 animate-scale-in">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-white">Payout Driver</h2>
+              <button onClick={() => setIsPayoutOpen(false)} className="text-pc-muted hover:text-white">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            
+            <form onSubmit={handlePayout} className="space-y-4">
+              <div className="bg-pc-black/50 p-4 rounded-xl border border-pc-border/50 text-center mb-4">
+                <p className="text-pc-muted text-sm mb-1">Pending Balance</p>
+                <p className="text-2xl font-bold text-yellow-400">${payoutDriver.pendingPayout.toFixed(2)}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-pc-muted mb-1">Amount to Pay</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-pc-muted font-bold">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max={payoutDriver.pendingPayout}
+                    required
+                    value={payoutAmount}
+                    onChange={e => setPayoutAmount(e.target.value)}
+                    className="w-full bg-pc-black border border-pc-border rounded-xl pl-8 pr-4 py-3 text-white focus:border-pc-green focus:outline-none text-lg font-bold"
+                  />
+                </div>
+              </div>
+              
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPayoutOpen(false)}
+                  className="flex-1 btn-secondary py-3"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={payoutLoading}
+                  className="flex-1 btn-primary py-3"
+                >
+                  {payoutLoading ? 'Processing...' : 'Mark as Paid'}
                 </button>
               </div>
             </form>
