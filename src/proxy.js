@@ -14,6 +14,7 @@ export function proxy(request) {
   if (
     pathname.startsWith('/api') ||
     pathname.startsWith('/admin') ||
+    pathname.startsWith('/driver') ||
     pathname.startsWith('/password') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/sitemap.xml') ||
