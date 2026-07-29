@@ -43,6 +43,13 @@ export default function SettingsPage() {
   const [messageAiPicks, setMessageAiPicks] = useState('');
   const [generatingAiPicks, setGeneratingAiPicks] = useState(false);
 
+  const [driverReferralReward, setDriverReferralReward] = useState(10);
+  const [customerReferralDiscount, setCustomerReferralDiscount] = useState(5);
+  const [driverBonusThreshold, setDriverBonusThreshold] = useState(10);
+  const [driverBonusAmount, setDriverBonusAmount] = useState(100);
+  const [loadingDriverPromo, setLoadingDriverPromo] = useState(false);
+  const [messageDriverPromo, setMessageDriverPromo] = useState('');
+
   const timezones = useMemo(() => {
     if (typeof Intl === 'undefined' || !Intl.supportedValuesOf) return [];
     const tzs = Intl.supportedValuesOf('timeZone');
@@ -94,6 +101,10 @@ export default function SettingsPage() {
           if (data.pointsPerDollar !== undefined) setPointsPerDollar(data.pointsPerDollar);
           if (data.signupBonus !== undefined) setSignupBonus(data.signupBonus);
           if (data.aiStaffPicksEnabled !== undefined) setAiStaffPicksEnabled(data.aiStaffPicksEnabled);
+          if (data.driverReferralReward !== undefined) setDriverReferralReward(data.driverReferralReward);
+          if (data.customerReferralDiscount !== undefined) setCustomerReferralDiscount(data.customerReferralDiscount);
+          if (data.driverBonusThreshold !== undefined) setDriverBonusThreshold(data.driverBonusThreshold);
+          if (data.driverBonusAmount !== undefined) setDriverBonusAmount(data.driverBonusAmount);
         }
       } catch (e) {
         console.error(e);
@@ -361,6 +372,39 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDriverPromoSubmit = async (e) => {
+    e.preventDefault();
+    setLoadingDriverPromo(true);
+    setMessageDriverPromo('');
+
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        },
+        body: JSON.stringify({ 
+          driverReferralReward: parseFloat(driverReferralReward),
+          customerReferralDiscount: parseFloat(customerReferralDiscount),
+          driverBonusThreshold: parseInt(driverBonusThreshold),
+          driverBonusAmount: parseFloat(driverBonusAmount)
+        }),
+      });
+
+      if (res.ok) {
+        setMessageDriverPromo('Driver Referral Promos updated successfully.');
+      } else {
+        const data = await res.json();
+        setMessageDriverPromo(data.error || 'Failed to update settings.');
+      }
+    } catch (err) {
+      setMessageDriverPromo('An error occurred.');
+    } finally {
+      setLoadingDriverPromo(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in pb-12">
       <div className="flex justify-between items-end">
@@ -437,6 +481,88 @@ export default function SettingsPage() {
               className="btn-primary w-full py-3"
             >
               {loadingLoyalty ? 'Saving...' : 'Update Loyalty Settings'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Driver Referral Promo Section */}
+      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
+        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-green-500"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Driver Referral Promos
+        </h2>
+        <p className="text-pc-muted mb-6 text-sm min-h-[4rem]">
+          Configure the payouts for drivers who refer new customers, and the discount those customers receive.
+        </p>
+
+        <form onSubmit={handleDriverPromoSubmit} className="space-y-4 flex flex-col flex-grow">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col justify-end h-full">
+              <label className="block text-sm font-medium text-pc-muted mb-1">Driver Reward ($ per referral)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={driverReferralReward}
+                onChange={(e) => setDriverReferralReward(e.target.value)}
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+                required
+              />
+            </div>
+            
+            <div className="flex flex-col justify-end h-full">
+              <label className="block text-sm font-medium text-pc-muted mb-1">Customer Discount ($ off first order)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={customerReferralDiscount}
+                onChange={(e) => setCustomerReferralDiscount(e.target.value)}
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+                required
+              />
+            </div>
+            
+            <div className="flex flex-col justify-end h-full">
+              <label className="block text-sm font-medium text-pc-muted mb-1">Bonus Threshold (e.g., 10 referrals)</label>
+              <input
+                type="number"
+                min="1"
+                value={driverBonusThreshold}
+                onChange={(e) => setDriverBonusThreshold(e.target.value)}
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+                required
+              />
+            </div>
+            
+            <div className="flex flex-col justify-end h-full">
+              <label className="block text-sm font-medium text-pc-muted mb-1">Bonus Amount ($ payout)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={driverBonusAmount}
+                onChange={(e) => setDriverBonusAmount(e.target.value)}
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+                required
+              />
+            </div>
+          </div>
+
+          {messageDriverPromo && (
+            <div className={`p-3 rounded-lg text-sm mt-4 ${messageDriverPromo.includes('success') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+              {messageDriverPromo}
+            </div>
+          )}
+
+          <div className="mt-auto pt-4">
+            <button
+              type="submit"
+              disabled={loadingDriverPromo}
+              className="btn-primary w-full py-3"
+            >
+              {loadingDriverPromo ? 'Saving...' : 'Update Promos'}
             </button>
           </div>
         </form>

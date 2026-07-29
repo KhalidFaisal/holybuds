@@ -40,7 +40,11 @@ export async function GET(request) {
       pointsPerDollar: settings.pointsPerDollar ?? 1,
       signupBonus: settings.signupBonus ?? 50,
       aiStaffPicksEnabled: settings.aiStaffPicksEnabled ?? false,
-      aiStaffPicksLastUpdate: settings.aiStaffPicksLastUpdate || null
+      aiStaffPicksLastUpdate: settings.aiStaffPicksLastUpdate || null,
+      driverReferralReward: settings.driverReferralReward ?? 10.0,
+      customerReferralDiscount: settings.customerReferralDiscount ?? 5.0,
+      driverBonusThreshold: settings.driverBonusThreshold ?? 10,
+      driverBonusAmount: settings.driverBonusAmount ?? 100.0
     });
   } catch (error) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -114,6 +118,22 @@ export async function POST(request) {
 
     if (data.aiStaffPicksEnabled !== undefined) {
       updateData.aiStaffPicksEnabled = Boolean(data.aiStaffPicksEnabled);
+    }
+
+    if (data.driverReferralReward !== undefined) {
+      updateData.driverReferralReward = parseFloat(data.driverReferralReward);
+    }
+
+    if (data.customerReferralDiscount !== undefined) {
+      updateData.customerReferralDiscount = parseFloat(data.customerReferralDiscount);
+    }
+
+    if (data.driverBonusThreshold !== undefined) {
+      updateData.driverBonusThreshold = parseInt(data.driverBonusThreshold, 10);
+    }
+
+    if (data.driverBonusAmount !== undefined) {
+      updateData.driverBonusAmount = parseFloat(data.driverBonusAmount);
     }
 
     if (Object.keys(updateData).length === 0) {

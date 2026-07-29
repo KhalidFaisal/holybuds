@@ -179,6 +179,10 @@ export async function POST(request) {
     const loyaltyEnabled = settings?.loyaltyEnabled ?? true;
     const pointsPerDollar = settings?.pointsPerDollar ?? 1;
     const signupBonus = settings?.signupBonus ?? 50;
+    const driverReferralReward = settings?.driverReferralReward ?? 10.0;
+    const customerReferralDiscount = settings?.customerReferralDiscount ?? 5.0;
+    const driverBonusThreshold = settings?.driverBonusThreshold ?? 10;
+    const driverBonusAmount = settings?.driverBonusAmount ?? 100.0;
 
     let pointsEarned = 0;
     if (loyaltyEnabled) {
@@ -232,6 +236,42 @@ export async function POST(request) {
         throw new Error('Insufficient points for this reward');
       }
 
+      // Check if this is their first order and they have a valid referral code to apply discount
+      let finalDiscountAmount = bestDiscountAmount;
+      let finalDiscountName = bestDiscountName;
+
+      if (data.referredByCode && customer.totalOrders === 0) {
+        const validDriver = await tx.driver.findUnique({
+          where: { referralCode: data.referredByCode.toUpperCase() }
+        });
+        if (validDriver && validDriver.isActive) {
+          // It's their first order and they used a valid driver code
+          // Add the driver discount
+          finalDiscountAmount += customerReferralDiscount;
+          if (finalDiscountName) {
+            finalDiscountName += ` & Referral Discount`;
+          } else {
+            finalDiscountName = `Referral Discount ($${customerReferralDiscount} off)`;
+          }
+
+          // Ensure we don't discount more than the subtotal
+          if (finalDiscountAmount > subtotal) {
+            finalDiscountAmount = subtotal;
+          }
+
+          // Recalculate totals
+          effectiveTotal = subtotal - finalDiscountAmount - rewardDiscountAmount;
+          if (effectiveTotal < 0) effectiveTotal = 0;
+          total = effectiveTotal + deliveryFee;
+
+          // Recalculate points earned
+          if (loyaltyEnabled) {
+             pointsEarned = Math.floor(effectiveTotal) * pointsPerDollar;
+             if (pointsEarned < 0) pointsEarned = 0;
+          }
+        }
+      }
+
       // Create Order
       const newOrder = await tx.order.create({
         data: {
@@ -242,8 +282,8 @@ export async function POST(request) {
           deliveryMethod,
           deliveryAddress: data.deliveryAddress || '',
           total,
-          discountName: bestDiscountName,
-          discountAmount: bestDiscountAmount,
+          discountName: finalDiscountName,
+          discountAmount: finalDiscountAmount,
           notes,
           pointsEarned: loyaltyEnabled ? pointsEarned : 0,
           pointsUsed: pointsUsed,
@@ -280,6 +320,54 @@ export async function POST(request) {
           where: { id: item.productId },
           data: { stock: { decrement: item.quantity } },
         });
+      }
+
+      // Handle Driver Referral
+      if (data.referredByCode && customer.totalOrders === 1) { // It was 0 before this transaction incremented it to 1
+        const driver = await tx.driver.findUnique({
+          where: { referralCode: data.referredByCode.toUpperCase() }
+        });
+
+        if (driver && driver.isActive) {
+          // Add Driver Referral Record
+          await tx.driverReferral.create({
+            data: {
+              driverId: driver.id,
+              customerId: customer.id,
+              orderId: newOrder.id,
+              rewardAmount: driverReferralReward
+            }
+          });
+
+          // Update driver earnings
+          let earnedAmount = driverReferralReward;
+          let bonusAmountEarned = 0;
+
+          const totalReferrals = await tx.driverReferral.count({
+            where: { driverId: driver.id }
+          });
+
+          if (totalReferrals > 0 && totalReferrals % driverBonusThreshold === 0) {
+            bonusAmountEarned = driverBonusAmount;
+            earnedAmount += driverBonusAmount;
+            
+            await tx.driverBonus.create({
+              data: {
+                driverId: driver.id,
+                bonusAmount: driverBonusAmount,
+                referralCount: totalReferrals
+              }
+            });
+          }
+
+          await tx.driver.update({
+            where: { id: driver.id },
+            data: {
+              totalEarned: { increment: earnedAmount },
+              pendingPayout: { increment: earnedAmount }
+            }
+          });
+        }
       }
 
       return newOrder;

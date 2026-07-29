@@ -26,7 +26,9 @@ import ChatWidget from '@/components/ChatWidget';
 import AuthProvider from '@/components/AuthProvider';
 import MixpanelTracker from '@/components/MixpanelTracker';
 import MoodWidget from '@/components/MoodWidget';
+import ReferralBanner from '@/components/ReferralBanner';
 import { Analytics } from '@vercel/analytics/react';
+import { Suspense } from 'react';
 
 export default function RootLayout({ children }) {
   return (
@@ -38,7 +40,10 @@ export default function RootLayout({ children }) {
           style={{ backgroundImage: "url('/Leaf-Logo.png')" }}
         />
         <AuthProvider>
-          <div className="relative z-10">
+          <div className="relative z-10 flex flex-col min-h-screen">
+            <Suspense fallback={null}>
+              <ReferralBanner />
+            </Suspense>
             {children}
           </div>
           <ChatWidget />

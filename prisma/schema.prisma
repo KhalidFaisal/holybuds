@@ -96,6 +96,10 @@ model SiteSettings {
   signupBonus           Int     @default(50)
   aiStaffPicksEnabled   Boolean @default(false)
   aiStaffPicksLastUpdate DateTime?
+  driverReferralReward     Float   @default(10.0)
+  customerReferralDiscount Float   @default(5.0)
+  driverBonusThreshold     Int     @default(10)
+  driverBonusAmount        Float   @default(100.0)
 }
 
 model Category {
@@ -138,6 +142,40 @@ model ActiveSession {
   checkoutName    String?
   checkoutPhone   String?
   checkoutAddress String?
+}
+
+model Driver {
+  id           String           @id @default(cuid())
+  name         String
+  phone        String           @unique
+  pin          String           @default("0000") // simple login
+  referralCode String           @unique
+  isActive     Boolean          @default(true)
+  totalEarned  Float            @default(0)
+  pendingPayout Float           @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  referrals    DriverReferral[]
+  bonuses      DriverBonus[]
+}
+
+model DriverReferral {
+  id           String   @id @default(cuid())
+  driverId     String
+  driver       Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  customerId   String?
+  orderId      String?
+  rewardAmount Float
+  createdAt    DateTime @default(now())
+}
+
+model DriverBonus {
+  id            String   @id @default(cuid())
+  driverId      String
+  driver        Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  bonusAmount   Float
+  referralCount Int
+  createdAt     DateTime @default(now())
 }
 
 // NextAuth Models
