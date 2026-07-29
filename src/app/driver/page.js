@@ -7,6 +7,7 @@ export default function DriverPortal() {
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [error, setError] = useState('');
   
   const [driver, setDriver] = useState(null);
@@ -19,6 +20,8 @@ export default function DriverPortal() {
     const savedPin = localStorage.getItem('driver_auth_pin');
     if (savedPhone && savedPin) {
       login(savedPhone, savedPin);
+    } else {
+      setIsCheckingAuth(false);
     }
   }, []);
 
@@ -48,6 +51,7 @@ export default function DriverPortal() {
       localStorage.removeItem('driver_auth_pin');
     } finally {
       setLoading(false);
+      setIsCheckingAuth(false);
     }
   };
 
@@ -58,6 +62,14 @@ export default function DriverPortal() {
     setPhone('');
     setPin('');
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-pc-black flex flex-col items-center justify-center p-4">
+        <div className="animate-pulse text-pc-muted">Loading...</div>
+      </div>
+    );
+  }
 
   if (!driver) {
     return (
