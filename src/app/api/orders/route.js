@@ -323,7 +323,7 @@ export async function POST(request) {
       }
 
       // Handle Driver Referral
-      if (data.referredByCode && customer.totalOrders === 1) { // It was 0 before this transaction incremented it to 1
+      if (data.referredByCode && customer.totalOrders === 0) { // Local object still has pre-increment value
         const driver = await tx.driver.findUnique({
           where: { referralCode: data.referredByCode.toUpperCase() }
         });
