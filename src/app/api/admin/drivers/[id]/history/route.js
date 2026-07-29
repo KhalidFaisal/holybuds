@@ -19,7 +19,8 @@ export async function GET(request, { params }) {
       where: { id },
       include: {
         referrals: {
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
+          include: { customer: true, order: true }
         },
         bonuses: {
           orderBy: { createdAt: 'desc' }
@@ -44,7 +45,9 @@ export async function GET(request, { params }) {
         amount: ref.rewardAmount,
         date: ref.createdAt,
         orderId: ref.orderId,
-        customerId: ref.customerId
+        orderNumber: ref.order?.orderNumber,
+        customerId: ref.customerId,
+        customerName: ref.customer?.name || ref.order?.customerName || 'Unknown'
       });
     });
 
@@ -69,8 +72,12 @@ export async function GET(request, { params }) {
 
     // Sort descending by date
     timeline.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Fetch site timezone
+    const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
+    const timezone = settings?.timezone || 'UTC';
 
-    return NextResponse.json(timeline);
+    return NextResponse.json({ timeline, timezone });
   } catch (error) {
     console.error('Error fetching driver history:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

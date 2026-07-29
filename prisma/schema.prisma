@@ -44,6 +44,7 @@ model Order {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   items           OrderItem[]
+  driverReferrals DriverReferral[]
 }
 
 model OrderItem {
@@ -127,6 +128,7 @@ model Customer {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   orders          Order[]
+  driverReferrals DriverReferral[]
   
   userId          String?  @unique
   user            User?    @relation(fields: [userId], references: [id])
@@ -166,7 +168,9 @@ model DriverReferral {
   driverId     String
   driver       Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
   customerId   String?
+  customer     Customer? @relation(fields: [customerId], references: [id])
   orderId      String?
+  order        Order?    @relation(fields: [orderId], references: [id])
   rewardAmount Float
   createdAt    DateTime @default(now())
 }

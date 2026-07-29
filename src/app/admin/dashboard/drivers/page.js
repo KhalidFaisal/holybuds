@@ -30,6 +30,7 @@ export default function DriversPage() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [historyDriver, setHistoryDriver] = useState(null);
   const [historyData, setHistoryData] = useState([]);
+  const [historyTimezone, setHistoryTimezone] = useState('UTC');
   const [historyLoading, setHistoryLoading] = useState(false);
 
   // Auto-gen suffix for referral codes
@@ -130,7 +131,14 @@ export default function DriversPage() {
       });
       if (!res.ok) throw new Error('Failed to load history');
       const data = await res.json();
-      setHistoryData(data);
+      if (Array.isArray(data)) {
+        // Fallback for previous API version just in case
+        setHistoryData(data);
+        setHistoryTimezone('UTC');
+      } else {
+        setHistoryData(data.timeline || []);
+        setHistoryTimezone(data.timezone || 'UTC');
+      }
     } catch (err) {
       alert(err.message);
     } finally {
@@ -644,14 +652,14 @@ export default function DriversPage() {
                             {item.type}
                           </span>
                           <span className="text-xs text-pc-muted">
-                            {new Date(item.date).toLocaleString()}
+                            {new Date(item.date).toLocaleString('en-US', { timeZone: historyTimezone, dateStyle: 'medium', timeStyle: 'short' })}
                           </span>
                         </div>
                         
                         <div className="mt-2 flex justify-between items-end">
                           <div>
                             {item.type === 'REFERRAL' && (
-                              <p className="text-white text-sm">Customer Order Referral</p>
+                              <p className="text-white text-sm">Customer Order Referral <span className="text-pc-muted">({item.customerName || 'Unknown'})</span></p>
                             )}
                             {item.type === 'BONUS' && (
                               <p className="text-white text-sm">Unlocked {item.referralCount}-referral bonus</p>
