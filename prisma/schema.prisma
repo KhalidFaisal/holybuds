@@ -147,7 +147,7 @@ model ActiveSession {
 model Driver {
   id           String           @id @default(cuid())
   name         String
-  phone        String           @unique
+  phone        String?          @unique
   email        String?          @unique
   pin          String           @default("0000") // simple login
   referralCode String           @unique

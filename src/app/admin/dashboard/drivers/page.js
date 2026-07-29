@@ -47,6 +47,10 @@ export default function DriversPage() {
 
   const handleAddDriver = async (e) => {
     e.preventDefault();
+    if (!newPhone && !newEmail) {
+      setError('Please provide either a phone number or an email address.');
+      return;
+    }
     setAddLoading(true);
     setError('');
     try {
@@ -118,6 +122,10 @@ export default function DriversPage() {
 
   const handleEditDriver = async (e) => {
     e.preventDefault();
+    if (!newPhone && !newEmail) {
+      setError('Please provide either a phone number or an email address.');
+      return;
+    }
     setAddLoading(true);
     setError('');
     try {
@@ -327,10 +335,9 @@ export default function DriversPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-pc-muted mb-1">Phone Number (For Login)</label>
+                <label className="block text-sm font-medium text-pc-muted mb-1">Phone Number (Optional Login)</label>
                 <input
                   type="tel"
-                  required
                   value={newPhone}
                   onChange={e => setNewPhone(e.target.value)}
                   className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:border-pc-green focus:outline-none"
@@ -422,10 +429,9 @@ export default function DriversPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-pc-muted mb-1">Phone Number (For Login)</label>
+                <label className="block text-sm font-medium text-pc-muted mb-1">Phone Number (Optional Login)</label>
                 <input
                   type="tel"
-                  required
                   value={newPhone}
                   onChange={e => setNewPhone(e.target.value)}
                   className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:border-pc-green focus:outline-none"

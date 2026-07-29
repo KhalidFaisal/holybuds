@@ -47,12 +47,16 @@ export async function POST(request) {
     const data = await request.json();
     const { name, phone, email, referralCode, pin } = data;
 
-    if (!name || !phone || !referralCode) {
-      return NextResponse.json({ error: 'Name, phone, and referral code are required' }, { status: 400 });
+    if (!name || !referralCode) {
+      return NextResponse.json({ error: 'Name and referral code are required' }, { status: 400 });
+    }
+    if (!phone && !email) {
+      return NextResponse.json({ error: 'Either phone or email is required' }, { status: 400 });
     }
 
     // Check if phone, email, or referral code exists
-    const conditions = [{ phone }, { referralCode }];
+    const conditions = [{ referralCode }];
+    if (phone) conditions.push({ phone });
     if (email) conditions.push({ email });
     
     const existing = await prisma.driver.findFirst({
@@ -60,7 +64,7 @@ export async function POST(request) {
     });
 
     if (existing) {
-      if (existing.phone === phone) return NextResponse.json({ error: 'Phone number already exists' }, { status: 400 });
+      if (phone && existing.phone === phone) return NextResponse.json({ error: 'Phone number already exists' }, { status: 400 });
       if (email && existing.email === email) return NextResponse.json({ error: 'Email already exists' }, { status: 400 });
       if (existing.referralCode === referralCode) return NextResponse.json({ error: 'Referral code already exists' }, { status: 400 });
     }
@@ -68,7 +72,7 @@ export async function POST(request) {
     const driver = await prisma.driver.create({
       data: {
         name,
-        phone,
+        phone: phone || null,
         email: email || null,
         referralCode: referralCode.toUpperCase(),
         pin: pin || '0000',
@@ -107,9 +111,15 @@ export async function PATCH(request) {
     }
 
     // Normal update
-    // If email is empty string, convert to null
+    // If empty string, convert to null
     if (updateData.email === '') updateData.email = null;
+    if (updateData.phone === '') updateData.phone = null;
     
+    // Ensure we don't nullify both
+    if (updateData.phone === null && updateData.email === null) {
+      return NextResponse.json({ error: 'Either phone or email is required' }, { status: 400 });
+    }
+
     const driver = await prisma.driver.update({
       where: { id },
       data: updateData
