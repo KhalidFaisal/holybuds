@@ -20,11 +20,13 @@ export default function DriversPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editDriverId, setEditDriverId] = useState(null);
   
-  // Payout State
   const [isPayoutOpen, setIsPayoutOpen] = useState(false);
   const [payoutDriver, setPayoutDriver] = useState(null);
   const [payoutAmount, setPayoutAmount] = useState('');
   const [payoutLoading, setPayoutLoading] = useState(false);
+
+  // Auto-gen suffix for referral codes
+  const [randomSuffix, setRandomSuffix] = useState('');
 
   useEffect(() => {
     fetchDrivers();
@@ -200,7 +202,8 @@ export default function DriversPage() {
             setNewPhone('');
             setNewEmail('');
             setNewCode('');
-            setNewPin('0000');
+            setNewPin(Math.floor(1000 + Math.random() * 9000).toString());
+            setRandomSuffix(Math.floor(10 + Math.random() * 90).toString());
             setError('');
             setIsAddOpen(true);
           }}
@@ -336,7 +339,12 @@ export default function DriversPage() {
                   type="text"
                   required
                   value={newName}
-                  onChange={e => setNewName(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setNewName(val);
+                    const base = val.split(' ')[0].toUpperCase().replace(/[^A-Z]/g, '');
+                    setNewCode(base ? base + randomSuffix : '');
+                  }}
                   className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:border-pc-green focus:outline-none"
                   placeholder="e.g. Mike Smith"
                 />
