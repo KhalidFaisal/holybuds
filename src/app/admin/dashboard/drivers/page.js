@@ -195,18 +195,20 @@ export default function DriversPage() {
           <p className="text-pc-muted">Manage referral codes, track payouts, and view driver progress.</p>
         </div>
         <button
-          onClick={() => setIsAddOpen(true)}
+          onClick={() => {
+            setNewName('');
+            setNewPhone('');
+            setNewEmail('');
+            setNewCode('');
+            setNewPin('0000');
+            setError('');
+            setIsAddOpen(true);
+          }}
           className="btn-primary whitespace-nowrap"
         >
           + Add Driver
         </button>
       </div>
-
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl">
-          {error}
-        </div>
-      )}
 
       {loading ? (
         <div className="text-pc-muted text-center py-12">Loading drivers...</div>
@@ -321,6 +323,12 @@ export default function DriversPage() {
               </button>
             </div>
             
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-sm mb-4">
+                {error}
+              </div>
+            )}
+            
             <form onSubmit={handleAddDriver} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-pc-muted mb-1">Driver Name</label>
@@ -414,6 +422,12 @@ export default function DriversPage() {
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
+            
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-sm mb-4">
+                {error}
+              </div>
+            )}
             
             <form onSubmit={handleEditDriver} className="space-y-4">
               <div>
