@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import SessionTracker from '@/components/SessionTracker';
+import posthog from 'posthog-js';
 
 const CartContext = createContext();
 
@@ -46,6 +47,16 @@ export function CartProvider({ children }) {
   }, [items, isLoaded]);
 
   const addItem = useCallback((product, quantity = 1) => {
+    const existingItem = items.find((item) => item.id === product.id);
+    const availableQuantity = Math.max(0, product.stock - (existingItem?.quantity || 0));
+    const addedQuantity = Math.min(quantity, availableQuantity);
+    if (addedQuantity > 0) {
+      posthog.capture('product_added_to_cart', {
+        product_id: product.id,
+        product_category: product.category,
+        quantity: addedQuantity,
+      });
+    }
     setItems((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       const currentQty = existing ? existing.quantity : 0;
@@ -74,13 +85,30 @@ export function CartProvider({ children }) {
       return [...prev, { ...product, quantity }];
     });
     setIsOpen(true);
-  }, []);
+  }, [items]);
 
   const removeItem = useCallback((productId) => {
+    const item = items.find((cartItem) => cartItem.id === productId);
+    if (item) {
+      posthog.capture('product_removed_from_cart', {
+        product_id: item.id,
+        product_category: item.category,
+        quantity: item.quantity,
+      });
+    }
     setItems((prev) => prev.filter((item) => item.id !== productId));
-  }, []);
+  }, [items]);
 
   const updateQuantity = useCallback((productId, quantity) => {
+    const item = items.find((cartItem) => cartItem.id === productId);
+    if (item) {
+      posthog.capture('cart_quantity_updated', {
+        product_id: item.id,
+        product_category: item.category,
+        previous_quantity: item.quantity,
+        quantity: Math.max(0, Math.min(quantity, item.stock)),
+      });
+    }
     if (quantity <= 0) {
       setItems((prev) => prev.filter((item) => item.id !== productId));
       return;
@@ -98,7 +126,7 @@ export function CartProvider({ children }) {
         return item;
       })
     );
-  }, []);
+  }, [items]);
 
   const clearCart = useCallback(() => {
     setItems([]);

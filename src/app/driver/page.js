@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import posthog from 'posthog-js';
 
 export default function DriverPortal() {
   const [phone, setPhone] = useState('');
@@ -14,23 +15,7 @@ export default function DriverPortal() {
   
   // QRCode library could be used here, but for simplicity we'll just show the link and maybe an image of a generic QR code or let the admin generate it for them, or we can use an external API.
   
-  useEffect(() => {
-    // Check if already logged in via localStorage
-    const savedPhone = localStorage.getItem('driver_auth_phone');
-    const savedPin = localStorage.getItem('driver_auth_pin');
-    if (savedPhone && savedPin) {
-      login(savedPhone, savedPin);
-    } else {
-      setIsCheckingAuth(false);
-    }
-  }, []);
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    login(phone, pin);
-  };
-
-  const login = async (p, n) => {
+  const login = async (p, n, shouldCaptureLogin) => {
     setLoading(true);
     setError('');
     try {
@@ -43,6 +28,12 @@ export default function DriverPortal() {
       if (!res.ok) throw new Error(data.error || 'Login failed');
       
       setDriver(data);
+      posthog.identify(data.id, {
+        name: data.name,
+      });
+      if (shouldCaptureLogin) {
+        posthog.capture('driver_logged_in');
+      }
       localStorage.setItem('driver_auth_phone', p);
       localStorage.setItem('driver_auth_pin', n);
     } catch (err) {
@@ -55,7 +46,25 @@ export default function DriverPortal() {
     }
   };
 
+  useEffect(() => {
+    // Check if already logged in via localStorage
+    const savedPhone = localStorage.getItem('driver_auth_phone');
+    const savedPin = localStorage.getItem('driver_auth_pin');
+    if (savedPhone && savedPin) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      login(savedPhone, savedPin, false);
+    } else {
+      setIsCheckingAuth(false);
+    }
+  }, []);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    login(phone, pin, true);
+  };
+
   const logout = () => {
+    posthog.reset();
     localStorage.removeItem('driver_auth_phone');
     localStorage.removeItem('driver_auth_pin');
     setDriver(null);
@@ -142,6 +151,7 @@ export default function DriverPortal() {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
+      posthog.capture('driver_referral_qr_downloaded');
     } catch (err) {
       console.error('Failed to download QR code', err);
       window.open(qrCodeUrl, '_blank');

@@ -54,6 +54,7 @@ export async function POST(request) {
     const progressToBonus = totalReferrals % threshold;
 
     return NextResponse.json({
+      id: driver.id,
       name: driver.name,
       referralCode: driver.referralCode,
       totalEarned: driver.totalEarned,

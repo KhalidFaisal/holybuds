@@ -8,6 +8,7 @@ import { CartProvider } from '@/components/CartProvider';
 import Link from 'next/link';
 import { LOYALTY_REWARDS, calcRewardDiscount } from '@/lib/loyalty';
 import { useSession } from 'next-auth/react';
+import posthog from 'posthog-js';
 
 function CheckoutContent() {
   const { items, subtotal, total, discountAmount, discountName, clearCart, updateQuantity, removeItem, syncCart, syncMessages, setSyncMessages } = useCart();
@@ -218,6 +219,15 @@ function CheckoutContent() {
         console.error('Failed to save recent order', e);
       }
 
+      posthog.capture('order_placed', {
+        order_id: order.id,
+        item_count: items.reduce((count, item) => count + item.quantity, 0),
+        unique_product_count: items.length,
+        delivery_method: form.deliveryMethod.toLowerCase(),
+        used_loyalty_reward: Boolean(selectedReward),
+        used_driver_referral: appliedDriverDiscount > 0,
+        order_total: finalTotal,
+      });
       setOrderConfirm(order);
       clearCart();
       localStorage.removeItem('holybuds_checkout_draft');

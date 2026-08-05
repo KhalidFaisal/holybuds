@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { getEffectColorClass } from '@/lib/colors';
 import { useCart } from './CartProvider';
 import CannabisIcon from './icons/CannabisIcon';
+import posthog from 'posthog-js';
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
@@ -32,6 +33,11 @@ export default function ProductCard({ product }) {
         setIsFavorite(true);
       }
       localStorage.setItem('holybuds_favorites', JSON.stringify(newFavs));
+      posthog.capture('favorite_updated', {
+        product_id: product.id,
+        product_category: product.category,
+        is_favorited: !favs.includes(product.id),
+      });
       window.dispatchEvent(new Event('holybuds_favorites_updated'));
     } catch(e) {}
   };
