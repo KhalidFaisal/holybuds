@@ -16,7 +16,8 @@ function CheckoutContent() {
 
   useEffect(() => {
     syncCart();
-  }, [syncCart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [form, setForm] = useState({
     customerName: '',
