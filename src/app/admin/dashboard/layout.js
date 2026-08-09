@@ -65,11 +65,11 @@ export default function AdminDashboardLayout({ children }) {
       </div>
 
       <main className={`${sidebarOpen ? 'hidden' : 'flex-1'} md:block overflow-y-auto`}>
-        <div className="hidden md:flex p-4 border-b border-pc-border bg-pc-dark/50 items-center justify-between">
+        <div className="hidden md:flex p-4 border-b border-pc-border bg-pc-dark/50 items-center justify-between gap-4">
           <div className="flex-1 max-w-2xl">
             <AdminGlobalSearch />
           </div>
-          <div className="ml-4 w-72 shrink-0">
+          <div className="shrink-0">
             <PushNotificationManager />
           </div>
         </div>
