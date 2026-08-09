@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { auth } from '@/auth';
+import webpush from 'web-push';
 
 function generateOrderNumber() {
   const prefix = 'ELV';
@@ -420,6 +421,50 @@ export async function POST(request) {
       } catch (webhookErr) {
         console.error('Webhook error:', webhookErr);
       }
+    }
+
+    // Send Web Push Notifications
+    try {
+      const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      const privateVapidKey = process.env.VAPID_PRIVATE_KEY;
+      
+      if (publicVapidKey && privateVapidKey) {
+        webpush.setVapidDetails(
+          'mailto:admin@holybuds.com',
+          publicVapidKey,
+          privateVapidKey
+        );
+
+        const subscriptions = await prisma.pushSubscription.findMany();
+        
+        const payload = JSON.stringify({
+          title: 'New Order Received!',
+          body: `Order ${order.orderNumber} for $${order.total.toFixed(2)} from ${order.customerName}`,
+          url: '/admin/dashboard/orders'
+        });
+
+        const pushPromises = subscriptions.map(sub => {
+          const pushSub = {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth
+            }
+          };
+          return webpush.sendNotification(pushSub, payload).catch(err => {
+            console.error('Failed to send push to', sub.endpoint, err);
+            // Optionally remove invalid subscriptions here
+            if (err.statusCode === 410 || err.statusCode === 404) {
+               return prisma.pushSubscription.delete({ where: { id: sub.id } });
+            }
+          });
+        });
+
+        // Don't await strictly to prevent hanging the checkout request
+        Promise.all(pushPromises).catch(err => console.error('Push broadcast error:', err));
+      }
+    } catch (pushErr) {
+      console.error('Push Notification error:', pushErr);
     }
 
     return NextResponse.json(order, { status: 201 });

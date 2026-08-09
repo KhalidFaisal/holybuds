@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminGlobalSearch from '@/components/AdminGlobalSearch';
+import PushNotificationManager from '@/components/PushNotificationManager';
 
 export default function AdminDashboardLayout({ children }) {
   const [authed, setAuthed] = useState(false);
@@ -64,12 +65,19 @@ export default function AdminDashboardLayout({ children }) {
       </div>
 
       <main className={`${sidebarOpen ? 'hidden' : 'flex-1'} md:block overflow-y-auto`}>
-        <div className="hidden md:flex p-4 border-b border-pc-border bg-pc-dark/50 items-center justify-center">
-          <div className="w-full max-w-2xl">
+        <div className="hidden md:flex p-4 border-b border-pc-border bg-pc-dark/50 items-center justify-between">
+          <div className="flex-1 max-w-2xl">
             <AdminGlobalSearch />
+          </div>
+          <div className="ml-4 w-72 shrink-0">
+            <PushNotificationManager />
           </div>
         </div>
         <div className="p-4 md:p-8 min-h-full">
+          {/* Mobile push manager */}
+          <div className="md:hidden mb-6">
+            <PushNotificationManager />
+          </div>
           {children}
         </div>
       </main>
