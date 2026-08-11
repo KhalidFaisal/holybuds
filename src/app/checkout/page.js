@@ -65,11 +65,12 @@ function CheckoutContent() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [driverReferralDiscount, setDriverReferralDiscount] = useState(0);
 
-  // Initialize referredByCode from localStorage
   useEffect(() => {
     const code = localStorage.getItem('driver_referral_code');
     if (code) {
-      setForm(prev => ({ ...prev, referredByCode: code }));
+      setTimeout(() => {
+        setForm(prev => ({ ...prev, referredByCode: code }));
+      }, 0);
     }
   }, []);
 
@@ -92,7 +93,10 @@ function CheckoutContent() {
       const timeoutId = setTimeout(fetchDiscount, 500);
       return () => clearTimeout(timeoutId);
     } else {
-      setDriverReferralDiscount(0);
+      const resetId = setTimeout(() => {
+        setDriverReferralDiscount(0);
+      }, 0);
+      return () => clearTimeout(resetId);
     }
   }, [isNewCustomer, form.referredByCode]);
 
