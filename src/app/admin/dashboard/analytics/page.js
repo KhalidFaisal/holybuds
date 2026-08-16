@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import StatsCard from '@/components/StatsCard';
 
 export default function AnalyticsPage() {
@@ -47,11 +47,10 @@ export default function AnalyticsPage() {
     );
   }
 
-  const chartData = useMemo(() => {
-    if (!data) return [];
-    if (chartView === 'daily') return data.trends.last30Days;
-    
-    // Group into 7-day chunks
+  let chartData = [];
+  if (data && chartView === 'daily') {
+    chartData = data.trends.last30Days;
+  } else if (data && chartView === 'weekly') {
     const weeks = [];
     let currentWeek = null;
     
@@ -70,8 +69,8 @@ export default function AnalyticsPage() {
       currentWeek.orders += day.orders;
     });
     if (currentWeek) weeks.push(currentWeek);
-    return weeks;
-  }, [data, chartView]);
+    chartData = weeks;
+  }
 
   const maxRevenue = Math.max(...chartData.map(d => d.revenue), 1);
   const maxOrders = Math.max(...chartData.map(d => d.orders), 1);
