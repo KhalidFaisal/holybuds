@@ -7,7 +7,6 @@ export default function AnalyticsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [chartView, setChartView] = useState('daily');
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -47,31 +46,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  let chartData = [];
-  if (data && chartView === 'daily') {
-    chartData = data.trends.last30Days;
-  } else if (data && chartView === 'weekly') {
-    const weeks = [];
-    let currentWeek = null;
-    
-    data.trends.last30Days.forEach((day, index) => {
-      if (index % 7 === 0) {
-        if (currentWeek) weeks.push(currentWeek);
-        currentWeek = { 
-           date: day.date, 
-           endDate: day.date,
-           revenue: 0, 
-           orders: 0 
-        };
-      }
-      currentWeek.endDate = day.date;
-      currentWeek.revenue += day.revenue;
-      currentWeek.orders += day.orders;
-    });
-    if (currentWeek) weeks.push(currentWeek);
-    chartData = weeks;
-  }
-
+  const chartData = data.trends.last30Days;
   const maxRevenue = Math.max(...chartData.map(d => d.revenue), 1);
   const maxOrders = Math.max(...chartData.map(d => d.orders), 1);
 
@@ -113,25 +88,10 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* 30-Day Trend Chart */}
       <div className="glass-card p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <h2 className="text-xl font-bold text-white">Revenue & Orders</h2>
-            <div className="flex bg-pc-black rounded-lg p-1 border border-pc-border">
-              <button 
-                onClick={() => setChartView('daily')}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${chartView === 'daily' ? 'bg-pc-dark text-white' : 'text-pc-muted hover:text-white'}`}
-              >
-                Daily
-              </button>
-              <button 
-                onClick={() => setChartView('weekly')}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${chartView === 'weekly' ? 'bg-pc-dark text-white' : 'text-pc-muted hover:text-white'}`}
-              >
-                Weekly
-              </button>
-            </div>
           </div>
           
           <div className="flex flex-col items-start sm:items-end gap-1">
@@ -140,46 +100,65 @@ export default function AnalyticsPage() {
             </div>
             <div className="text-xs font-bold text-white flex items-center gap-3">
               <span className="flex items-center gap-1.5"><div className="w-3 h-3 bg-pc-green/50 border border-pc-green/50 rounded-sm"></div> Revenue</span>
-              <span className="flex items-center gap-1.5"><div className="w-3 h-3 bg-pc-gold/50 border border-pc-gold/50 rounded-sm"></div> Orders</span>
+              <span className="flex items-center gap-1.5"><div className="w-3 h-0 border-t-2 border-pc-gold/80 rounded-sm"></div> Orders</span>
             </div>
           </div>
         </div>
         
-        <div className="h-64 flex items-end gap-[1px] sm:gap-[2px]">
+        <div className="h-64 flex items-end gap-2 sm:gap-3 relative">
           {chartData.map((period, i) => {
             const revenueHeight = Math.max((period.revenue / maxRevenue) * 100, 2);
             const ordersHeight = Math.max((period.orders / maxOrders) * 100, 2);
+            const nextPeriod = chartData[i + 1];
+            const nextOrdersHeight = nextPeriod ? Math.max((nextPeriod.orders / maxOrders) * 100, 2) : null;
             
+            const daysFromEnd = (chartData.length - 1) - i;
+            const isWeekBoundary = daysFromEnd > 0 && daysFromEnd % 7 === 0;
+
             return (
               <div key={period.date} className="relative flex-1 group flex flex-col justify-end h-full">
+                {/* SVG Line to next point */}
+                {nextPeriod && (
+                  <svg className="absolute w-[calc(100%+0.5rem)] sm:w-[calc(100%+0.75rem)] h-full overflow-visible pointer-events-none z-20" style={{ left: '50%' }}>
+                    <line 
+                      x1="0" y1={`${100 - ordersHeight}%`} 
+                      x2="100%" y2={`${100 - nextOrdersHeight}%`} 
+                      stroke="#fbbf24" strokeWidth="2" 
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </svg>
+                )}
+                {/* Data point circle on hover */}
+                <div 
+                  className="absolute w-2 h-2 rounded-full bg-pc-gold opacity-0 group-hover:opacity-100 transition-opacity z-30 pointer-events-none"
+                  style={{ left: 'calc(50% - 0.25rem)', bottom: `calc(${ordersHeight}% - 0.25rem)` }}
+                />
+
+                {/* Week Boundary Divider */}
+                {isWeekBoundary && (
+                  <div className="absolute top-0 right-[-0.25rem] sm:right-[-0.375rem] w-px h-full bg-pc-border border-r border-dashed z-0 opacity-50"></div>
+                )}
+                
                 {/* Tooltip */}
-                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-black text-white text-xs p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none whitespace-nowrap">
-                  {chartView === 'weekly' 
-                    ? `${new Date(period.date).toLocaleDateString()} - ${new Date(period.endDate).toLocaleDateString()}`
-                    : new Date(period.date).toLocaleDateString()
-                  }<br/>
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-black text-white text-xs p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity z-40 pointer-events-none whitespace-nowrap">
+                  {new Date(period.date).toLocaleDateString()}<br/>
                   ${period.revenue.toFixed(2)} ({period.orders} orders)
                 </div>
-                {/* Grouped Bars Container */}
-                <div className="w-full h-full flex items-end gap-[1px]">
-                  {/* Revenue Bar */}
+                
+                {/* Revenue Bar */}
+                <div className="w-full h-full flex items-end">
                   <div 
-                    className="flex-1 bg-pc-green/20 group-hover:bg-pc-green/50 border-t border-pc-green/50 rounded-t-sm transition-all duration-300"
+                    className="flex-1 bg-pc-green/20 group-hover:bg-pc-green/50 border-t border-pc-green/50 rounded-t-sm transition-all duration-300 relative z-10"
                     style={{ height: `${revenueHeight}%` }}
-                  ></div>
-                  {/* Orders Bar */}
-                  <div 
-                    className="flex-1 bg-pc-gold/20 group-hover:bg-pc-gold/50 border-t border-pc-gold/50 rounded-t-sm transition-all duration-300"
-                    style={{ height: `${ordersHeight}%` }}
                   ></div>
                 </div>
               </div>
             );
           })}
         </div>
-        <div className="flex justify-between text-xs text-pc-muted mt-4 font-bold uppercase tracking-wider">
+        <div className="flex justify-between text-xs text-pc-muted mt-4 font-bold uppercase tracking-wider relative">
           <span>{chartData.length > 0 ? new Date(chartData[0].date).toLocaleDateString() : ''}</span>
-          <span>{chartData.length > 0 ? new Date(chartData[chartData.length - 1][chartView === 'weekly' ? 'endDate' : 'date']).toLocaleDateString() : ''}</span>
+          <span>{chartData.length > 0 ? new Date(chartData[chartData.length - 1].date).toLocaleDateString() : ''}</span>
         </div>
       </div>
 
