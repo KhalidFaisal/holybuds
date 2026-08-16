@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import StatsCard from '@/components/StatsCard';
 
 export default function AnalyticsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [chartView, setChartView] = useState('daily');
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -46,8 +47,34 @@ export default function AnalyticsPage() {
     );
   }
 
-  // Calculate max revenue for chart scaling
-  const maxDailyRevenue = Math.max(...data.trends.last30Days.map(d => d.revenue), 1);
+  const chartData = useMemo(() => {
+    if (!data) return [];
+    if (chartView === 'daily') return data.trends.last30Days;
+    
+    // Group into 7-day chunks
+    const weeks = [];
+    let currentWeek = null;
+    
+    data.trends.last30Days.forEach((day, index) => {
+      if (index % 7 === 0) {
+        if (currentWeek) weeks.push(currentWeek);
+        currentWeek = { 
+           date: day.date, 
+           endDate: day.date,
+           revenue: 0, 
+           orders: 0 
+        };
+      }
+      currentWeek.endDate = day.date;
+      currentWeek.revenue += day.revenue;
+      currentWeek.orders += day.orders;
+    });
+    if (currentWeek) weeks.push(currentWeek);
+    return weeks;
+  }, [data, chartView]);
+
+  const maxRevenue = Math.max(...chartData.map(d => d.revenue), 1);
+  const maxOrders = Math.max(...chartData.map(d => d.orders), 1);
 
   return (
     <div className="animate-fade-in space-y-8">
@@ -89,34 +116,71 @@ export default function AnalyticsPage() {
 
       {/* 30-Day Trend Chart */}
       <div className="glass-card p-6">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-xl font-bold text-white">Revenue (Last 30 Days)</h2>
-          <div className="text-sm font-bold text-pc-green">
-            ${data.trends.last30Days.reduce((sum, d) => sum + d.revenue, 0).toFixed(2)} total
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <h2 className="text-xl font-bold text-white">Revenue & Orders</h2>
+            <div className="flex bg-pc-black rounded-lg p-1 border border-pc-border">
+              <button 
+                onClick={() => setChartView('daily')}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${chartView === 'daily' ? 'bg-pc-dark text-white' : 'text-pc-muted hover:text-white'}`}
+              >
+                Daily
+              </button>
+              <button 
+                onClick={() => setChartView('weekly')}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${chartView === 'weekly' ? 'bg-pc-dark text-white' : 'text-pc-muted hover:text-white'}`}
+              >
+                Weekly
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex flex-col items-start sm:items-end gap-1">
+            <div className="text-sm font-bold text-pc-green">
+              ${data.trends.last30Days.reduce((sum, d) => sum + d.revenue, 0).toFixed(2)} total
+            </div>
+            <div className="text-xs font-bold text-white flex items-center gap-3">
+              <span className="flex items-center gap-1.5"><div className="w-3 h-3 bg-pc-green/50 border border-pc-green/50 rounded-sm"></div> Revenue</span>
+              <span className="flex items-center gap-1.5"><div className="w-3 h-3 bg-pc-gold/50 border border-pc-gold/50 rounded-sm"></div> Orders</span>
+            </div>
           </div>
         </div>
-        <div className="h-64 flex items-end gap-1 sm:gap-2">
-          {data.trends.last30Days.map((day, i) => {
-            const height = Math.max((day.revenue / maxDailyRevenue) * 100, 2); // min 2% height for visibility
+        
+        <div className="h-64 flex items-end gap-[1px] sm:gap-[2px]">
+          {chartData.map((period, i) => {
+            const revenueHeight = Math.max((period.revenue / maxRevenue) * 100, 2);
+            const ordersHeight = Math.max((period.orders / maxOrders) * 100, 2);
+            
             return (
-              <div key={day.date} className="relative flex-1 group flex flex-col justify-end h-full">
+              <div key={period.date} className="relative flex-1 group flex flex-col justify-end h-full">
                 {/* Tooltip */}
                 <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-black text-white text-xs p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none whitespace-nowrap">
-                  {new Date(day.date).toLocaleDateString()}<br/>
-                  ${day.revenue.toFixed(2)} ({day.orders} orders)
+                  {chartView === 'weekly' 
+                    ? `${new Date(period.date).toLocaleDateString()} - ${new Date(period.endDate).toLocaleDateString()}`
+                    : new Date(period.date).toLocaleDateString()
+                  }<br/>
+                  ${period.revenue.toFixed(2)} ({period.orders} orders)
                 </div>
-                {/* Bar */}
-                <div 
-                  className="w-full bg-pc-green/20 group-hover:bg-pc-green/50 border-t border-pc-green/50 rounded-t-sm transition-all duration-300"
-                  style={{ height: `${height}%` }}
-                ></div>
+                {/* Grouped Bars Container */}
+                <div className="w-full h-full flex items-end gap-[1px]">
+                  {/* Revenue Bar */}
+                  <div 
+                    className="flex-1 bg-pc-green/20 group-hover:bg-pc-green/50 border-t border-pc-green/50 rounded-t-sm transition-all duration-300"
+                    style={{ height: `${revenueHeight}%` }}
+                  ></div>
+                  {/* Orders Bar */}
+                  <div 
+                    className="flex-1 bg-pc-gold/20 group-hover:bg-pc-gold/50 border-t border-pc-gold/50 rounded-t-sm transition-all duration-300"
+                    style={{ height: `${ordersHeight}%` }}
+                  ></div>
+                </div>
               </div>
             );
           })}
         </div>
         <div className="flex justify-between text-xs text-pc-muted mt-4 font-bold uppercase tracking-wider">
-          <span>{new Date(data.trends.last30Days[0].date).toLocaleDateString()}</span>
-          <span>{new Date(data.trends.last30Days[29].date).toLocaleDateString()}</span>
+          <span>{chartData.length > 0 ? new Date(chartData[0].date).toLocaleDateString() : ''}</span>
+          <span>{chartData.length > 0 ? new Date(chartData[chartData.length - 1][chartView === 'weekly' ? 'endDate' : 'date']).toLocaleDateString() : ''}</span>
         </div>
       </div>
 
