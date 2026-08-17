@@ -42,7 +42,8 @@ export default function AdminDashboardPage() {
       const ordersData = await ordersRes.json();
       const settingsData = await settingsRes.json();
 
-      const products = Array.isArray(productsData) ? productsData : [];
+      const allProducts = Array.isArray(productsData) ? productsData : [];
+      const products = allProducts.filter(p => p.isVisible !== false);
       const orders = Array.isArray(ordersData) ? ordersData : [];
       const tz = settingsData.timezone || 'UTC';
 
