@@ -225,7 +225,7 @@ export default function AdminDashboardPage() {
                       <p className="text-pc-muted text-xs">{product.category}</p>
                     </div>
                   </div>
-                  <span className={`font-bold text-sm ${product.stock === 0 ? 'text-red-400' : product.stock <= 5 ? 'text-yellow-400' : 'text-orange-400'}`}>
+                  <span className={`font-bold text-sm ${product.stock <= 1 ? 'text-red-400' : product.stock <= 3 ? 'text-orange-400' : 'text-yellow-400'}`}>
                     {product.stock === 0 ? 'OUT' : `${product.stock} left`}
                   </span>
                 </div>
