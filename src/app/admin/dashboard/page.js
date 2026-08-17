@@ -66,7 +66,7 @@ export default function AdminDashboardPage() {
       const validOrders = orders.filter(o => o.status && !['CANCELLED', 'Cancelled', 'cancelled'].includes(o.status));
       const ordersToday = validOrders.filter((o) => getTzDateStr(new Date(o.createdAt)) === todayStr);
       const revenue = ordersToday.reduce((sum, o) => sum + o.total, 0);
-      const lowStock = products.filter((p) => p.stock <= 10);
+      const lowStock = products.filter((p) => p.stock <= 5);
 
       setStats({
         products: products.length,
