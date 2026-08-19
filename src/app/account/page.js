@@ -333,10 +333,40 @@ function AccountContent() {
             </button>
           </div>
 
-          {/* Content */}
-          {activeTab === 'profile' && (
-            <ProfileTab customerProfile={customerProfile} setCustomerProfile={setCustomerProfile} />
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {/* Sidebar */}
+            <div className="md:col-span-1 flex flex-col gap-6 items-start">
+              <button 
+                onClick={() => setActiveTab('profile')} 
+                className={`text-2xl font-black transition-colors ${activeTab === 'profile' ? 'text-pc-green' : 'text-pc-muted hover:text-pc-green/70'}`}
+              >
+                Profile
+              </button>
+              <button 
+                onClick={() => setActiveTab('orders')} 
+                className={`text-2xl font-black transition-colors ${activeTab === 'orders' ? 'text-pc-green' : 'text-pc-muted hover:text-pc-green/70'}`}
+              >
+                Orders
+              </button>
+              <button 
+                onClick={() => setActiveTab('favorites')} 
+                className={`text-2xl font-black transition-colors ${activeTab === 'favorites' ? 'text-pc-green' : 'text-pc-muted hover:text-pc-green/70'}`}
+              >
+                Favorites
+              </button>
+              <button 
+                onClick={() => setActiveTab('rewards')} 
+                className={`text-2xl font-black transition-colors text-left leading-tight ${activeTab === 'rewards' ? 'text-pc-green' : 'text-pc-muted hover:text-pc-green/70'}`}
+              >
+                Rewards & Referrals
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="md:col-span-3">
+              {activeTab === 'profile' && (
+                <ProfileTab customerProfile={customerProfile} setCustomerProfile={setCustomerProfile} />
+              )}
 
           {activeTab === 'orders' && (
             <div>
@@ -526,6 +556,8 @@ function AccountContent() {
               )}
             </div>
           )}
+            </div>
+          </div>
 
         </div>
       </main>

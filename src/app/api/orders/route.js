@@ -311,7 +311,8 @@ export async function POST(request) {
           },
           totalOrders: {
             increment: 1
-          }
+          },
+          ...(data.deliveryMethod === 'DELIVERY' && data.deliveryAddress ? { address: data.deliveryAddress } : {})
         }
       });
 

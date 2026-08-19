@@ -42,7 +42,8 @@ export async function GET(request) {
         name: customer.name,
         points: customer.points,
         totalOrders: customer.totalOrders,
-        referralCode: referralCode
+        referralCode: referralCode,
+        address: customer.address
       },
       settings: {
         pointsPerDollar

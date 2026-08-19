@@ -30,6 +30,23 @@ function CheckoutContent() {
     referredByCode: '',
   });
 
+  // Load saved info from local storage for fast checkout
+  useEffect(() => {
+    const saved = localStorage.getItem('holybuds_saved_info');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setForm(prev => ({ 
+          ...prev, 
+          ...parsed, 
+          notes: '', // Don't prefill notes
+          referredByCode: prev.referredByCode || parsed.referredByCode || '' 
+        }));
+      } catch (e) {}
+    }
+  }, []);
+
   // Prefill form if session is present
   useEffect(() => {
     if (status === 'authenticated') {
@@ -39,11 +56,31 @@ function CheckoutContent() {
           if (res.ok) {
             const data = await res.json();
             if (data.customer) {
-              setForm(prev => ({
-                ...prev,
-                customerName: prev.customerName || data.customer.name,
-                customerPhone: prev.customerPhone || data.customer.phone
-              }));
+              setForm(prev => {
+                let addr = prev.deliveryAddress;
+                let twn = prev.town;
+                let zip = prev.zipCode;
+
+                if (data.customer.address && !addr) {
+                  const parts = data.customer.address.split(',').map(s => s.trim());
+                  if (parts.length >= 3) {
+                    addr = parts[0];
+                    twn = parts[1];
+                    zip = parts[2];
+                  } else {
+                    addr = data.customer.address;
+                  }
+                }
+
+                return {
+                  ...prev,
+                  customerName: prev.customerName || data.customer.name,
+                  customerPhone: prev.customerPhone || data.customer.phone,
+                  deliveryAddress: addr,
+                  town: twn,
+                  zipCode: zip
+                };
+              });
             }
           }
         } catch (e) {}
@@ -112,6 +149,17 @@ function CheckoutContent() {
             const data = await res.json();
             setCustomerProfile(data.customer);
             setIsNewCustomer(data.isNewCustomer || false);
+
+            if (data.customer?.address) {
+              setForm(prev => {
+                if (prev.deliveryAddress) return prev;
+                const parts = data.customer.address.split(',').map(s => s.trim());
+                if (parts.length >= 3) {
+                  return { ...prev, deliveryAddress: parts[0], town: parts[1], zipCode: parts[2] };
+                }
+                return { ...prev, deliveryAddress: data.customer.address };
+              });
+            }
           } else {
             setCustomerProfile(null);
             setIsNewCustomer(false);
@@ -229,6 +277,16 @@ function CheckoutContent() {
       } catch (e) {
         console.error('Failed to save recent order', e);
       }
+
+      // Save for fast "one-click" checkout next time
+      localStorage.setItem('holybuds_saved_info', JSON.stringify({
+        customerName: form.customerName,
+        customerPhone: form.customerPhone,
+        deliveryMethod: form.deliveryMethod,
+        deliveryAddress: form.deliveryAddress,
+        town: form.town,
+        zipCode: form.zipCode,
+      }));
 
       setOrderConfirm(order);
       clearCart();
