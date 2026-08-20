@@ -137,8 +137,8 @@ function ProductSection({ title, subtitle, products, viewAllHref, icon }) {
   };
 
   return (
-    <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative group">
-      <div className="flex items-end justify-between mb-10">
+    <section className="py-8 md:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative group">
+      <div className="flex items-end justify-between mb-6 md:mb-10">
         <div>
           <h2 className="section-title flex items-center gap-3">
             <span>{icon}</span> {title}
