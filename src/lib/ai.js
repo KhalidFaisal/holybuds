@@ -62,45 +62,85 @@ export async function callAI(messages, options = {}) {
   const primaryModel = options.model || settings?.aiModel || "groq";
   const openRouterApiKey = options.openRouterApiKey || settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
   const groqApiKey = options.groqApiKey || settings?.groqApiKey || process.env.GROQ_API_KEY;
+  
+  const groqEnabled = settings?.groqEnabled ?? true;
+  const openRouterEnabled = settings?.openRouterEnabled ?? true;
+  
+  let enabledGroqModels = GROQ_MODELS;
+  if (settings?.enabledGroqModels) {
+    try {
+      enabledGroqModels = JSON.parse(settings.enabledGroqModels);
+    } catch (e) {}
+  }
 
   const isPrimaryGroq = primaryModel.toLowerCase() === 'groq' || GROQ_MODELS.includes(primaryModel);
   
+  if (!groqEnabled && !openRouterEnabled) {
+    throw new Error('All AI providers are disabled in settings.');
+  }
+
+  // Helper to try all enabled Groq models
+  const tryGroqModels = async () => {
+    if (!groqEnabled || enabledGroqModels.length === 0) {
+      throw new Error('Groq is disabled or no models are enabled.');
+    }
+    
+    // Shuffle models to randomly distribute load
+    const modelsToTry = [...enabledGroqModels].sort(() => Math.random() - 0.5);
+    let lastError = null;
+    
+    for (const model of modelsToTry) {
+      try {
+        console.log(`[AI] Attempting Groq model: ${model}`);
+        return await callGroq(model, messages, groqApiKey);
+      } catch (error) {
+        lastError = error;
+        const isRetryable = error.status === 429 || error.status === 503 || error.message.toLowerCase().includes('rate limit') || error.message.toLowerCase().includes('overloaded');
+        if (isRetryable) {
+          console.warn(`[AI Failover] Groq model ${model} failed. Trying next...`);
+          continue; // Try next Groq model
+        } else {
+          // If it's a fatal error (like invalid API key), stop trying Groq
+          throw error;
+        }
+      }
+    }
+    // If we exhausted all Groq models
+    throw lastError || new Error('All Groq models failed.');
+  };
+
+  // Helper to try OpenRouter
+  const tryOpenRouter = async () => {
+    if (!openRouterEnabled) throw new Error('OpenRouter is disabled.');
+    const actualModel = primaryModel.toLowerCase() === 'openrouter' ? 'openrouter/free' : primaryModel;
+    return await callOpenRouter(actualModel, messages, openRouterApiKey);
+  };
+
   try {
     // Attempt Primary Provider
     if (isPrimaryGroq) {
-      const actualModel = GROQ_MODELS.includes(primaryModel) ? primaryModel : GROQ_MODELS[Math.floor(Math.random() * GROQ_MODELS.length)];
-      return await callGroq(actualModel, messages, groqApiKey);
+      return await tryGroqModels();
     } else {
-      const actualModel = primaryModel.toLowerCase() === 'openrouter' ? 'openrouter/free' : primaryModel;
-      return await callOpenRouter(actualModel, messages, openRouterApiKey);
+      return await tryOpenRouter();
     }
   } catch (error) {
-    // Check if it's a rate limit (429) or service unavailable (503) error
-    const isRetryableError = error.status === 429 || error.status === 503 || error.message.toLowerCase().includes('rate limit');
+    console.warn(`[AI Failover] Primary provider failed: ${error.message}. Attempting fallback provider...`);
     
-    if (isRetryableError) {
-      console.warn(`[AI Failover] Primary provider failed with ${error.status || 'rate limit'}. Attempting fallback...`);
-      
-      try {
-        // Attempt Secondary Provider as Fallback
-        if (isPrimaryGroq) {
-          // Fallback to OpenRouter
-          console.log('[AI Failover] Falling back to OpenRouter');
-          return await callOpenRouter("openrouter/free", messages, openRouterApiKey);
-        } else {
-          // Fallback to Groq
-          console.log('[AI Failover] Falling back to Groq');
-          const randomFallbackModel = GROQ_MODELS[Math.floor(Math.random() * GROQ_MODELS.length)];
-          return await callGroq(randomFallbackModel, messages, groqApiKey);
-        }
-      } catch (fallbackError) {
-        console.error('[AI Failover] Fallback provider also failed:', fallbackError);
-        throw new Error(`Primary Provider Error: ${error.message}. Fallback Provider Error: ${fallbackError.message}`); 
+    try {
+      // Attempt Secondary Provider as Fallback
+      if (isPrimaryGroq) {
+        // Fallback to OpenRouter
+        console.log('[AI Failover] Falling back to OpenRouter');
+        return await tryOpenRouter();
+      } else {
+        // Fallback to Groq
+        console.log('[AI Failover] Falling back to Groq');
+        return await tryGroqModels();
       }
+    } catch (fallbackError) {
+      console.error('[AI Failover] Fallback provider also failed:', fallbackError.message);
+      throw new Error(`Primary and Fallback Providers failed.`);
     }
-    
-    // If it wasn't a rate limit/503, just throw the original error
-    throw error;
   }
 }
 

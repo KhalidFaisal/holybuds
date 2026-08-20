@@ -93,6 +93,9 @@ model SiteSettings {
   aiModel           String  @default("openai/gpt-4o-mini")
   openRouterApiKey  String?
   groqApiKey        String?
+  groqEnabled       Boolean @default(true)
+  openRouterEnabled Boolean @default(true)
+  enabledGroqModels String  @default("[\"groq/compound\", \"openai/gpt-oss-120b\", \"groq/compound-mini\", \"qwen/qwen3.6-27b\", \"openai/gpt-oss-20b\"]")
   loyaltyEnabled        Boolean @default(true)
   pointsPerDollar       Int     @default(1)
   signupBonus           Int     @default(50)

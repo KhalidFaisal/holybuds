@@ -36,6 +36,9 @@ export async function GET(request) {
       aiModel: settings.aiModel || "openai/gpt-4o-mini",
       openRouterApiKey: settings.openRouterApiKey ? '••••••••••••••••' : '', // Masked in response
       groqApiKey: settings.groqApiKey ? '••••••••••••••••' : '', // Masked in response
+      groqEnabled: settings.groqEnabled ?? true,
+      openRouterEnabled: settings.openRouterEnabled ?? true,
+      enabledGroqModels: settings.enabledGroqModels || "[\"groq/compound\", \"openai/gpt-oss-120b\", \"groq/compound-mini\", \"qwen/qwen3.6-27b\", \"openai/gpt-oss-20b\"]",
       loyaltyEnabled: settings.loyaltyEnabled ?? true,
       pointsPerDollar: settings.pointsPerDollar ?? 1,
       signupBonus: settings.signupBonus ?? 50,
@@ -102,6 +105,18 @@ export async function POST(request) {
 
     if (data.groqApiKey !== undefined) {
       updateData.groqApiKey = data.groqApiKey === '' ? null : data.groqApiKey;
+    }
+
+    if (data.groqEnabled !== undefined) {
+      updateData.groqEnabled = Boolean(data.groqEnabled);
+    }
+
+    if (data.openRouterEnabled !== undefined) {
+      updateData.openRouterEnabled = Boolean(data.openRouterEnabled);
+    }
+
+    if (data.enabledGroqModels !== undefined) {
+      updateData.enabledGroqModels = data.enabledGroqModels;
     }
 
     if (data.loyaltyEnabled !== undefined) {
