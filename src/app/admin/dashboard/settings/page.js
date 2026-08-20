@@ -947,6 +947,7 @@ export default function SettingsPage() {
                 Save Settings
               </button>
             </div>
+            </div>
           </div>
 
           <form onSubmit={handlePromptSubmit} className="space-y-4 pt-4 border-t border-pc-border">
