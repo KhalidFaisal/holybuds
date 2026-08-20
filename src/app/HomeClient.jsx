@@ -119,13 +119,13 @@ function ProductSection({ title, subtitle, products, viewAllHref, icon }) {
     return () => window.removeEventListener('resize', checkScroll);
   }, [products]);
 
-  const checkScroll = () => {
+  function checkScroll() {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       setCanScrollLeft(scrollLeft > 0);
       setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 2); // margin of error
     }
-  };
+  }
 
   if (!products || products.length === 0) return null;
 
