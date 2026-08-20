@@ -114,6 +114,7 @@ export function CartProvider({ children }) {
 
     for (const d of discounts) {
       let qualifyingTotal = 0;
+      let qualifyingQuantity = 0;
       let targetIds = [];
 
       if (d.targetType === 'SPECIFIC_PRODUCTS' && d.targetProductIds) {
@@ -124,17 +125,22 @@ export function CartProvider({ children }) {
         const lineTotal = item.price * item.quantity;
         if (d.targetType === 'ENTIRE_ORDER') {
           qualifyingTotal += lineTotal;
+          qualifyingQuantity += item.quantity;
         } else if (d.targetType === 'CATEGORY' && item.category === d.targetCategory) {
           qualifyingTotal += lineTotal;
+          qualifyingQuantity += item.quantity;
         } else if (d.targetType === 'SPECIFIC_PRODUCTS' && targetIds.includes(item.id)) {
           qualifyingTotal += lineTotal;
+          qualifyingQuantity += item.quantity;
         }
       }
 
-      if (qualifyingTotal >= d.minOrderValue && qualifyingTotal > 0) {
-        let amount = d.type === 'PERCENTAGE' 
-          ? qualifyingTotal * (d.value / 100) 
-          : d.value;
+      if (qualifyingTotal >= d.minOrderValue && qualifyingQuantity >= (d.minItemQuantity || 0) && qualifyingTotal > 0) {
+        let amount = 0;
+        if (d.type === 'PERCENTAGE') amount = qualifyingTotal * (d.value / 100);
+        else if (d.type === 'FIXED') amount = d.value;
+        else if (d.type === 'BULK_FIXED') amount = d.value * qualifyingQuantity;
+        
         if (amount > qualifyingTotal) amount = qualifyingTotal;
         
         if (amount > bestAmt) {

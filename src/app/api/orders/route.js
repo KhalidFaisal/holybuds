@@ -90,6 +90,7 @@ export async function POST(request) {
 
     for (const discount of activeDiscounts) {
       let qualifyingTotal = 0;
+      let qualifyingQuantity = 0;
 
       let targetIds = [];
       if (discount.targetType === 'SPECIFIC_PRODUCTS' && discount.targetProductIds) {
@@ -104,19 +105,23 @@ export async function POST(request) {
         const lineTotal = item.price * item.quantity;
         if (discount.targetType === 'ENTIRE_ORDER') {
           qualifyingTotal += lineTotal;
+          qualifyingQuantity += item.quantity;
         } else if (discount.targetType === 'CATEGORY' && item.category === discount.targetCategory) {
           qualifyingTotal += lineTotal;
+          qualifyingQuantity += item.quantity;
         } else if (discount.targetType === 'SPECIFIC_PRODUCTS' && targetIds.includes(item.productId)) {
           qualifyingTotal += lineTotal;
+          qualifyingQuantity += item.quantity;
         }
       }
 
-      if (qualifyingTotal >= discount.minOrderValue && qualifyingTotal > 0) {
-        let amount = discount.type === 'PERCENTAGE' 
-          ? qualifyingTotal * (discount.value / 100) 
-          : discount.value;
+      if (qualifyingTotal >= discount.minOrderValue && qualifyingQuantity >= (discount.minItemQuantity || 0) && qualifyingTotal > 0) {
+        let amount = 0;
+        if (discount.type === 'PERCENTAGE') amount = qualifyingTotal * (discount.value / 100);
+        else if (discount.type === 'FIXED') amount = discount.value;
+        else if (discount.type === 'BULK_FIXED') amount = discount.value * qualifyingQuantity;
         
-        if (amount > qualifyingTotal) amount = qualifyingTotal; // Cap fixed discounts
+        if (amount > qualifyingTotal) amount = qualifyingTotal; // Cap discounts
 
         if (amount > bestDiscountAmount) {
           bestDiscountAmount = amount;

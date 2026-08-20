@@ -34,6 +34,13 @@ export async function withProductDiscounts(products) {
       }
 
       if (applies) {
+        // Skip discounts that require multiple items for the single-item strikethrough calculation
+        if (d.minItemQuantity > 1 || d.type === 'BULK_FIXED') {
+          // We can still add it to eligibleDiscountNames so they see the badge
+          bestDiscountName = d.name;
+          return;
+        }
+
         let discountAmount = d.type === 'PERCENTAGE' 
           ? product.price * (d.value / 100) 
           : d.value;

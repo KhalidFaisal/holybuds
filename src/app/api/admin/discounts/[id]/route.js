@@ -22,6 +22,7 @@ export async function PUT(request, { params }) {
         type: data.type,
         value: parseFloat(data.value),
         minOrderValue: parseFloat(data.minOrderValue || 0),
+        minItemQuantity: parseInt(data.minItemQuantity || 0, 10),
         targetType: data.targetType,
         targetCategory: data.targetCategory || null,
         targetProductIds: data.targetProductIds || null,

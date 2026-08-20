@@ -63,6 +63,7 @@ model Discount {
   type             String   // PERCENTAGE, FIXED
   value            Float
   minOrderValue    Float    @default(0)
+  minItemQuantity  Int      @default(0)
   targetType       String   // ENTIRE_ORDER, CATEGORY, SPECIFIC_PRODUCTS
   targetCategory   String?  // FLOWER, EDIBLE
   targetProductIds String?  // JSON array of strings

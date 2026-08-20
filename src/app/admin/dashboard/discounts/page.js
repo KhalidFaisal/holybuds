@@ -17,6 +17,7 @@ export default function DiscountsPage() {
     type: 'PERCENTAGE',
     value: '',
     minOrderValue: '0',
+    minItemQuantity: '0',
     targetType: 'ENTIRE_ORDER',
     targetCategory: '',
     targetProductIds: [],
@@ -85,6 +86,7 @@ export default function DiscountsPage() {
       type: discount.type,
       value: discount.value?.toString() || '',
       minOrderValue: discount.minOrderValue?.toString() || '0',
+      minItemQuantity: discount.minItemQuantity?.toString() || '0',
       targetType: discount.targetType,
       targetCategory: discount.targetCategory || '',
       targetProductIds: targetIds,
@@ -100,6 +102,7 @@ export default function DiscountsPage() {
       type: 'PERCENTAGE',
       value: '',
       minOrderValue: '0',
+      minItemQuantity: '0',
       targetType: 'ENTIRE_ORDER',
       targetCategory: '',
       targetProductIds: [],
@@ -116,6 +119,7 @@ export default function DiscountsPage() {
       ...form,
       value: parseFloat(form.value),
       minOrderValue: parseFloat(form.minOrderValue || 0),
+      minItemQuantity: parseInt(form.minItemQuantity || 0, 10),
       targetProductIds: form.targetType === 'SPECIFIC_PRODUCTS' ? JSON.stringify(form.targetProductIds) : null,
       targetCategory: form.targetType === 'CATEGORY' ? form.targetCategory : null,
     };
@@ -196,6 +200,7 @@ export default function DiscountsPage() {
               <select name="type" value={form.type} onChange={handleChange} className="input-field">
                 <option value="PERCENTAGE">Percentage (%)</option>
                 <option value="FIXED">Fixed Amount ($)</option>
+                <option value="BULK_FIXED">Bulk Fixed ($ Off Each Item)</option>
               </select>
             </div>
 
@@ -217,6 +222,12 @@ export default function DiscountsPage() {
               <label className="block text-sm font-medium text-pc-muted mb-1">Minimum Qualifying Subtotal ($)</label>
               <input type="number" step="0.01" name="minOrderValue" value={form.minOrderValue} onChange={handleChange} required className="input-field" />
               <p className="text-xs text-pc-muted mt-1">Set to 0 for no minimum.</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-pc-muted mb-1">Minimum Qualifying Quantity</label>
+              <input type="number" step="1" name="minItemQuantity" value={form.minItemQuantity} onChange={handleChange} required className="input-field" />
+              <p className="text-xs text-pc-muted mt-1">Required number of eligible items (e.g. 5 for &quot;Buy 5+&quot;).</p>
             </div>
           </div>
 
@@ -289,6 +300,7 @@ export default function DiscountsPage() {
                 <th className="px-6 py-4 font-bold">Discount</th>
                 <th className="px-6 py-4 font-bold">Applies To</th>
                 <th className="px-6 py-4 font-bold">Min Subtotal</th>
+                <th className="px-6 py-4 font-bold">Min Qty</th>
                 <th className="px-6 py-4 font-bold">Status</th>
                 <th className="px-6 py-4 font-bold text-right">Actions</th>
               </tr>
@@ -307,7 +319,9 @@ export default function DiscountsPage() {
                       {discount.name}
                     </td>
                     <td className="px-6 py-4 text-pc-green font-semibold">
-                      {discount.type === 'PERCENTAGE' ? `${discount.value}%` : `$${discount.value.toFixed(2)}`}
+                      {discount.type === 'PERCENTAGE' && `${discount.value}%`}
+                      {discount.type === 'FIXED' && `$${discount.value.toFixed(2)}`}
+                      {discount.type === 'BULK_FIXED' && `$${discount.value.toFixed(2)} / ea`}
                     </td>
                     <td className="px-6 py-4">
                       {discount.targetType === 'ENTIRE_ORDER' && 'Entire Order'}
@@ -316,6 +330,9 @@ export default function DiscountsPage() {
                     </td>
                     <td className="px-6 py-4">
                       {discount.minOrderValue > 0 ? `$${discount.minOrderValue.toFixed(2)}` : 'None'}
+                    </td>
+                    <td className="px-6 py-4">
+                      {discount.minItemQuantity > 0 ? discount.minItemQuantity : 'None'}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
