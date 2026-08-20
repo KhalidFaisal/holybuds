@@ -37,6 +37,7 @@ export default function SettingsPage() {
   
   const [testingModel, setTestingModel] = useState(false);
   const [testMessage, setTestMessage] = useState('');
+  const [groqTestResults, setGroqTestResults] = useState([]);
 
   const [aiStaffPicksEnabled, setAiStaffPicksEnabled] = useState(false);
   const [loadingAiPicks, setLoadingAiPicks] = useState(false);
@@ -187,7 +188,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleTestModel = async () => {
+  const handleTestOpenRouter = async () => {
     setTestingModel(true);
     setTestMessage('');
     try {
@@ -198,9 +199,8 @@ export default function SettingsPage() {
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
         },
         body: JSON.stringify({ 
-          model: aiModel,
-          openRouterApiKey: openRouterApiKey === '••••••••••••••••' ? undefined : openRouterApiKey,
-          groqApiKey: groqApiKey === '••••••••••••••••' ? undefined : groqApiKey
+          model: 'openrouter/free',
+          openRouterApiKey: openRouterApiKey === '••••••••••••••••' ? undefined : openRouterApiKey
         })
       });
       if (res.ok) {
@@ -215,6 +215,47 @@ export default function SettingsPage() {
     } finally {
       setTestingModel(false);
     }
+  };
+
+  const handleTestGroq = async () => {
+    setTestingModel(true);
+    setGroqTestResults([]);
+    const modelsToTest = [
+      'groq/compound',
+      'openai/gpt-oss-120b',
+      'groq/compound-mini',
+      'qwen/qwen3.6-27b',
+      'openai/gpt-oss-20b'
+    ];
+    
+    let results = [];
+    
+    for (const m of modelsToTest) {
+      setGroqTestResults([...results, { model: m, status: 'testing' }]);
+      try {
+        const res = await fetch('/api/admin/settings/test-ai', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+          },
+          body: JSON.stringify({ 
+            model: m,
+            groqApiKey: groqApiKey === '••••••••••••••••' ? undefined : groqApiKey
+          })
+        });
+        if (res.ok) {
+          results.push({ model: m, status: 'success' });
+        } else {
+          results.push({ model: m, status: 'error' });
+        }
+      } catch (err) {
+        results.push({ model: m, status: 'error' });
+      }
+      setGroqTestResults([...results]);
+    }
+    
+    setTestingModel(false);
   };
 
   const handleSiteSubmit = async (e) => {
@@ -775,126 +816,113 @@ export default function SettingsPage() {
           Customize the instructions given to the AI Chatbot on your storefront. Train it to use specific slang, recommend certain products, or adopt a unique persona.
         </p>
 
-        <form onSubmit={handlePromptSubmit} className="space-y-4">
-          {/* OpenRouter API Key */}
-          <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">OpenRouter API Key</label>
-            <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key. Add your own key to bypass free limits or use paid models.</p>
-            {openRouterApiKey === '••••••••••••••••' ? (
-              <div className="flex items-center gap-4 bg-pc-black border border-pc-border rounded-xl px-4 py-2 mb-4">
-                <span className="text-pc-green font-bold flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M20 6 9 17l-5-5"/></svg>
-                  Configured
-                </span>
-                <span className="text-pc-muted flex-1 text-right tracking-widest">{openRouterApiKey}</span>
-                <button
-                  type="button"
-                  onClick={() => setOpenRouterApiKey('')}
-                  className="text-xs font-bold text-pc-muted hover:text-white px-3 py-1 bg-pc-dark rounded-lg transition-colors border border-pc-border hover:border-pc-muted"
-                >
-                  Edit
-                </button>
-              </div>
-            ) : (
-              <input
-                type="password"
-                value={openRouterApiKey}
-                onChange={(e) => setOpenRouterApiKey(e.target.value)}
-                placeholder="sk-or-v1-..."
-                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4"
-              />
-            )}
-          </div>
-
-          {/* Groq API Key */}
-          <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">Groq API Key</label>
-            <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key. Add your own key to bypass free limits or use paid models.</p>
-            {groqApiKey === '••••••••••••••••' ? (
-              <div className="flex items-center gap-4 bg-pc-black border border-pc-border rounded-xl px-4 py-2 mb-4">
-                <span className="text-pc-green font-bold flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M20 6 9 17l-5-5"/></svg>
-                  Configured
-                </span>
-                <span className="text-pc-muted flex-1 text-right tracking-widest">{groqApiKey}</span>
-                <button
-                  type="button"
-                  onClick={() => setGroqApiKey('')}
-                  className="text-xs font-bold text-pc-muted hover:text-white px-3 py-1 bg-pc-dark rounded-lg transition-colors border border-pc-border hover:border-pc-muted"
-                >
-                  Edit
-                </button>
-              </div>
-            ) : (
-              <input
-                type="password"
-                value={groqApiKey}
-                onChange={(e) => setGroqApiKey(e.target.value)}
-                placeholder="gsk_..."
-                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4"
-              />
-            )}
-          </div>
-
-
-
-          <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">Primary AI Model</label>
+        <div className="space-y-6">
+          <div className="bg-pc-black border border-pc-border rounded-xl p-4">
+            <h3 className="text-lg font-semibold text-white mb-4">OpenRouter Configuration</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-pc-muted mb-1">OpenRouter API Key</label>
+              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server's default environment key.</p>
+              {openRouterApiKey === '••••••••••••••••' ? (
+                <div className="flex items-center gap-4 bg-pc-dark border border-pc-border rounded-xl px-4 py-2 mb-4">
+                  <span className="text-pc-green font-bold flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M20 6 9 17l-5-5"/></svg>
+                    Configured
+                  </span>
+                  <span className="text-pc-muted flex-1 text-right tracking-widest">{openRouterApiKey}</span>
+                  <button type="button" onClick={() => setOpenRouterApiKey('')} className="text-xs font-bold text-pc-muted hover:text-white px-3 py-1 bg-pc-black rounded-lg transition-colors border border-pc-border hover:border-pc-muted">Edit</button>
+                </div>
+              ) : (
+                <input type="password" value={openRouterApiKey} onChange={(e) => setOpenRouterApiKey(e.target.value)} placeholder="sk-or-v1-..." className="w-full bg-pc-dark border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4" />
+              )}
+            </div>
             <div className="flex gap-2">
+              <button type="button" onClick={handleTestOpenRouter} disabled={testingModel} className="flex-1 px-4 py-2 bg-pc-dark border border-pc-border text-white hover:border-pc-green rounded-xl text-sm font-bold transition-all disabled:opacity-50">
+                {testingModel ? 'Testing...' : 'Test OpenRouter'}
+              </button>
+              <button type="button" onClick={handlePromptSubmit} disabled={loadingPrompt} className="flex-1 px-4 py-2 bg-pc-green/10 text-pc-green hover:bg-pc-green hover:text-black rounded-xl text-sm font-bold transition-all disabled:opacity-50">
+                Save API Key
+              </button>
+            </div>
+            {testMessage && <div className={`mt-4 p-3 rounded-lg text-xs ${testMessage.startsWith('Success') ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'}`}>{testMessage}</div>}
+          </div>
+
+          <div className="bg-pc-black border border-pc-border rounded-xl p-4">
+            <h3 className="text-lg font-semibold text-white mb-4">Groq Configuration</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-pc-muted mb-1">Groq API Key</label>
+              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server's default environment key.</p>
+              {groqApiKey === '••••••••••••••••' ? (
+                <div className="flex items-center gap-4 bg-pc-dark border border-pc-border rounded-xl px-4 py-2 mb-4">
+                  <span className="text-pc-green font-bold flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M20 6 9 17l-5-5"/></svg>
+                    Configured
+                  </span>
+                  <span className="text-pc-muted flex-1 text-right tracking-widest">{groqApiKey}</span>
+                  <button type="button" onClick={() => setGroqApiKey('')} className="text-xs font-bold text-pc-muted hover:text-white px-3 py-1 bg-pc-black rounded-lg transition-colors border border-pc-border hover:border-pc-muted">Edit</button>
+                </div>
+              ) : (
+                <input type="password" value={groqApiKey} onChange={(e) => setGroqApiKey(e.target.value)} placeholder="gsk_..." className="w-full bg-pc-dark border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green mb-4" />
+              )}
+            </div>
+            
+            {groqTestResults.length > 0 && (
+              <div className="mb-4 space-y-2">
+                {groqTestResults.map((res, i) => (
+                  <div key={i} className="flex items-center justify-between bg-pc-dark px-3 py-2 rounded-lg text-xs border border-pc-border">
+                    <span className="text-white">{res.model}</span>
+                    {res.status === 'testing' && <span className="text-yellow-400 animate-pulse">Testing...</span>}
+                    {res.status === 'success' && <span className="text-pc-green font-bold flex items-center gap-1"><svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17l-5-5"/></svg>OK</span>}
+                    {res.status === 'error' && <span className="text-red-400 font-bold flex items-center gap-1"><svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12"/></svg>Fail</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="flex gap-2">
+              <button type="button" onClick={handleTestGroq} disabled={testingModel} className="flex-1 px-4 py-2 bg-pc-dark border border-pc-border text-white hover:border-pc-green rounded-xl text-sm font-bold transition-all disabled:opacity-50">
+                {testingModel ? 'Testing...' : 'Test All Models'}
+              </button>
+              <button type="button" onClick={handlePromptSubmit} disabled={loadingPrompt} className="flex-1 px-4 py-2 bg-pc-green/10 text-pc-green hover:bg-pc-green hover:text-black rounded-xl text-sm font-bold transition-all disabled:opacity-50">
+                Save API Key
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={handlePromptSubmit} className="space-y-4 pt-4 border-t border-pc-border">
+            <div>
+              <label className="block text-sm font-medium text-pc-muted mb-1">Primary AI Provider</label>
               <select
                 value={aiModel}
                 onChange={(e) => setAiModel(e.target.value)}
-                className="flex-1 bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green appearance-none"
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green appearance-none"
               >
-                <option value="openrouter/free">OpenRouter Free (Default)</option>
-                <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
-                <option value="openai/gpt-5-mini">GPT-5 Mini</option>
-
-                <option value="groq-llama-3.1-8b-instant">Groq LLaMA 3.1 8B (Free)</option>
-                <option value="groq-llama-3.3-70b-versatile">Groq LLaMA 3.3 70B (Free)</option>
-                <option value="groq-mixtral-8x7b-32768">Groq Mixtral 8x7B (Free)</option>
+                <option value="groq">Groq</option>
+                <option value="openrouter">OpenRouter</option>
               </select>
-              <button
-                type="button"
-                onClick={handleTestModel}
-                disabled={testingModel}
-                className="px-4 py-2 bg-pc-green/10 text-pc-green hover:bg-pc-green hover:text-black rounded-xl text-sm font-bold transition-all whitespace-nowrap disabled:opacity-50"
-              >
-                {testingModel ? 'Testing...' : 'Test Connection'}
-              </button>
             </div>
-            {testMessage && (
-              <div className={`mt-2 p-2 rounded text-xs ${testMessage.startsWith('Success') ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'}`}>
-                {testMessage}
+            
+            <div>
+              <label className="block text-sm font-medium text-pc-muted mb-1">System Prompt</label>
+              <textarea
+                value={chatbotPrompt}
+                onChange={(e) => setChatbotPrompt(e.target.value)}
+                rows={6}
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+                required
+              />
+            </div>
+
+            {messagePrompt && (
+              <div className={`p-3 rounded-lg text-sm ${messagePrompt.includes('success') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                {messagePrompt}
               </div>
             )}
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">System Prompt</label>
-            <textarea
-              value={chatbotPrompt}
-              onChange={(e) => setChatbotPrompt(e.target.value)}
-              rows={6}
-              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
-              required
-            />
-          </div>
-
-          {messagePrompt && (
-            <div className={`p-3 rounded-lg text-sm ${messagePrompt.includes('success') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-              {messagePrompt}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loadingPrompt}
-            className="btn-primary w-full py-3"
-          >
-            {loadingPrompt ? 'Saving...' : 'Update AI Settings'}
-          </button>
-        </form>
+            <button type="submit" disabled={loadingPrompt} className="btn-primary w-full py-3">
+              {loadingPrompt ? 'Saving...' : 'Update Settings'}
+            </button>
+          </form>
+        </div>
       </div>
       </div>
     </div>

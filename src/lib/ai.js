@@ -1,8 +1,15 @@
 import prisma from '@/lib/prisma';
 
+export const GROQ_MODELS = [
+  'groq/compound',
+  'openai/gpt-oss-120b',
+  'groq/compound-mini',
+  'qwen/qwen3.6-27b',
+  'openai/gpt-oss-20b'
+];
+
 async function callGroq(model, messages, apiKey) {
   if (!apiKey) throw new Error('Groq API Key is missing');
-  const actualModel = model.replace('groq-', '');
 
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -11,7 +18,7 @@ async function callGroq(model, messages, apiKey) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: actualModel,
+      model: model,
       messages: messages
     })
   });
@@ -24,8 +31,6 @@ async function callGroq(model, messages, apiKey) {
   }
   return await res.json();
 }
-
-
 
 async function callOpenRouter(model, messages, apiKey) {
   if (!apiKey) throw new Error('OPENROUTER_API_KEY is missing');
@@ -54,18 +59,20 @@ async function callOpenRouter(model, messages, apiKey) {
 export async function callAI(messages, options = {}) {
   const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
   
-  const primaryModel = options.model || settings?.aiModel || "openai/gpt-4o-mini";
+  const primaryModel = options.model || settings?.aiModel || "groq";
   const openRouterApiKey = options.openRouterApiKey || settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
   const groqApiKey = options.groqApiKey || settings?.groqApiKey || process.env.GROQ_API_KEY;
 
-  const isPrimaryGroq = primaryModel.startsWith('groq-');
+  const isPrimaryGroq = primaryModel.toLowerCase() === 'groq' || GROQ_MODELS.includes(primaryModel);
   
   try {
     // Attempt Primary Provider
     if (isPrimaryGroq) {
-      return await callGroq(primaryModel, messages, groqApiKey);
+      const actualModel = GROQ_MODELS.includes(primaryModel) ? primaryModel : GROQ_MODELS[Math.floor(Math.random() * GROQ_MODELS.length)];
+      return await callGroq(actualModel, messages, groqApiKey);
     } else {
-      return await callOpenRouter(primaryModel, messages, openRouterApiKey);
+      const actualModel = primaryModel.toLowerCase() === 'openrouter' ? 'openrouter/free' : primaryModel;
+      return await callOpenRouter(actualModel, messages, openRouterApiKey);
     }
   } catch (error) {
     // Check if it's a rate limit (429) or service unavailable (503) error
@@ -83,7 +90,8 @@ export async function callAI(messages, options = {}) {
         } else {
           // Fallback to Groq
           console.log('[AI Failover] Falling back to Groq');
-          return await callGroq("groq-llama-3.1-8b-instant", messages, groqApiKey);
+          const randomFallbackModel = GROQ_MODELS[Math.floor(Math.random() * GROQ_MODELS.length)];
+          return await callGroq(randomFallbackModel, messages, groqApiKey);
         }
       } catch (fallbackError) {
         console.error('[AI Failover] Fallback provider also failed:', fallbackError);
