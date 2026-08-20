@@ -131,7 +131,7 @@ export default function ProductCard({ product, compact = false }) {
             return (
               <div className="mb-3 flex flex-wrap gap-1">
                 {parsedEffects.map(effect => (
-                  <span key={effect} className={`${getEffectColorClass(effect)} text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full`}>
+                  <span key={effect} className={`${getEffectColorClass(effect)} ${compact ? 'text-[8px] sm:text-[10px] px-1.5 sm:px-2' : 'text-[10px] px-2'} font-bold uppercase tracking-wider py-0.5 rounded-full`}>
                     {effect}
                   </span>
                 ))}
