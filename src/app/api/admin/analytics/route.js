@@ -187,17 +187,17 @@ export async function GET(request) {
     
     // Categorized top products
     const topFlower = Object.values(stats.topProducts)
-      .filter(p => p.category === 'FLOWER')
+      .filter(p => p.category?.toLowerCase() === 'flowers')
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 5);
 
     const topEdibles = Object.values(stats.topProducts)
-      .filter(p => p.category === 'EDIBLE')
+      .filter(p => p.category?.toLowerCase() === 'edibles')
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 5);
 
     const topCarts = Object.values(stats.topProducts)
-      .filter(p => p.category === 'VAPE' || p.name.toLowerCase().includes('cart') || p.name.toLowerCase().includes('disposable'))
+      .filter(p => p.category?.toLowerCase() === 'vapes')
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 5);
 
