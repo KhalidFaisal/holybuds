@@ -45,7 +45,8 @@ export default function SettingsPage() {
   const [loadingLoyalty, setLoadingLoyalty] = useState(false);
   const [messageLoyalty, setMessageLoyalty] = useState('');
   
-  const [testingModel, setTestingModel] = useState(false);
+  const [testingOpenRouter, setTestingOpenRouter] = useState(false);
+  const [testingGroq, setTestingGroq] = useState(false);
   const [testMessage, setTestMessage] = useState('');
   const [groqTestResults, setGroqTestResults] = useState([]);
 
@@ -111,7 +112,15 @@ export default function SettingsPage() {
           if (data.openRouterEnabled !== undefined) setOpenRouterEnabled(data.openRouterEnabled);
           if (data.enabledGroqModels) {
             try {
-              setEnabledGroqModels(JSON.parse(data.enabledGroqModels));
+              const parsed = JSON.parse(data.enabledGroqModels);
+              const validModels = [
+                'groq/compound',
+                'openai/gpt-oss-120b',
+                'groq/compound-mini',
+                'qwen/qwen3.6-27b',
+                'openai/gpt-oss-20b'
+              ];
+              setEnabledGroqModels(parsed.filter(m => validModels.includes(m)));
             } catch (e) {}
           }
           
@@ -196,7 +205,9 @@ export default function SettingsPage() {
       });
 
       if (res.ok) {
-        setMessagePrompt('AI Budtender prompt updated successfully.');
+        setMessagePrompt('Settings updated successfully.');
+        if (openRouterApiKey && openRouterApiKey !== '••••••••••••••••') setOpenRouterApiKey('••••••••••••••••');
+        if (groqApiKey && groqApiKey !== '••••••••••••••••') setGroqApiKey('••••••••••••••••');
       } else {
         const data = await res.json();
         setMessagePrompt(data.error || 'Failed to update settings.');
@@ -209,7 +220,7 @@ export default function SettingsPage() {
   };
 
   const handleTestOpenRouter = async () => {
-    setTestingModel(true);
+    setTestingOpenRouter(true);
     setTestMessage('');
     try {
       const res = await fetch('/api/admin/settings/test-ai', {
@@ -233,12 +244,12 @@ export default function SettingsPage() {
     } catch (err) {
       setTestMessage('Failed to connect to test endpoint.');
     } finally {
-      setTestingModel(false);
+      setTestingOpenRouter(false);
     }
   };
 
   const handleTestGroq = async () => {
-    setTestingModel(true);
+    setTestingGroq(true);
     setGroqTestResults([]);
     const modelsToTest = enabledGroqModels;
     
@@ -269,7 +280,7 @@ export default function SettingsPage() {
       setGroqTestResults([...results]);
     }
     
-    setTestingModel(false);
+    setTestingGroq(false);
   };
 
   const handleSiteSubmit = async (e) => {
@@ -858,8 +869,8 @@ export default function SettingsPage() {
                 )}
               </div>
               <div className="flex gap-2">
-                <button type="button" onClick={handleTestOpenRouter} disabled={testingModel} className="flex-1 px-4 py-2 bg-pc-dark border border-pc-border text-white hover:border-pc-green rounded-xl text-sm font-bold transition-all disabled:opacity-50">
-                  {testingModel ? 'Testing...' : 'Test OpenRouter'}
+                <button type="button" onClick={handleTestOpenRouter} disabled={testingOpenRouter || !openRouterEnabled} className="flex-1 px-4 py-2 bg-pc-dark border border-pc-border text-white hover:border-pc-green rounded-xl text-sm font-bold transition-all disabled:opacity-50">
+                  {testingOpenRouter ? 'Testing...' : 'Test OpenRouter'}
                 </button>
                 <button type="button" onClick={handlePromptSubmit} disabled={loadingPrompt} className="flex-1 px-4 py-2 bg-pc-green/10 text-pc-green hover:bg-pc-green hover:text-black rounded-xl text-sm font-bold transition-all disabled:opacity-50">
                   Save Settings
@@ -940,8 +951,8 @@ export default function SettingsPage() {
 
             
             <div className="flex gap-2">
-              <button type="button" onClick={handleTestGroq} disabled={testingModel || !groqEnabled} className="flex-1 px-4 py-2 bg-pc-dark border border-pc-border text-white hover:border-pc-green rounded-xl text-sm font-bold transition-all disabled:opacity-50">
-                {testingModel ? 'Testing...' : 'Test Enabled Models'}
+              <button type="button" onClick={handleTestGroq} disabled={testingGroq || !groqEnabled} className="flex-1 px-4 py-2 bg-pc-dark border border-pc-border text-white hover:border-pc-green rounded-xl text-sm font-bold transition-all disabled:opacity-50">
+                {testingGroq ? 'Testing...' : 'Test Enabled Models'}
               </button>
               <button type="button" onClick={handlePromptSubmit} disabled={loadingPrompt} className="flex-1 px-4 py-2 bg-pc-green/10 text-pc-green hover:bg-pc-green hover:text-black rounded-xl text-sm font-bold transition-all disabled:opacity-50">
                 Save Settings
