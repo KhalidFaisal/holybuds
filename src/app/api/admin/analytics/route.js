@@ -175,7 +175,6 @@ export async function GET(request) {
     
     // Sort and convert object maps to arrays
     const topProductsArr = Object.values(stats.topProducts)
-      .filter(p => p.stock > 0)
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 10);
     const topDiscountsArr = Object.entries(stats.discounts)
@@ -186,9 +185,28 @@ export async function GET(request) {
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
     
+    // Categorized top products
+    const topFlower = Object.values(stats.topProducts)
+      .filter(p => p.category === 'FLOWER')
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5);
+
+    const topEdibles = Object.values(stats.topProducts)
+      .filter(p => p.category === 'EDIBLE')
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5);
+
+    const topCarts = Object.values(stats.topProducts)
+      .filter(p => p.category === 'VAPE' || p.name.toLowerCase().includes('cart') || p.name.toLowerCase().includes('disposable'))
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5);
+
     return NextResponse.json({
       ...stats,
       topProducts: topProductsArr,
+      topFlower,
+      topEdibles,
+      topCarts,
       topDiscounts: topDiscountsArr,
       topCustomers: topCustomersArr
     });

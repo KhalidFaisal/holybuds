@@ -8,6 +8,35 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const renderProductList = (title, products, emptyText = "No sales data yet.") => (
+    <div className="glass-card p-6 h-full">
+      <h2 className="text-xl font-bold text-white mb-6">{title}</h2>
+      {!products || products.length === 0 ? (
+        <p className="text-pc-muted">{emptyText}</p>
+      ) : (
+        <div className="space-y-4">
+          {products.map((product, index) => (
+            <div key={product.id} className="flex items-center justify-between p-4 bg-pc-black rounded-xl border border-pc-border">
+              <div className="flex items-center gap-4">
+                <div className="w-8 h-8 rounded-full bg-pc-dark flex items-center justify-center font-bold text-pc-muted border border-pc-border">
+                  {index + 1}
+                </div>
+                <div>
+                  <p className="text-white font-bold">{product.name}</p>
+                  <p className="text-xs text-pc-muted">{product.category}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-white font-bold">{product.quantity} sold</p>
+                <p className="text-sm text-pc-green">${product.revenue.toFixed(2)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
@@ -162,35 +191,15 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Top Products */}
-        <div className="glass-card p-6">
-          <h2 className="text-xl font-bold text-white mb-6">Top Selling Products</h2>
-          {data.topProducts.length === 0 ? (
-            <p className="text-pc-muted">No sales data yet.</p>
-          ) : (
-            <div className="space-y-4">
-              {data.topProducts.map((product, index) => (
-                <div key={product.id} className="flex items-center justify-between p-4 bg-pc-black rounded-xl border border-pc-border">
-                  <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-full bg-pc-dark flex items-center justify-center font-bold text-pc-muted border border-pc-border">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="text-white font-bold">{product.name}</p>
-                      <p className="text-xs text-pc-muted">{product.category}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-white font-bold">{product.quantity} sold</p>
-                    <p className="text-sm text-pc-green">${product.revenue.toFixed(2)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      {/* Top Performers by Category */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {renderProductList("Overall Top Sellers", data.topProducts.slice(0, 5))}
+        {renderProductList("Top Flower", data.topFlower)}
+        {renderProductList("Top Edibles", data.topEdibles)}
+        {renderProductList("Top Vapes & Carts", data.topCarts)}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
         {/* Top Customers */}
         {data.topCustomers && data.topCustomers.length > 0 && (
