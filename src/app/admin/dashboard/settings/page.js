@@ -821,7 +821,7 @@ export default function SettingsPage() {
             <h3 className="text-lg font-semibold text-white mb-4">OpenRouter Configuration</h3>
             <div className="mb-4">
               <label className="block text-sm font-medium text-pc-muted mb-1">OpenRouter API Key</label>
-              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server's default environment key.</p>
+              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key.</p>
               {openRouterApiKey === '••••••••••••••••' ? (
                 <div className="flex items-center gap-4 bg-pc-dark border border-pc-border rounded-xl px-4 py-2 mb-4">
                   <span className="text-pc-green font-bold flex items-center gap-1">
@@ -850,7 +850,7 @@ export default function SettingsPage() {
             <h3 className="text-lg font-semibold text-white mb-4">Groq Configuration</h3>
             <div className="mb-4">
               <label className="block text-sm font-medium text-pc-muted mb-1">Groq API Key</label>
-              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server's default environment key.</p>
+              <p className="text-xs text-pc-muted mb-2">Leave blank to use the server&apos;s default environment key.</p>
               {groqApiKey === '••••••••••••••••' ? (
                 <div className="flex items-center gap-4 bg-pc-dark border border-pc-border rounded-xl px-4 py-2 mb-4">
                   <span className="text-pc-green font-bold flex items-center gap-1">
