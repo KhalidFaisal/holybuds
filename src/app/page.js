@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import HomeClient from './HomeClient';
 import { withProductDiscounts } from '@/lib/discounts';
 import AIUpdaterTrigger from '@/components/AIUpdaterTrigger';
+import { auth } from '@/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,14 @@ function shuffleHourly(array) {
 }
 
 export default async function HomePage() {
+  const session = await auth();
+  let customer = null;
+  if (session?.user?.id) {
+    customer = await prisma.customer.findUnique({
+      where: { userId: session.user.id }
+    });
+  }
+
   const allActiveProducts = await prisma.product.findMany({
     where: { isVisible: true, stock: { gt: 0 } },
     orderBy: { createdAt: 'desc' }
@@ -105,6 +114,7 @@ export default async function HomePage() {
     <>
       {needsAiUpdate && <AIUpdaterTrigger />}
       <HomeClient
+        customer={customer ? JSON.parse(JSON.stringify(customer)) : null}
         deals={JSON.parse(JSON.stringify(deals))}
         staffPicks={JSON.parse(JSON.stringify(staffPicks))}
         newArrivals={JSON.parse(JSON.stringify(newArrivals))}

@@ -311,7 +311,7 @@ function Footer({ categories }) {
   );
 }
 
-export default function HomeClient({ deals, staffPicks, newArrivals, bestSellers, categories, banners }) {
+export default function HomeClient({ customer, deals, staffPicks, newArrivals, bestSellers, categories, banners }) {
   const [recentProducts, setRecentProducts] = useState([]);
 
   useEffect(() => {
@@ -345,9 +345,25 @@ export default function HomeClient({ deals, staffPicks, newArrivals, bestSellers
       <main className="min-h-screen">
         <BannerCarousel banners={banners} />
 
+        {customer && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 md:mt-12">
+            <div className="glass-card p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 glow-emerald">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Welcome back{customer.name ? `, ${customer.name.split(' ')[0]}` : ''} 👋</h2>
+                <p className="text-pc-muted text-sm sm:text-base">
+                  You have <span className="text-pc-gold font-bold">{customer.points} points</span> available
+                </p>
+              </div>
+              <Link href="/account" className="btn-secondary whitespace-nowrap">
+                View Account
+              </Link>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-4">
           <ProductSection 
-            title="New Arrivals" 
+            title={customer ? "New Since Your Last Visit" : "New Arrivals"} 
             subtitle="The latest additions to our collection" 
             products={newArrivals} 
             viewAllHref="/menu" 
