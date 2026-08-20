@@ -149,7 +149,7 @@ function ProductDetails({ product }) {
                 {product.eligibleDiscountNames && product.eligibleDiscountNames.length > 0 && (
                   <div className="mb-4 flex flex-wrap gap-2">
                     {product.eligibleDiscountNames.map(name => (
-                      <span key={name} className="bg-emerald-500/20 text-emerald-400 text-sm font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-emerald-500/30">
+                      <span key={name} className="bg-pc-gold/20 border border-pc-gold/40 text-pc-gold text-xs sm:text-sm font-black uppercase tracking-wider px-3 py-1 rounded-full truncate max-w-full">
                         {name}
                       </span>
                     ))}

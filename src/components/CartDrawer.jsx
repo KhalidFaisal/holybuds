@@ -154,7 +154,7 @@ export default function CartDrawer() {
                     {item.eligibleDiscountNames && item.eligibleDiscountNames.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-1">
                         {item.eligibleDiscountNames.map(name => (
-                          <span key={name} className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border border-emerald-500/30 truncate max-w-full">
+                          <span key={name} className="bg-pc-gold/20 border border-pc-gold/40 text-pc-gold text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full truncate max-w-full">
                             {name}
                           </span>
                         ))}
