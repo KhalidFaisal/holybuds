@@ -162,7 +162,7 @@ function ProductSection({ title, subtitle, products, viewAllHref, icon }) {
           className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-6 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar"
         >
           {products.map((product) => (
-            <div key={product.id} className="w-[180px] sm:w-[220px] lg:w-[260px] shrink-0 snap-start">
+            <div key={product.id} className="w-[140px] sm:w-[220px] lg:w-[260px] shrink-0 snap-start">
               <ProductCard product={product} />
             </div>
           ))}

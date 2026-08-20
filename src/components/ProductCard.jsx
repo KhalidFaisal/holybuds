@@ -118,12 +118,7 @@ export default function ProductCard({ product }) {
           </div>
         )}
 
-        {/* Description */}
-        {product.description && (
-          <p className="text-pc-muted text-sm mb-3 line-clamp-2">
-            {product.description}
-          </p>
-        )}
+
 
         {/* Effects Badges */}
         {(() => {
