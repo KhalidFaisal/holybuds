@@ -145,7 +145,7 @@ export default function ProductCard({ product, compact = false }) {
         {product.eligibleDiscountNames && product.eligibleDiscountNames.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-1">
             {product.eligibleDiscountNames.map(name => (
-              <span key={name} className="bg-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-500/30">
+              <span key={name} className="bg-pc-green text-black text-[10px] sm:text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm">
                 {name}
               </span>
             ))}
