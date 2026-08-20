@@ -354,7 +354,7 @@ export default function HomeClient({ customer, deals, staffPicks, newArrivals, b
                   You have <span className="text-pc-gold font-bold">{customer.points} points</span> available
                 </p>
               </div>
-              <Link href="/account" className="btn-secondary whitespace-nowrap">
+              <Link href="/account" className="btn-secondary whitespace-nowrap w-full md:w-auto text-center justify-center">
                 View Account
               </Link>
             </div>
