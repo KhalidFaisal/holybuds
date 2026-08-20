@@ -7,7 +7,7 @@ import { getEffectColorClass } from '@/lib/colors';
 import { useCart } from './CartProvider';
 import CannabisIcon from './icons/CannabisIcon';
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, compact = false }) {
   const { addItem } = useCart();
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -103,7 +103,7 @@ export default function ProductCard({ product }) {
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-start justify-between gap-2 mb-2">
           <Link href={`/product/${product.id}`} className="hover:underline">
-            <h3 className="font-bold text-white text-lg leading-tight group-hover:text-pc-green-light transition-colors">
+            <h3 className={`font-bold text-white leading-tight group-hover:text-pc-green-light transition-colors ${compact ? 'text-sm sm:text-lg' : 'text-lg'}`}>
               {product.name}
             </h3>
           </Link>

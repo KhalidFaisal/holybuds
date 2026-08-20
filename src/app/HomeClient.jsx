@@ -163,7 +163,7 @@ function ProductSection({ title, subtitle, products, viewAllHref, icon }) {
         >
           {products.map((product) => (
             <div key={product.id} className="w-[140px] sm:w-[220px] lg:w-[260px] shrink-0 snap-start">
-              <ProductCard product={product} />
+              <ProductCard product={product} compact={true} />
             </div>
           ))}
         </div>
