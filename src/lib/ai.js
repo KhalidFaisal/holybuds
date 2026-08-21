@@ -95,12 +95,14 @@ export async function callAI(messages, options = {}) {
         return await callGroq(model, messages, groqApiKey);
       } catch (error) {
         lastError = error;
-        const isRetryable = error.status === 429 || error.status === 503 || error.message.toLowerCase().includes('rate limit') || error.message.toLowerCase().includes('overloaded');
-        if (isRetryable) {
-          console.warn(`[AI Failover] Groq model ${model} failed. Trying next...`);
+        // Don't retry on Auth/Forbidden errors
+        const isFatal = error.status === 401 || error.status === 403;
+        
+        if (!isFatal) {
+          console.warn(`[AI Failover] Groq model ${model} failed with ${error.status}. Trying next...`);
           continue; // Try next Groq model
         } else {
-          // If it's a fatal error (like invalid API key), stop trying Groq
+          // Fatal auth error, stop trying Groq
           throw error;
         }
       }
@@ -110,9 +112,15 @@ export async function callAI(messages, options = {}) {
   };
 
   // Helper to try OpenRouter
-  const tryOpenRouter = async () => {
+  const tryOpenRouter = async (isFallback = false) => {
     if (!openRouterEnabled) throw new Error('OpenRouter is disabled.');
-    const actualModel = primaryModel.toLowerCase() === 'openrouter' ? 'openrouter/free' : primaryModel;
+    
+    // If falling back from Groq, or the model is literally 'openrouter', use a free OpenRouter model
+    let actualModel = primaryModel;
+    if (isFallback || primaryModel.toLowerCase() === 'openrouter' || primaryModel.toLowerCase() === 'groq' || GROQ_MODELS.includes(primaryModel)) {
+      actualModel = 'openrouter/free';
+    }
+    
     return await callOpenRouter(actualModel, messages, openRouterApiKey);
   };
 
@@ -121,7 +129,7 @@ export async function callAI(messages, options = {}) {
     if (isPrimaryGroq) {
       return await tryGroqModels();
     } else {
-      return await tryOpenRouter();
+      return await tryOpenRouter(false);
     }
   } catch (error) {
     console.warn(`[AI Failover] Primary provider failed: ${error.message}. Attempting fallback provider...`);
@@ -131,7 +139,7 @@ export async function callAI(messages, options = {}) {
       if (isPrimaryGroq) {
         // Fallback to OpenRouter
         console.log('[AI Failover] Falling back to OpenRouter');
-        return await tryOpenRouter();
+        return await tryOpenRouter(true);
       } else {
         // Fallback to Groq
         console.log('[AI Failover] Falling back to Groq');
