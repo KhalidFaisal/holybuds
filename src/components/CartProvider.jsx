@@ -140,6 +140,10 @@ export function CartProvider({ children }) {
         if (d.type === 'PERCENTAGE') amount = qualifyingTotal * (d.value / 100);
         else if (d.type === 'FIXED') amount = d.value;
         else if (d.type === 'BULK_FIXED') amount = d.value * qualifyingQuantity;
+        else if (d.type === 'BUNDLE_FIXED') {
+          const bundleCount = Math.floor(qualifyingQuantity / (d.minItemQuantity || 1));
+          amount = bundleCount * d.value;
+        }
         
         if (amount > qualifyingTotal) amount = qualifyingTotal;
         

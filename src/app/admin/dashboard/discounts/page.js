@@ -201,6 +201,7 @@ export default function DiscountsPage() {
                 <option value="PERCENTAGE">Percentage (%)</option>
                 <option value="FIXED">Fixed Amount ($)</option>
                 <option value="BULK_FIXED">Bulk Fixed ($ Off Each Item)</option>
+                <option value="BUNDLE_FIXED">Bundle Fixed ($ Off Per Bundle)</option>
               </select>
             </div>
 
@@ -322,6 +323,7 @@ export default function DiscountsPage() {
                       {discount.type === 'PERCENTAGE' && `${discount.value}%`}
                       {discount.type === 'FIXED' && `$${discount.value.toFixed(2)}`}
                       {discount.type === 'BULK_FIXED' && `$${discount.value.toFixed(2)} / ea`}
+                      {discount.type === 'BUNDLE_FIXED' && `$${discount.value.toFixed(2)} off every ${discount.minItemQuantity || 1}`}
                     </td>
                     <td className="px-6 py-4">
                       {discount.targetType === 'ENTIRE_ORDER' && 'Entire Order'}

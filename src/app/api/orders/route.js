@@ -120,6 +120,10 @@ export async function POST(request) {
         if (discount.type === 'PERCENTAGE') amount = qualifyingTotal * (discount.value / 100);
         else if (discount.type === 'FIXED') amount = discount.value;
         else if (discount.type === 'BULK_FIXED') amount = discount.value * qualifyingQuantity;
+        else if (discount.type === 'BUNDLE_FIXED') {
+          const bundleCount = Math.floor(qualifyingQuantity / (discount.minItemQuantity || 1));
+          amount = bundleCount * discount.value;
+        }
         
         if (amount > qualifyingTotal) amount = qualifyingTotal; // Cap discounts
 
