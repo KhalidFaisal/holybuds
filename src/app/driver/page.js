@@ -15,22 +15,6 @@ export default function DriverPortal() {
   const [driver, setDriver] = useState(null);
   const [activeTab, setActiveTab] = useState('ORDERS');
 
-  useEffect(() => {
-    const savedPhone = localStorage.getItem('driver_auth_phone');
-    const savedPin = localStorage.getItem('driver_auth_pin');
-    if (savedPhone && savedPin) {
-      login(savedPhone, savedPin);
-    } else {
-      setIsCheckingAuth(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    login(phone, pin);
-  };
-
   const login = async (p, n) => {
     setLoading(true);
     setError('');
@@ -55,6 +39,22 @@ export default function DriverPortal() {
       setIsCheckingAuth(false);
     }
   };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    login(phone, pin);
+  };
+
+  useEffect(() => {
+    const savedPhone = localStorage.getItem('driver_auth_phone');
+    const savedPin = localStorage.getItem('driver_auth_pin');
+    if (savedPhone && savedPin) {
+      login(savedPhone, savedPin);
+    } else {
+      setTimeout(() => setIsCheckingAuth(false), 0);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const refreshDriver = () => {
     const p = localStorage.getItem('driver_auth_phone');
@@ -241,6 +241,7 @@ export default function DriverPortal() {
             <div className="bg-pc-dark border border-pc-border p-6 rounded-2xl text-center space-y-6">
               <h2 className="text-lg font-bold text-white">Your Referral QR Code</h2>
               <div className="inline-block bg-white p-4 rounded-xl">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48" />
               </div>
               <div>
