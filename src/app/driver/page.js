@@ -49,11 +49,11 @@ export default function DriverPortal() {
     const savedPhone = localStorage.getItem('driver_auth_phone');
     const savedPin = localStorage.getItem('driver_auth_pin');
     if (savedPhone && savedPin) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       login(savedPhone, savedPin);
     } else {
       setTimeout(() => setIsCheckingAuth(false), 0);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refreshDriver = () => {
