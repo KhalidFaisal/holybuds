@@ -40,8 +40,12 @@ export async function GET(request) {
         orderBy: { createdAt: 'desc' }
       });
     }
+    const safeOrders = orders.map(order => {
+      const { customerPhone, ...safeOrder } = order;
+      return safeOrder;
+    });
 
-    return NextResponse.json(orders);
+    return NextResponse.json(safeOrders);
   } catch (error) {
     console.error('Error fetching driver orders:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

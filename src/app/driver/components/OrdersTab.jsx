@@ -76,7 +76,7 @@ export default function OrdersTab({ driverId }) {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="font-bold text-white text-lg">{order.orderNumber}</h3>
-                  <p className="text-sm text-pc-muted">{order.customerName} • {order.customerPhone}</p>
+                  <p className="text-sm text-pc-muted">{order.customerName}</p>
                   {order.deliveryMethod === 'DELIVERY' && (
                     <p className="text-sm text-pc-muted mt-1">📍 {order.deliveryAddress}</p>
                   )}
