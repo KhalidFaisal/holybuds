@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import { withProductDiscounts } from '@/lib/discounts';
 import { requireAdmin } from '@/lib/auth';
@@ -13,9 +14,23 @@ export async function GET(request) {
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
+    const cookieStore = await cookies();
+    const hasWholesaleAccess = cookieStore.get('wholesale_access')?.value === 'true';
+
     const where = {};
 
-    if (category && category !== 'ALL') where.category = category;
+    if (category && category !== 'ALL') {
+      if (category.toLowerCase() === 'wholesale' && !hasWholesaleAccess) {
+        where.id = 'none';
+      } else {
+        where.category = category;
+      }
+    } else {
+      if (!hasWholesaleAccess) {
+        where.category = { not: 'wholesale' };
+      }
+    }
+
     if (featured === 'true') where.featured = true;
     if (search) {
       where.name = { contains: search, mode: 'insensitive' };

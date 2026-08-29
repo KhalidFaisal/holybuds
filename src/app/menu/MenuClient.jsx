@@ -1,19 +1,48 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 import ProductCard from '@/components/ProductCard';
 import { CartProvider } from '@/components/CartProvider';
 import Link from 'next/link';
 
-export default function MenuClient({ products, categories, initialCategory, initialSearch, initialEffect }) {
+export default function MenuClient({ products, categories, initialCategory, initialSearch, initialEffect, wholesaleLocked }) {
+  const router = useRouter();
   const [category, setCategory] = useState(initialCategory || 'ALL');
   const [search, setSearch] = useState(initialSearch || '');
   const [sortBy, setSortBy] = useState('newest');
   const [effectFilter, setEffectFilter] = useState(initialEffect || 'ALL');
   
+  const [passcode, setPasscode] = useState('');
+  const [passcodeError, setPasscodeError] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  
   const AVAILABLE_EFFECTS = ['Sleep', 'Focus', 'Energy', 'Relax', 'Creative', 'Euphoric'];
+
+  const verifyPasscode = async (e) => {
+    e.preventDefault();
+    setPasscodeError('');
+    setVerifying(true);
+    try {
+      const res = await fetch('/api/wholesale-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        router.refresh();
+      } else {
+        setPasscodeError(data.error || 'Incorrect passcode');
+      }
+    } catch (err) {
+      setPasscodeError('Something went wrong');
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   // Sync state with URL params when navigating between categories
   useEffect(() => {
@@ -97,9 +126,38 @@ export default function MenuClient({ products, categories, initialCategory, init
             <p className="section-subtitle">Browse our curated selection of premium products</p>
           </div>
 
-          {/* Filters Bar */}
-          <div className="glass-card p-4 md:p-6 mb-8">
-            <div className="flex flex-col md:flex-row gap-4">
+          {wholesaleLocked && category === 'wholesale' ? (
+            <div className="max-w-md mx-auto glass-card p-8 text-center mt-12 animate-fade-in">
+              <svg className="w-12 h-12 mx-auto text-pc-green mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+              </svg>
+              <h2 className="text-2xl font-bold text-white mb-2">Wholesale Access</h2>
+              <p className="text-pc-muted mb-6 text-sm">Please enter the wholesale passcode to view these products.</p>
+              
+              <form onSubmit={verifyPasscode} className="space-y-4">
+                <input
+                  type="password"
+                  placeholder="Enter passcode"
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  className="input-field w-full text-center"
+                  required
+                />
+                {passcodeError && <p className="text-red-400 text-sm">{passcodeError}</p>}
+                <button
+                  type="submit"
+                  disabled={verifying}
+                  className="btn-primary w-full"
+                >
+                  {verifying ? 'Verifying...' : 'Unlock'}
+                </button>
+              </form>
+            </div>
+          ) : (
+            <>
+              {/* Filters Bar */}
+              <div className="glass-card p-4 md:p-6 mb-8">
+                <div className="flex flex-col md:flex-row gap-4">
               {/* Search */}
               <div className="flex-1 relative">
                 <svg
@@ -193,6 +251,8 @@ export default function MenuClient({ products, categories, initialCategory, init
               <h3 className="text-xl font-bold text-white mb-2">No products found</h3>
               <p className="text-pc-muted">Try adjusting your filters or search term</p>
             </div>
+          )}
+            </>
           )}
         </div>
       </main>

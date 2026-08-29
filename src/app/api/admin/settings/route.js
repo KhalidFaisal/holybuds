@@ -47,7 +47,8 @@ export async function GET(request) {
       driverReferralReward: settings.driverReferralReward ?? 10.0,
       customerReferralDiscount: settings.customerReferralDiscount ?? 5.0,
       driverBonusThreshold: settings.driverBonusThreshold ?? 10,
-      driverBonusAmount: settings.driverBonusAmount ?? 100.0
+      driverBonusAmount: settings.driverBonusAmount ?? 100.0,
+      wholesalePassword: settings.wholesalePassword || 'Onlyholy'
     });
   } catch (error) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -84,6 +85,13 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Admin password must be at least 4 characters long' }, { status: 400 });
       }
       updateData.adminPasswordHash = await bcrypt.hash(data.adminPassword, 10);
+    }
+    
+    if (data.wholesalePassword !== undefined) {
+      if (data.wholesalePassword.length < 4) {
+        return NextResponse.json({ error: 'Wholesale password must be at least 4 characters long' }, { status: 400 });
+      }
+      updateData.wholesalePassword = data.wholesalePassword;
     }
     
     if (data.timezone) {

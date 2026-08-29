@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import MenuClient from './MenuClient';
 import { withProductDiscounts } from '@/lib/discounts';
+import { cookies } from 'next/headers';
 
 export default async function MenuPage({ searchParams }) {
   const sp = await searchParams;
@@ -8,8 +9,26 @@ export default async function MenuPage({ searchParams }) {
   const search = sp?.search || null;
   const effect = sp?.effect || null;
 
+  const cookieStore = await cookies();
+  const hasWholesaleAccess = cookieStore.get('wholesale_access')?.value === 'true';
+
+  let wholesaleLocked = false;
   const where = { isVisible: true };
-  if (category) where.category = category;
+  
+  if (category) {
+    if (category.toLowerCase() === 'wholesale' && !hasWholesaleAccess) {
+      wholesaleLocked = true;
+      // Don't fetch any products if wholesale is locked
+      where.id = 'none'; // Impossible condition to return 0 products
+    } else {
+      where.category = category;
+    }
+  } else {
+    // Exclude wholesale from ALL categories if they don't have access
+    if (!hasWholesaleAccess) {
+      where.category = { not: 'wholesale' };
+    }
+  }
 
   const products = await prisma.product.findMany({
     where,
@@ -30,6 +49,7 @@ export default async function MenuPage({ searchParams }) {
       initialCategory={category}
       initialSearch={search}
       initialEffect={effect}
+      wholesaleLocked={wholesaleLocked}
     />
   );
 }

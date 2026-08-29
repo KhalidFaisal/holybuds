@@ -132,6 +132,7 @@ export default function SettingsPage() {
           if (data.customerReferralDiscount !== undefined) setCustomerReferralDiscount(data.customerReferralDiscount);
           if (data.driverBonusThreshold !== undefined) setDriverBonusThreshold(data.driverBonusThreshold);
           if (data.driverBonusAmount !== undefined) setDriverBonusAmount(data.driverBonusAmount);
+          if (data.wholesalePassword) setCurrentWholesalePassword(data.wholesalePassword);
         }
       } catch (e) {
         console.error(e);
@@ -352,6 +353,49 @@ export default function SettingsPage() {
       setMessageAdmin('An error occurred.');
     } finally {
       setLoadingAdmin(false);
+    }
+  };
+
+  const [wholesalePassword, setWholesalePassword] = useState('');
+  const [wholesaleConfirm, setWholesaleConfirm] = useState('');
+  const [currentWholesalePassword, setCurrentWholesalePassword] = useState('Onlyholy');
+  const [loadingWholesale, setLoadingWholesale] = useState(false);
+  const [messageWholesale, setMessageWholesale] = useState('');
+
+  const handleWholesaleSubmit = async (e) => {
+    e.preventDefault();
+    if (wholesalePassword !== wholesaleConfirm) {
+      setMessageWholesale('Passwords do not match.');
+      return;
+    }
+
+    setLoadingWholesale(true);
+    setMessageWholesale('');
+
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        },
+        body: JSON.stringify({ wholesalePassword }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setMessageWholesale('Wholesale password updated successfully.');
+        setCurrentWholesalePassword(data.wholesalePassword || wholesalePassword);
+        setWholesalePassword('');
+        setWholesaleConfirm('');
+      } else {
+        const data = await res.json();
+        setMessageWholesale(data.error || 'Failed to update settings.');
+      }
+    } catch (err) {
+      setMessageWholesale('An error occurred.');
+    } finally {
+      setLoadingWholesale(false);
     }
   };
 
@@ -776,6 +820,53 @@ export default function SettingsPage() {
             className="btn-secondary w-full py-3"
           >
             {loadingAdmin ? 'Saving...' : 'Update Admin Password'}
+          </button>
+        </form>
+      </div>
+
+      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6">
+        <h2 className="text-xl font-semibold text-white mb-4">Wholesale Access Password</h2>
+        <p className="text-pc-muted mb-6 text-sm">
+          Change the passcode required for users to enter the wholesale section. The current passcode is <span className="text-pc-green font-bold font-mono px-1">{currentWholesalePassword}</span>.
+        </p>
+
+        <form onSubmit={handleWholesaleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-pc-muted mb-1">New Wholesale Passcode</label>
+            <input
+              type="password"
+              value={wholesalePassword}
+              onChange={(e) => setWholesalePassword(e.target.value)}
+              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+              required
+              minLength={4}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-pc-muted mb-1">Confirm Wholesale Passcode</label>
+            <input
+              type="password"
+              value={wholesaleConfirm}
+              onChange={(e) => setWholesaleConfirm(e.target.value)}
+              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+              required
+              minLength={4}
+            />
+          </div>
+
+          {messageWholesale && (
+            <div className={`p-3 rounded-lg text-sm ${messageWholesale.includes('success') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+              {messageWholesale}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loadingWholesale}
+            className="btn-secondary w-full py-3"
+          >
+            {loadingWholesale ? 'Saving...' : 'Update Wholesale Passcode'}
           </button>
         </form>
       </div>

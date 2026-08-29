@@ -105,6 +105,7 @@ model SiteSettings {
   customerReferralDiscount Float   @default(5.0)
   driverBonusThreshold     Int     @default(10)
   driverBonusAmount        Float   @default(100.0)
+  wholesalePassword        String  @default("Onlyholy")
 }
 
 model Category {
