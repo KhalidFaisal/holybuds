@@ -1,0 +1,217 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
+export default function AdminInventory() {
+  const [boxes, setBoxes] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Modals
+  const [restockModalBoxId, setRestockModalBoxId] = useState(null);
+  const [restockCounts, setRestockCounts] = useState({});
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [bRes, dRes, pRes] = await Promise.all([
+        fetch('/api/admin/inventory/boxes'),
+        fetch('/api/admin/drivers'),
+        fetch('/api/products?all=true')
+      ]);
+
+      if (bRes.ok) setBoxes((await bRes.json()).boxes || []);
+      if (dRes.ok) setDrivers((await dRes.json()).drivers || []);
+      if (pRes.ok) setProducts(await pRes.json() || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createBox = async (name) => {
+    if (!name) return;
+    try {
+      const res = await fetch('/api/admin/inventory/boxes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'CREATE', name })
+      });
+      if (res.ok) fetchData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const assignBox = async (boxId, driverId) => {
+    try {
+      const res = await fetch('/api/admin/inventory/boxes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'ASSIGN', boxId, driverId })
+      });
+      if (res.ok) fetchData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const openRestock = (boxId) => {
+    setRestockModalBoxId(boxId);
+    setRestockCounts({});
+  };
+
+  const submitRestock = async () => {
+    try {
+      const res = await fetch('/api/admin/inventory/boxes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'RESTOCK', 
+          boxId: restockModalBoxId, 
+          itemsToAdd: restockCounts 
+        })
+      });
+      if (res.ok) {
+        setRestockModalBoxId(null);
+        fetchData();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-pc-muted animate-pulse">Loading Inventory...</div>;
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Driver Inventory Boxes</h1>
+          <p className="text-pc-muted">Track what is inside each physical box.</p>
+        </div>
+        <button 
+          onClick={() => {
+            const name = prompt('Enter new box name (e.g. Box 1)');
+            createBox(name);
+          }}
+          className="btn-primary py-2 px-4"
+        >
+          + Add Box
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {boxes.map(box => (
+          <div key={box.id} className="bg-pc-dark border border-pc-border rounded-xl p-6">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-white mb-1">{box.name}</h2>
+                {box.driver ? (
+                  <span className="text-pc-green text-sm font-bold bg-pc-green/10 px-2 py-1 rounded">
+                    Assigned to: {box.driver.name}
+                  </span>
+                ) : (
+                  <span className="text-yellow-500 text-sm font-bold bg-yellow-500/10 px-2 py-1 rounded">
+                    Unassigned / Pending Handoff
+                  </span>
+                )}
+              </div>
+              <button 
+                onClick={() => openRestock(box.id)}
+                className="text-sm font-bold text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                + Restock
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-xs font-bold text-pc-muted uppercase mb-2">Re-Assign To Driver</label>
+              <select 
+                value={box.currentDriverId || ''}
+                onChange={e => assignBox(box.id, e.target.value)}
+                className="w-full bg-pc-black border border-pc-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
+              >
+                <option value="">Unassigned</option>
+                {drivers.map(d => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <h3 className="text-sm font-bold text-pc-muted uppercase mb-3">Current Expected Inventory</h3>
+            <div className="space-y-2">
+              {box.items.map(item => (
+                <div key={item.id} className="flex justify-between items-center bg-pc-black rounded-lg p-3 border border-pc-border">
+                  <span className="text-white text-sm">{item.product.name}</span>
+                  <span className="font-bold text-white bg-white/10 px-3 py-1 rounded">
+                    {item.expectedQuantity}
+                  </span>
+                </div>
+              ))}
+              {box.items.length === 0 && (
+                <p className="text-pc-muted text-sm italic">Box is empty.</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {restockModalBoxId && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-pc-dark border border-pc-border rounded-3xl p-8 max-h-[90vh] flex flex-col">
+            <h2 className="text-xl font-bold text-white mb-2">Restock Box</h2>
+            <p className="text-pc-muted mb-6">Enter the quantities you are adding to the box.</p>
+            
+            <div className="overflow-y-auto flex-1 space-y-4 mb-6 pr-2">
+              {products.map(product => {
+                const currentQty = boxes.find(b => b.id === restockModalBoxId)?.items.find(i => i.productId === product.id)?.expectedQuantity || 0;
+                return (
+                  <div key={product.id} className="flex items-center justify-between bg-pc-black rounded-lg p-3 border border-pc-border">
+                    <div className="flex-1 pr-4">
+                      <p className="text-white text-sm font-bold">{product.name}</p>
+                      <p className="text-xs text-pc-muted">Current Expected: {currentQty}</p>
+                    </div>
+                    <div className="w-24">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Add +"
+                        value={restockCounts[product.id] || ''}
+                        onChange={e => setRestockCounts(prev => ({ ...prev, [product.id]: parseInt(e.target.value) || 0 }))}
+                        className="w-full bg-pc-dark border border-pc-border rounded-lg px-2 py-1.5 text-white text-center text-sm focus:outline-none focus:border-pc-green"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setRestockModalBoxId(null)}
+                className="flex-1 border border-pc-border text-white rounded-lg py-3 font-bold hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitRestock}
+                className="flex-1 btn-primary py-3 font-bold"
+              >
+                Apply Restock
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

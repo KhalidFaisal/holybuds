@@ -22,6 +22,7 @@ model Product {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]
+  boxItems    BoxItem[]
 }
 
 model Order {
@@ -43,6 +44,12 @@ model Order {
   rewardUsed      String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  
+  driverId        String?
+  driver          Driver?     @relation("OrderFulfillment", fields: [driverId], references: [id])
+  boxId           String?
+  box             InventoryBox? @relation(fields: [boxId], references: [id])
+  
   items           OrderItem[]
   driverReferrals DriverReferral[]
 }
@@ -166,6 +173,10 @@ model Driver {
   referrals    DriverReferral[]
   bonuses      DriverBonus[]
   payouts      DriverPayout[]
+  fulfilledOrders Order[]       @relation("OrderFulfillment")
+  currentBox   InventoryBox?    @relation("DriverCurrentBox")
+  handoffsFrom Handoff[]        @relation("HandoffFrom")
+  handoffsTo   Handoff[]        @relation("HandoffTo")
 }
 
 model DriverReferral {
@@ -253,3 +264,53 @@ model PushSubscription {
   auth      String
   createdAt DateTime @default(now())
 }
+
+model InventoryBox {
+  id              String      @id @default(cuid())
+  name            String      @unique // e.g., "Box 1"
+  currentDriverId String?     @unique
+  driver          Driver?     @relation("DriverCurrentBox", fields: [currentDriverId], references: [id])
+  items           BoxItem[]
+  logs            BoxLog[]
+  handoffs        Handoff[]
+  orders          Order[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model BoxItem {
+  id               String       @id @default(cuid())
+  boxId            String
+  box              InventoryBox @relation(fields: [boxId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product      @relation(fields: [productId], references: [id])
+  expectedQuantity Int          @default(0)
+
+  @@unique([boxId, productId])
+}
+
+model BoxLog {
+  id        String       @id @default(cuid())
+  boxId     String
+  box       InventoryBox @relation(fields: [boxId], references: [id], onDelete: Cascade)
+  type      String       // RESTOCK, RETURN, AUDIT, HANDOFF
+  details   String       @db.Text // JSON with details (what was added/removed/counted)
+  createdAt DateTime     @default(now())
+}
+
+model Handoff {
+  id                String       @id @default(cuid())
+  boxId             String
+  box               InventoryBox @relation(fields: [boxId], references: [id], onDelete: Cascade)
+  fromDriverId      String
+  fromDriver        Driver       @relation("HandoffFrom", fields: [fromDriverId], references: [id])
+  toDriverId        String
+  toDriver          Driver       @relation("HandoffTo", fields: [toDriverId], references: [id])
+  expectedInventory String       @db.Text // Snapshot of what the system expects
+  actualInventory   String       @db.Text // What the next driver physically counted
+  discrepancies     String       @db.Text // Differences
+  status            String       @default("PENDING") // PENDING, ACCEPTED
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+

@@ -53,7 +53,21 @@ export async function POST(request) {
     const bonusAmount = settings?.driverBonusAmount || 100.0;
     const progressToBonus = totalReferrals % threshold;
 
+    // Get Box Info
+    const currentBox = await prisma.inventoryBox.findUnique({
+      where: { currentDriverId: driver.id },
+      include: {
+        items: { include: { product: true } }
+      }
+    });
+
+    const pendingHandoffs = await prisma.handoff.findMany({
+      where: { toDriverId: driver.id, status: 'PENDING' },
+      include: { fromDriver: true, box: true }
+    });
+
     return NextResponse.json({
+      id: driver.id,
       name: driver.name,
       referralCode: driver.referralCode,
       totalEarned: driver.totalEarned,
@@ -63,6 +77,8 @@ export async function POST(request) {
       progressToBonus,
       bonusThreshold: threshold,
       bonusAmount: bonusAmount,
+      currentBox,
+      pendingHandoffs,
       recentReferrals: driver.referrals.map(r => ({
         id: r.id,
         date: r.createdAt,

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import OrdersTab from './components/OrdersTab';
+import InventoryTab from './components/InventoryTab';
+import HandoffAccept from './components/HandoffAccept';
 
 export default function DriverPortal() {
   const [phone, setPhone] = useState('');
@@ -11,11 +13,9 @@ export default function DriverPortal() {
   const [error, setError] = useState('');
   
   const [driver, setDriver] = useState(null);
-  
-  // QRCode library could be used here, but for simplicity we'll just show the link and maybe an image of a generic QR code or let the admin generate it for them, or we can use an external API.
-  
+  const [activeTab, setActiveTab] = useState('DASHBOARD');
+
   useEffect(() => {
-    // Check if already logged in via localStorage
     const savedPhone = localStorage.getItem('driver_auth_phone');
     const savedPin = localStorage.getItem('driver_auth_pin');
     if (savedPhone && savedPin) {
@@ -23,6 +23,7 @@ export default function DriverPortal() {
     } else {
       setIsCheckingAuth(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogin = async (e) => {
@@ -53,6 +54,12 @@ export default function DriverPortal() {
       setLoading(false);
       setIsCheckingAuth(false);
     }
+  };
+
+  const refreshDriver = () => {
+    const p = localStorage.getItem('driver_auth_phone');
+    const n = localStorage.getItem('driver_auth_pin');
+    if (p && n) login(p, n);
   };
 
   const logout = () => {
@@ -148,8 +155,18 @@ export default function DriverPortal() {
     }
   };
 
+  const pendingHandoff = driver.pendingHandoffs && driver.pendingHandoffs.length > 0 ? driver.pendingHandoffs[0] : null;
+
   return (
     <div className="min-h-screen bg-pc-black p-4 sm:p-8">
+      {pendingHandoff && (
+        <HandoffAccept 
+          handoff={pendingHandoff} 
+          driverId={driver.id} 
+          onAccepted={refreshDriver} 
+        />
+      )}
+
       <div className="max-w-3xl mx-auto space-y-6">
         
         {/* Header */}
@@ -163,94 +180,84 @@ export default function DriverPortal() {
           </button>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-pc-dark border border-pc-border p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-            <span className="text-pc-muted text-xs uppercase font-bold tracking-wider mb-1">Total Earned</span>
-            <span className="text-2xl font-black text-white">${driver.totalEarned.toFixed(2)}</span>
-          </div>
-          
-          <div className="bg-pc-dark border border-pc-border p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-            <span className="text-pc-muted text-xs uppercase font-bold tracking-wider mb-1">Pending Payout</span>
-            <span className="text-2xl font-black text-yellow-400">${driver.pendingPayout.toFixed(2)}</span>
-          </div>
-
-          <div className="bg-pc-dark border border-pc-border p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-            <span className="text-pc-muted text-xs uppercase font-bold tracking-wider mb-1">Referrals</span>
-            <span className="text-2xl font-black text-white">{driver.totalReferrals}</span>
-          </div>
-
-          <div className="bg-pc-dark border border-pc-border p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-            <span className="text-pc-muted text-xs uppercase font-bold tracking-wider mb-1">Bonuses</span>
-            <span className="text-2xl font-black text-pc-green">{driver.totalBonuses}</span>
-          </div>
-        </div>
-
-        {/* Bonus Progress */}
-        <div className="bg-pc-dark border border-pc-border p-6 rounded-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
-            <svg className="w-24 h-24 text-pc-green" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-          </div>
-          <h2 className="text-lg font-bold text-white mb-2 relative z-10">Next ${driver.bonusAmount || 100} Bonus Progress</h2>
-          <p className="text-pc-muted text-sm mb-4 relative z-10">
-            You have {driver.progressToBonus} out of {driver.bonusThreshold} referrals needed for your next bonus.
-          </p>
-          
-          <div className="w-full bg-pc-black rounded-full h-4 border border-pc-border relative z-10">
-            <div 
-              className="bg-pc-green h-full rounded-full transition-all duration-1000"
-              style={{ width: `${(driver.progressToBonus / driver.bonusThreshold) * 100}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs font-bold text-pc-muted mt-2 relative z-10">
-            <span>0</span>
-            <span>{driver.bonusThreshold}</span>
-          </div>
-        </div>
-
-        {/* QR Code & Link */}
-        <div className="bg-pc-dark border border-pc-border p-6 rounded-2xl text-center space-y-6">
-          <h2 className="text-lg font-bold text-white">Your Referral QR Code</h2>
-          <p className="text-pc-muted text-sm">Have customers scan this to automatically apply your referral code and get their discount!</p>
-          
-          <div className="inline-block bg-white p-4 rounded-xl">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48" />
-          </div>
-
-          <div>
-            <button 
-              onClick={downloadQRCode}
-              className="px-6 py-2 bg-pc-green text-black rounded-lg text-sm font-bold hover:bg-pc-green/90 transition-colors inline-flex items-center gap-2"
+        {/* Navigation Tabs */}
+        <div className="flex bg-pc-dark rounded-xl p-1 border border-pc-border">
+          {['DASHBOARD', 'ORDERS', 'INVENTORY'].map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${
+                activeTab === tab 
+                  ? 'bg-pc-black text-white shadow' 
+                  : 'text-pc-muted hover:text-white'
+              }`}
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Download QR Code
+              {tab.charAt(0) + tab.slice(1).toLowerCase()}
             </button>
-          </div>
+          ))}
+        </div>
 
-          <div>
-            <p className="text-xs text-pc-muted uppercase font-bold mb-2">Or share your link manually:</p>
-            <div className="flex items-center gap-2 max-w-sm mx-auto">
-              <input 
-                type="text" 
-                readOnly 
-                value={referralLink} 
-                className="flex-1 bg-pc-black border border-pc-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
-              />
-              <button 
-                onClick={() => {
-                  navigator.clipboard.writeText(referralLink);
-                  alert('Copied to clipboard!');
-                }}
-                className="px-3 py-2 bg-pc-green/20 text-pc-green rounded-lg text-sm font-bold hover:bg-pc-green hover:text-black transition-colors"
-              >
-                Copy
-              </button>
+        {activeTab === 'DASHBOARD' && (
+          <div className="space-y-6">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-pc-dark border border-pc-border p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                <span className="text-pc-muted text-xs uppercase font-bold tracking-wider mb-1">Total Earned</span>
+                <span className="text-2xl font-black text-white">${driver.totalEarned.toFixed(2)}</span>
+              </div>
+              
+              <div className="bg-pc-dark border border-pc-border p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                <span className="text-pc-muted text-xs uppercase font-bold tracking-wider mb-1">Pending Payout</span>
+                <span className="text-2xl font-black text-yellow-400">${driver.pendingPayout.toFixed(2)}</span>
+              </div>
+
+              <div className="bg-pc-dark border border-pc-border p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                <span className="text-pc-muted text-xs uppercase font-bold tracking-wider mb-1">Referrals</span>
+                <span className="text-2xl font-black text-white">{driver.totalReferrals}</span>
+              </div>
+
+              <div className="bg-pc-dark border border-pc-border p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                <span className="text-pc-muted text-xs uppercase font-bold tracking-wider mb-1">Bonuses</span>
+                <span className="text-2xl font-black text-pc-green">{driver.totalBonuses}</span>
+              </div>
+            </div>
+
+            {/* Bonus Progress */}
+            <div className="bg-pc-dark border border-pc-border p-6 rounded-2xl relative overflow-hidden">
+              <h2 className="text-lg font-bold text-white mb-2 relative z-10">Next ${driver.bonusAmount || 100} Bonus Progress</h2>
+              <p className="text-pc-muted text-sm mb-4 relative z-10">
+                You have {driver.progressToBonus} out of {driver.bonusThreshold} referrals needed for your next bonus.
+              </p>
+              
+              <div className="w-full bg-pc-black rounded-full h-4 border border-pc-border relative z-10">
+                <div 
+                  className="bg-pc-green h-full rounded-full transition-all duration-1000"
+                  style={{ width: `${(driver.progressToBonus / driver.bonusThreshold) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            {/* QR Code & Link */}
+            <div className="bg-pc-dark border border-pc-border p-6 rounded-2xl text-center space-y-6">
+              <h2 className="text-lg font-bold text-white">Your Referral QR Code</h2>
+              <div className="inline-block bg-white p-4 rounded-xl">
+                <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48" />
+              </div>
+              <div>
+                <button 
+                  onClick={downloadQRCode}
+                  className="px-6 py-2 bg-pc-green text-black rounded-lg text-sm font-bold hover:bg-pc-green/90 transition-colors"
+                >
+                  Download QR Code
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {activeTab === 'ORDERS' && <OrdersTab driverId={driver.id} />}
+        
+        {activeTab === 'INVENTORY' && <InventoryTab driver={driver} refreshDriver={refreshDriver} />}
 
       </div>
     </div>
