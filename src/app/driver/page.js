@@ -13,7 +13,7 @@ export default function DriverPortal() {
   const [error, setError] = useState('');
   
   const [driver, setDriver] = useState(null);
-  const [activeTab, setActiveTab] = useState('DASHBOARD');
+  const [activeTab, setActiveTab] = useState('ORDERS');
 
   useEffect(() => {
     const savedPhone = localStorage.getItem('driver_auth_phone');
