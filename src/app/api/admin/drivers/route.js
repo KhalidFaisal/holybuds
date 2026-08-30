@@ -1,24 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'elevated-secret-key-change-in-production';
-
-// Helper to authenticate admin
-const authenticateAdmin = (request) => {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
-  const token = authHeader.split(' ')[1];
-  try {
-    jwt.verify(token, JWT_SECRET);
-    return true;
-  } catch (e) {
-    return false;
-  }
-};
+import { requireAdmin } from '@/lib/auth';
 
 export async function GET(request) {
-  if (!authenticateAdmin(request)) {
+  if (!requireAdmin(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -39,7 +24,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  if (!authenticateAdmin(request)) {
+  if (!requireAdmin(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -88,7 +73,7 @@ export async function POST(request) {
 }
 
 export async function PATCH(request) {
-  if (!authenticateAdmin(request)) {
+  if (!requireAdmin(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -143,7 +128,7 @@ export async function PATCH(request) {
 }
 
 export async function DELETE(request) {
-  if (!authenticateAdmin(request)) {
+  if (!requireAdmin(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
