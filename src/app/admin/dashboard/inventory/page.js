@@ -27,7 +27,7 @@ export default function AdminInventory() {
       ]);
 
       if (bRes.ok) setBoxes((await bRes.json()).boxes || []);
-      if (dRes.ok) setDrivers((await dRes.json()).drivers || []);
+      if (dRes.ok) setDrivers(await dRes.json() || []);
       if (pRes.ok) {
         const pData = await pRes.json() || [];
         // Only show active products and sort alphabetically
