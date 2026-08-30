@@ -41,15 +41,19 @@ export async function POST(request) {
     }
 
     if (action === 'ASSIGN') {
+      const targetDriverId = driverId || null;
+      
       // Unassign driver from any other box first
-      await prisma.inventoryBox.updateMany({
-        where: { currentDriverId: driverId },
-        data: { currentDriverId: null }
-      });
+      if (targetDriverId) {
+        await prisma.inventoryBox.updateMany({
+          where: { currentDriverId: targetDriverId },
+          data: { currentDriverId: null }
+        });
+      }
 
       const box = await prisma.inventoryBox.update({
         where: { id: boxId },
-        data: { currentDriverId: driverId }
+        data: { currentDriverId: targetDriverId }
       });
       return NextResponse.json({ success: true, box });
     }
