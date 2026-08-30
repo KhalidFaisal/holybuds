@@ -27,7 +27,14 @@ export default function AdminInventory() {
 
       if (bRes.ok) setBoxes((await bRes.json()).boxes || []);
       if (dRes.ok) setDrivers((await dRes.json()).drivers || []);
-      if (pRes.ok) setProducts(await pRes.json() || []);
+      if (pRes.ok) {
+        const pData = await pRes.json() || [];
+        // Only show active products and sort alphabetically
+        const activeProducts = pData
+          .filter(p => p.isVisible)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setProducts(activeProducts);
+      }
     } catch (err) {
       console.error(err);
     } finally {
