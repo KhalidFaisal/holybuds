@@ -17,7 +17,7 @@ export default function AdminInventory() {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+  async function fetchData() {
     setLoading(true);
     try {
       const [bRes, dRes, pRes] = await Promise.all([
