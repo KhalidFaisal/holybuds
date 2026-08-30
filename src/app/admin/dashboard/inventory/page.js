@@ -11,6 +11,7 @@ export default function AdminInventory() {
   // Modals
   const [restockModalBoxId, setRestockModalBoxId] = useState(null);
   const [restockCounts, setRestockCounts] = useState({});
+  const [expandedBoxes, setExpandedBoxes] = useState({});
 
   useEffect(() => {
     fetchData();
@@ -154,20 +155,31 @@ export default function AdminInventory() {
               </select>
             </div>
 
-            <h3 className="text-sm font-bold text-pc-muted uppercase mb-3">Current Expected Inventory</h3>
-            <div className="space-y-2">
-              {box.items.map(item => (
-                <div key={item.id} className="flex justify-between items-center bg-pc-black rounded-lg p-3 border border-pc-border">
-                  <span className="text-white text-sm">{item.product.name}</span>
-                  <span className="font-bold text-white bg-white/10 px-3 py-1 rounded">
-                    {item.expectedQuantity}
-                  </span>
-                </div>
-              ))}
-              {box.items.length === 0 && (
-                <p className="text-pc-muted text-sm italic">Box is empty.</p>
-              )}
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-pc-muted uppercase">Current Expected Inventory</h3>
+              <button 
+                onClick={() => setExpandedBoxes(prev => ({ ...prev, [box.id]: !prev[box.id] }))}
+                className="text-xs font-bold text-pc-green hover:text-white transition-colors"
+              >
+                {expandedBoxes[box.id] ? 'Collapse ▲' : 'Expand ▼'}
+              </button>
             </div>
+            
+            {expandedBoxes[box.id] && (
+              <div className="space-y-2">
+                {box.items.map(item => (
+                  <div key={item.id} className="flex justify-between items-center bg-pc-black rounded-lg p-3 border border-pc-border">
+                    <span className="text-white text-sm">{item.product.name}</span>
+                    <span className="font-bold text-white bg-white/10 px-3 py-1 rounded">
+                      {item.expectedQuantity}
+                    </span>
+                  </div>
+                ))}
+                {box.items.length === 0 && (
+                  <p className="text-pc-muted text-sm italic">Box is empty.</p>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
