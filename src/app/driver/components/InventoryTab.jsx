@@ -14,7 +14,9 @@ export default function InventoryTab({ driver, refreshDriver }) {
   useEffect(() => {
     // Fetch drivers for the handoff dropdown
     if (isHandoffMode) {
-      fetch('/api/admin/drivers') // we can reuse this if accessible, or create a public driver list
+      fetch('/api/driver/drivers', {
+        headers: { 'Authorization': `Bearer ${driver.id}` }
+      })
         .then(res => res.json())
         .then(data => {
           if (data && Array.isArray(data)) {
