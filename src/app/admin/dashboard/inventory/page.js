@@ -331,13 +331,13 @@ export default function AdminInventory() {
                         </p>
                         
                         {hasDiscrepancies ? (
-                          <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                          <div className="mt-3 p-3 bg-red-500/20 border border-red-500/40 rounded-lg">
                             <p className="text-red-400 font-bold text-xs uppercase mb-2">Discrepancies Found</p>
                             {Object.entries(discObj).map(([pid, data]) => {
                               const pName = products.find(p => p.id === pid)?.name || 'Unknown Product';
                               const diffNum = data.diff;
                               return (
-                                <div key={pid} className="flex justify-between text-sm text-red-200">
+                                <div key={pid} className="flex justify-between text-sm text-white mb-1">
                                   <span>{pName}</span>
                                   <span className="font-bold text-red-400">{diffNum > 0 ? `+${diffNum}` : diffNum}</span>
                                 </div>
