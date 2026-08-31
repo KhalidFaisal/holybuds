@@ -144,7 +144,7 @@ export default function AdminInventory() {
                       }).then(res => { if(res.ok) fetchData() });
                     }
                   }}
-                  className="text-xs font-bold text-white bg-yellow-600/50 hover:bg-yellow-600/70 px-2 py-1.5 rounded-lg transition-colors"
+                  className="text-xs font-bold text-yellow-700 bg-yellow-100 border border-yellow-200 hover:bg-yellow-200 px-3 py-1.5 rounded-lg transition-colors"
                   title="Reset Inventory to 0"
                 >
                   Reset
@@ -159,14 +159,14 @@ export default function AdminInventory() {
                       }).then(res => { if(res.ok) fetchData() });
                     }
                   }}
-                  className="text-xs font-bold text-white bg-red-600/50 hover:bg-red-600/70 px-2 py-1.5 rounded-lg transition-colors"
+                  className="text-xs font-bold text-red-700 bg-red-100 border border-red-200 hover:bg-red-200 px-3 py-1.5 rounded-lg transition-colors"
                   title="Delete Box"
                 >
                   Delete
                 </button>
                 <button 
                   onClick={() => openRestock(box.id)}
-                  className="text-sm font-bold text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors ml-2"
+                  className="text-xs font-bold text-pc-green bg-pc-green/10 border border-pc-green/20 hover:bg-pc-green/20 px-3 py-1.5 rounded-lg transition-colors ml-2"
                 >
                   + Restock
                 </button>
