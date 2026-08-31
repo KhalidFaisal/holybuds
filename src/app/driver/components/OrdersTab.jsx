@@ -8,7 +8,6 @@ export default function OrdersTab({ driverId }) {
   const [filter, setFilter] = useState('AVAILABLE'); // AVAILABLE or MY_ORDERS
 
   const fetchOrders = async () => {
-    setLoading(true);
     try {
       const res = await fetch(`/api/driver/orders?filter=${filter}`, {
         headers: { 'Authorization': `Bearer ${driverId}` }
@@ -39,6 +38,7 @@ export default function OrdersTab({ driverId }) {
       });
       const data = await res.json();
       if (res.ok) {
+        setLoading(true);
         fetchOrders();
       } else {
         alert(data.error);
@@ -52,13 +52,19 @@ export default function OrdersTab({ driverId }) {
     <div className="space-y-6">
       <div className="flex gap-4 border-b border-pc-border pb-4">
         <button 
-          onClick={() => setFilter('AVAILABLE')}
+          onClick={() => {
+            setLoading(true);
+            setFilter('AVAILABLE');
+          }}
           className={`font-bold ${filter === 'AVAILABLE' ? 'text-pc-green' : 'text-pc-muted hover:text-white'}`}
         >
           Available Orders
         </button>
         <button 
-          onClick={() => setFilter('MY_ORDERS')}
+          onClick={() => {
+            setLoading(true);
+            setFilter('MY_ORDERS');
+          }}
           className={`font-bold ${filter === 'MY_ORDERS' ? 'text-pc-green' : 'text-pc-muted hover:text-white'}`}
         >
           My Orders
