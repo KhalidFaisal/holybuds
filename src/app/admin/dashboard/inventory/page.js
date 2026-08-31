@@ -133,12 +133,44 @@ export default function AdminInventory() {
                   </span>
                 )}
               </div>
-              <button 
-                onClick={() => openRestock(box.id)}
-                className="text-sm font-bold text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors"
-              >
-                + Restock
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => {
+                    if (confirm(`Are you sure you want to completely RESET the inventory for ${box.name} to 0?`)) {
+                      fetch('/api/admin/inventory/boxes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'RESET', boxId: box.id })
+                      }).then(res => { if(res.ok) fetchData() });
+                    }
+                  }}
+                  className="text-xs font-bold text-white bg-yellow-600/50 hover:bg-yellow-600/70 px-2 py-1.5 rounded-lg transition-colors"
+                  title="Reset Inventory to 0"
+                >
+                  Reset
+                </button>
+                <button 
+                  onClick={() => {
+                    if (confirm(`Are you sure you want to DELETE ${box.name}? This will clear all its inventory and history.`)) {
+                      fetch('/api/admin/inventory/boxes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'DELETE', boxId: box.id })
+                      }).then(res => { if(res.ok) fetchData() });
+                    }
+                  }}
+                  className="text-xs font-bold text-white bg-red-600/50 hover:bg-red-600/70 px-2 py-1.5 rounded-lg transition-colors"
+                  title="Delete Box"
+                >
+                  Delete
+                </button>
+                <button 
+                  onClick={() => openRestock(box.id)}
+                  className="text-sm font-bold text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors ml-2"
+                >
+                  + Restock
+                </button>
+              </div>
             </div>
 
             <div className="mb-6">

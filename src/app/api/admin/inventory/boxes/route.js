@@ -89,6 +89,37 @@ export async function POST(request) {
       return NextResponse.json({ success: true });
     }
 
+    if (action === 'RESET') {
+      await prisma.$transaction(async (tx) => {
+        await tx.boxItem.deleteMany({
+          where: { boxId }
+        });
+        await tx.boxLog.create({
+          data: {
+            boxId,
+            type: 'AUDIT',
+            details: JSON.stringify({ note: 'Inventory reset to zero' })
+          }
+        });
+      });
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === 'DELETE') {
+      // Must first delete related BoxItem, BoxLog, Handoff (or Prisma cascade handles it)
+      // Prisma schema has onDelete: Cascade for BoxItem, BoxLog, Handoff. 
+      // Orders might be linked via boxId. We might need to just set order boxId to null.
+      await prisma.order.updateMany({
+        where: { boxId },
+        data: { boxId: null }
+      });
+      
+      await prisma.inventoryBox.delete({
+        where: { id: boxId }
+      });
+      return NextResponse.json({ success: true });
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     console.error('Error updating inventory boxes:', error);
