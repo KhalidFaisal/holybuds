@@ -13,6 +13,16 @@ export async function GET(request) {
         driver: true,
         items: {
           include: { product: true }
+        },
+        logs: {
+          orderBy: { createdAt: 'desc' }
+        },
+        handoffs: {
+          include: {
+            fromDriver: true,
+            toDriver: true
+          },
+          orderBy: { createdAt: 'desc' }
         }
       },
       orderBy: { name: 'asc' }

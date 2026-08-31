@@ -12,6 +12,7 @@ export default function AdminInventory() {
   const [restockModalBoxId, setRestockModalBoxId] = useState(null);
   const [restockCounts, setRestockCounts] = useState({});
   const [expandedBoxes, setExpandedBoxes] = useState({});
+  const [logsModalBox, setLogsModalBox] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -165,6 +166,13 @@ export default function AdminInventory() {
                   Delete
                 </button>
                 <button 
+                  onClick={() => setLogsModalBox(box)}
+                  className="text-xs font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 px-3 py-1.5 rounded-lg transition-colors ml-2"
+                  title="View History & Discrepancies"
+                >
+                  View Logs
+                </button>
+                <button 
                   onClick={() => openRestock(box.id)}
                   className="text-xs font-bold text-pc-green bg-pc-green/10 border border-pc-green/20 hover:bg-pc-green/20 px-3 py-1.5 rounded-lg transition-colors ml-2"
                 >
@@ -259,6 +267,92 @@ export default function AdminInventory() {
               >
                 Apply Restock
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {logsModalBox && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4">
+          <div className="w-full max-w-3xl bg-pc-dark border border-pc-border rounded-3xl p-8 max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-white">Logs & History: {logsModalBox.name}</h2>
+              <button onClick={() => setLogsModalBox(null)} className="text-pc-muted hover:text-white font-bold">Close</button>
+            </div>
+            
+            <div className="overflow-y-auto flex-1 space-y-4 pr-2">
+              {(() => {
+                const logs = (logsModalBox.logs || []).map(l => ({ ...l, _model: 'log' }));
+                const handoffs = (logsModalBox.handoffs || []).map(h => ({ ...h, _model: 'handoff' }));
+                const timeline = [...logs, ...handoffs].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                if (timeline.length === 0) {
+                  return <p className="text-pc-muted">No history found for this box.</p>;
+                }
+
+                return timeline.map(item => {
+                  const date = new Date(item.createdAt).toLocaleString();
+                  if (item._model === 'log') {
+                    let detailsObj = {};
+                    try { detailsObj = JSON.parse(item.details); } catch(e){}
+                    
+                    return (
+                      <div key={`log-${item.id}`} className="bg-pc-black border border-pc-border rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="font-bold text-white bg-white/10 px-2 py-1 rounded text-xs">{item.type}</span>
+                          <span className="text-xs text-pc-muted">{date}</span>
+                        </div>
+                        {item.type === 'RESTOCK' ? (
+                          <div className="text-sm text-pc-muted mt-2">
+                            <p className="font-semibold text-white mb-1">Items Restocked:</p>
+                            {Object.entries(detailsObj).map(([pid, qty]) => (
+                              <div key={pid}>• Product ID {pid.slice(-6)}: +{qty}</div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-pc-muted mt-2">{item.details}</p>
+                        )}
+                      </div>
+                    );
+                  } else {
+                    let discObj = {};
+                    try { discObj = JSON.parse(item.discrepancies); } catch(e){}
+                    const hasDiscrepancies = Object.keys(discObj).length > 0;
+                    
+                    return (
+                      <div key={`handoff-${item.id}`} className="bg-pc-black border border-pc-border rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="font-bold text-yellow-400 bg-yellow-500/10 px-2 py-1 rounded text-xs border border-yellow-500/20">HANDOFF - {item.status}</span>
+                          <span className="text-xs text-pc-muted">{date}</span>
+                        </div>
+                        <p className="text-sm text-white mb-2">
+                          From <span className="font-bold">{item.fromDriver?.name}</span> to <span className="font-bold">{item.toDriver?.name}</span>
+                        </p>
+                        
+                        {hasDiscrepancies ? (
+                          <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                            <p className="text-red-400 font-bold text-xs uppercase mb-2">Discrepancies Found</p>
+                            {Object.entries(discObj).map(([pid, data]) => {
+                              const pName = products.find(p => p.id === pid)?.name || 'Unknown Product';
+                              const diffNum = data.diff;
+                              return (
+                                <div key={pid} className="flex justify-between text-sm text-red-200">
+                                  <span>{pName}</span>
+                                  <span className="font-bold text-red-400">{diffNum > 0 ? `+${diffNum}` : diffNum}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="mt-2 text-sm text-pc-green font-bold bg-pc-green/10 border border-pc-green/20 px-3 py-2 rounded-lg inline-block">
+                            No Discrepancies (Perfect Match)
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                });
+              })()}
             </div>
           </div>
         </div>
