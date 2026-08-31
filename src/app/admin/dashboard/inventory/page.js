@@ -118,7 +118,7 @@ export default function AdminInventory() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {boxes.map(box => (
           <div key={box.id} className="bg-pc-dark border border-pc-border rounded-xl p-6">
             <div className="flex justify-between items-start mb-6 gap-2">
