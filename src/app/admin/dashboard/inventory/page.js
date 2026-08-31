@@ -121,20 +121,20 @@ export default function AdminInventory() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {boxes.map(box => (
           <div key={box.id} className="bg-pc-dark border border-pc-border rounded-xl p-6">
-            <div className="flex flex-col 2xl:flex-row justify-between items-start mb-6 gap-4">
-              <div className="min-w-0 flex-shrink-0">
-                <h2 className="text-xl font-bold text-white mb-2">{box.name}</h2>
+            <div className="flex justify-between items-start mb-6 gap-2">
+              <div className="min-w-0 pr-2">
+                <h2 className="text-xl font-bold text-white mb-2 truncate">{box.name}</h2>
                 {box.driver ? (
-                  <span className="inline-block whitespace-nowrap text-pc-green text-sm font-bold bg-pc-green/10 px-2 py-1 rounded">
-                    Assigned to: {box.driver.name}
+                  <span className="inline-block whitespace-nowrap text-pc-green text-xs font-bold bg-pc-green/10 px-2 py-1 rounded">
+                    Assigned: {box.driver.name}
                   </span>
                 ) : (
-                  <span className="inline-block whitespace-nowrap text-yellow-500 text-sm font-bold bg-yellow-500/10 px-2 py-1 rounded">
-                    Unassigned / Pending Handoff
+                  <span className="inline-block whitespace-nowrap text-yellow-500 text-xs font-bold bg-yellow-500/10 px-2 py-1 rounded">
+                    Unassigned
                   </span>
                 )}
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-nowrap gap-1.5 flex-shrink-0">
                 <button 
                   onClick={() => {
                     if (confirm(`Are you sure you want to completely RESET the inventory for ${box.name} to 0?`)) {
@@ -145,7 +145,7 @@ export default function AdminInventory() {
                       }).then(res => { if(res.ok) fetchData() });
                     }
                   }}
-                  className="text-xs font-bold text-yellow-700 bg-yellow-100 border border-yellow-200 hover:bg-yellow-200 px-3 py-1.5 rounded-lg transition-colors"
+                  className="text-[11px] font-bold text-yellow-700 bg-yellow-100 border border-yellow-200 hover:bg-yellow-200 px-2 py-1 rounded transition-colors"
                   title="Reset Inventory to 0"
                 >
                   Reset
@@ -160,23 +160,23 @@ export default function AdminInventory() {
                       }).then(res => { if(res.ok) fetchData() });
                     }
                   }}
-                  className="text-xs font-bold text-red-700 bg-red-100 border border-red-200 hover:bg-red-200 px-3 py-1.5 rounded-lg transition-colors"
+                  className="text-[11px] font-bold text-red-700 bg-red-100 border border-red-200 hover:bg-red-200 px-2 py-1 rounded transition-colors"
                   title="Delete Box"
                 >
                   Delete
                 </button>
                 <button 
                   onClick={() => setLogsModalBox(box)}
-                  className="text-xs font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 px-3 py-1.5 rounded-lg transition-colors"
+                  className="text-[11px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 px-2 py-1 rounded transition-colors"
                   title="View History & Discrepancies"
                 >
-                  View Logs
+                  Logs
                 </button>
                 <button 
                   onClick={() => openRestock(box.id)}
-                  className="text-xs font-bold text-pc-green bg-pc-green/10 border border-pc-green/20 hover:bg-pc-green/20 px-3 py-1.5 rounded-lg transition-colors"
+                  className="text-[11px] font-bold text-pc-green bg-pc-green/10 border border-pc-green/20 hover:bg-pc-green/20 px-2 py-1 rounded transition-colors"
                 >
-                  + Restock
+                  Restock
                 </button>
               </div>
             </div>
