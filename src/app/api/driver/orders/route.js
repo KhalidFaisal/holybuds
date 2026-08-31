@@ -98,18 +98,18 @@ export async function POST(request) {
       return NextResponse.json({ success: true, order: updated });
     }
 
-    if (action === 'COMPLETE') {
+    if (action === 'DELIVER') {
       const order = await prisma.order.findUnique({
         where: { id: orderId },
         include: { items: true }
       });
       
       if (!order || order.driverId !== driver.id) {
-        return NextResponse.json({ error: 'Unauthorized to complete this order' }, { status: 403 });
+        return NextResponse.json({ error: 'Unauthorized to deliver this order' }, { status: 403 });
       }
 
-      if (order.status === 'COMPLETED') {
-        return NextResponse.json({ error: 'Order already completed' }, { status: 400 });
+      if (order.status === 'DELIVERED' || order.status === 'COMPLETED') {
+        return NextResponse.json({ error: 'Order already delivered or completed' }, { status: 400 });
       }
 
       if (!order.boxId) {
@@ -139,7 +139,7 @@ export async function POST(request) {
         // Update order status
         await tx.order.update({
           where: { id: orderId },
-          data: { status: 'COMPLETED' }
+          data: { status: 'DELIVERED' }
         });
       });
 

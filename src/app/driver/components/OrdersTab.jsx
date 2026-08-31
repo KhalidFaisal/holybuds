@@ -103,9 +103,9 @@ export default function OrdersTab({ driverId }) {
                   Claim Order
                 </button>
               ) : (
-                order.status !== 'COMPLETED' && (
+                (order.status !== 'COMPLETED' && order.status !== 'DELIVERED') && (
                   <button 
-                    onClick={() => handleAction(order.id, 'COMPLETE')}
+                    onClick={() => handleAction(order.id, 'DELIVER')}
                     className="w-full bg-pc-green text-black rounded-lg py-2 font-bold hover:bg-pc-green/90"
                   >
                     Mark as Delivered

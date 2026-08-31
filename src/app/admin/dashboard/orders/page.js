@@ -17,7 +17,7 @@ function OrdersSearchParamsHandler({ onParams }) {
   return null;
 }
 
-const STATUSES = ['ALL', 'PENDING', 'PROCESSING', 'READY', 'COMPLETED', 'CANCELLED'];
+const STATUSES = ['ALL', 'PENDING', 'PROCESSING', 'READY', 'DELIVERED', 'COMPLETED', 'CANCELLED'];
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -589,7 +589,7 @@ export default function AdminOrdersPage() {
                     <div>
                       <h4 className="text-sm font-semibold text-pc-muted uppercase tracking-wider mb-3">Update Status</h4>
                       <div className="flex flex-wrap gap-2">
-                        {['PENDING', 'PROCESSING', 'READY', 'COMPLETED', 'CANCELLED'].map((s) => (
+                        {['PENDING', 'PROCESSING', 'READY', 'DELIVERED', 'COMPLETED', 'CANCELLED'].map((s) => (
                           <button
                             key={s}
                             onClick={() => updateStatus(order.id, s)}
