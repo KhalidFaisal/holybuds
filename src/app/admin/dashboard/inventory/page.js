@@ -282,7 +282,7 @@ export default function AdminInventory() {
             
             <div className="overflow-y-auto flex-1 space-y-4 pr-2">
               {(() => {
-                const logs = (logsModalBox.logs || []).map(l => ({ ...l, _model: 'log' }));
+                const logs = (logsModalBox.logs || []).filter(l => l.type !== 'HANDOFF').map(l => ({ ...l, _model: 'log' }));
                 const handoffs = (logsModalBox.handoffs || []).map(h => ({ ...h, _model: 'handoff' }));
                 const timeline = [...logs, ...handoffs].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
@@ -305,12 +305,13 @@ export default function AdminInventory() {
                         {item.type === 'RESTOCK' ? (
                           <div className="text-sm text-pc-muted mt-2">
                             <p className="font-semibold text-white mb-1">Items Restocked:</p>
-                            {Object.entries(detailsObj).map(([pid, qty]) => (
-                              <div key={pid}>• Product ID {pid.slice(-6)}: +{qty}</div>
-                            ))}
+                            {Object.entries(detailsObj).map(([pid, qty]) => {
+                              const pName = products.find(p => p.id === pid)?.name || `Product ${pid.slice(-6)}`;
+                              return <div key={pid}>• {pName}: +{qty}</div>
+                            })}
                           </div>
                         ) : (
-                          <p className="text-sm text-pc-muted mt-2">{item.details}</p>
+                          <p className="text-sm text-pc-muted mt-2">{detailsObj.note || item.details}</p>
                         )}
                       </div>
                     );
