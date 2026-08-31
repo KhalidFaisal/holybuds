@@ -7,24 +7,31 @@ export default function OrdersTab({ driverId }) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('AVAILABLE'); // AVAILABLE or MY_ORDERS
 
-  const fetchOrders = async () => {
-    try {
-      const res = await fetch(`/api/driver/orders?filter=${filter}`, {
-        headers: { 'Authorization': `Bearer ${driverId}` }
-      });
-      const data = await res.json();
-      if (res.ok) setOrders(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    let ignore = false;
+    
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch(`/api/driver/orders?filter=${filter}`, {
+          headers: { 'Authorization': `Bearer ${driverId}` }
+        });
+        const data = await res.json();
+        if (!ignore && res.ok) {
+          setOrders(data);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error(err);
+        if (!ignore) setLoading(false);
+      }
+    };
+
     fetchOrders();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, driverId]);
+
+    return () => { ignore = true; };
+  }, [filter, driverId, refreshKey]);
 
   const handleAction = async (orderId, action) => {
     try {
@@ -39,7 +46,7 @@ export default function OrdersTab({ driverId }) {
       const data = await res.json();
       if (res.ok) {
         setLoading(true);
-        fetchOrders();
+        setRefreshKey(prev => prev + 1);
       } else {
         alert(data.error);
       }
