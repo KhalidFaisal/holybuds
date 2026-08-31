@@ -121,20 +121,20 @@ export default function AdminInventory() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {boxes.map(box => (
           <div key={box.id} className="bg-pc-dark border border-pc-border rounded-xl p-6">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-white mb-1">{box.name}</h2>
+            <div className="flex flex-col 2xl:flex-row justify-between items-start mb-6 gap-4">
+              <div className="min-w-0 flex-shrink-0">
+                <h2 className="text-xl font-bold text-white mb-2">{box.name}</h2>
                 {box.driver ? (
-                  <span className="text-pc-green text-sm font-bold bg-pc-green/10 px-2 py-1 rounded">
+                  <span className="inline-block whitespace-nowrap text-pc-green text-sm font-bold bg-pc-green/10 px-2 py-1 rounded">
                     Assigned to: {box.driver.name}
                   </span>
                 ) : (
-                  <span className="text-yellow-500 text-sm font-bold bg-yellow-500/10 px-2 py-1 rounded">
+                  <span className="inline-block whitespace-nowrap text-yellow-500 text-sm font-bold bg-yellow-500/10 px-2 py-1 rounded">
                     Unassigned / Pending Handoff
                   </span>
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button 
                   onClick={() => {
                     if (confirm(`Are you sure you want to completely RESET the inventory for ${box.name} to 0?`)) {
@@ -167,14 +167,14 @@ export default function AdminInventory() {
                 </button>
                 <button 
                   onClick={() => setLogsModalBox(box)}
-                  className="text-xs font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 px-3 py-1.5 rounded-lg transition-colors ml-2"
+                  className="text-xs font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 px-3 py-1.5 rounded-lg transition-colors"
                   title="View History & Discrepancies"
                 >
                   View Logs
                 </button>
                 <button 
                   onClick={() => openRestock(box.id)}
-                  className="text-xs font-bold text-pc-green bg-pc-green/10 border border-pc-green/20 hover:bg-pc-green/20 px-3 py-1.5 rounded-lg transition-colors ml-2"
+                  className="text-xs font-bold text-pc-green bg-pc-green/10 border border-pc-green/20 hover:bg-pc-green/20 px-3 py-1.5 rounded-lg transition-colors"
                 >
                   + Restock
                 </button>
