@@ -99,6 +99,41 @@ export async function POST(request) {
       return NextResponse.json({ success: true });
     }
 
+    if (action === 'EDIT_COUNTS') {
+      const { itemsToSet } = data;
+      await prisma.$transaction(async (tx) => {
+        for (const [productId, quantity] of Object.entries(itemsToSet)) {
+          if (Number(quantity) > 0) {
+            await tx.boxItem.upsert({
+              where: {
+                boxId_productId: { boxId, productId }
+              },
+              update: { expectedQuantity: Number(quantity) },
+              create: {
+                boxId,
+                productId,
+                expectedQuantity: Number(quantity)
+              }
+            });
+          } else {
+            await tx.boxItem.deleteMany({
+              where: { boxId, productId }
+            });
+          }
+        }
+
+        await tx.boxLog.create({
+          data: {
+            boxId,
+            type: 'AUDIT',
+            details: JSON.stringify({ note: 'Manual Admin Inventory Override', edits: itemsToSet })
+          }
+        });
+      });
+
+      return NextResponse.json({ success: true });
+    }
+
     if (action === 'RESET') {
       await prisma.$transaction(async (tx) => {
         await tx.boxItem.deleteMany({

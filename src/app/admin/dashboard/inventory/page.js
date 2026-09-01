@@ -11,6 +11,8 @@ export default function AdminInventory() {
   // Modals
   const [restockModalBoxId, setRestockModalBoxId] = useState(null);
   const [restockCounts, setRestockCounts] = useState({});
+  const [editModalBoxId, setEditModalBoxId] = useState(null);
+  const [editCounts, setEditCounts] = useState({});
   const [expandedBoxes, setExpandedBoxes] = useState({});
   const [logsModalBox, setLogsModalBox] = useState(null);
 
@@ -89,6 +91,35 @@ export default function AdminInventory() {
       });
       if (res.ok) {
         setRestockModalBoxId(null);
+        fetchData();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const openEdit = (box) => {
+    setEditModalBoxId(box.id);
+    const initial = {};
+    box.items.forEach(item => {
+      initial[item.productId] = item.expectedQuantity;
+    });
+    setEditCounts(initial);
+  };
+
+  const submitEdit = async () => {
+    try {
+      const res = await fetch('/api/admin/inventory/boxes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'EDIT_COUNTS', 
+          boxId: editModalBoxId, 
+          itemsToSet: editCounts 
+        })
+      });
+      if (res.ok) {
+        setEditModalBoxId(null);
         fetchData();
       }
     } catch (err) {
@@ -178,6 +209,12 @@ export default function AdminInventory() {
                 >
                   Restock
                 </button>
+                <button 
+                  onClick={() => openEdit(box)}
+                  className="text-[11px] font-bold text-white bg-white/10 border border-white/20 hover:bg-white/20 px-2 py-1 rounded transition-colors"
+                >
+                  Edit
+                </button>
               </div>
             </div>
 
@@ -266,6 +303,54 @@ export default function AdminInventory() {
                 className="flex-1 btn-primary py-3 font-bold"
               >
                 Apply Restock
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editModalBoxId && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-pc-dark border border-pc-border rounded-3xl p-8 max-h-[90vh] flex flex-col">
+            <h2 className="text-xl font-bold text-white mb-2">Edit Inventory Counts</h2>
+            <p className="text-pc-muted mb-6">Manually override the current inventory counts for this box.</p>
+            
+            <div className="overflow-y-auto flex-1 space-y-4 mb-6 pr-2">
+              {products.map(product => {
+                const currentQty = boxes.find(b => b.id === editModalBoxId)?.items.find(i => i.productId === product.id)?.expectedQuantity || 0;
+                return (
+                  <div key={product.id} className="flex items-center justify-between bg-pc-black rounded-lg p-3 border border-pc-border">
+                    <div className="flex-1 pr-4">
+                      <p className="text-white text-sm font-bold">{product.name}</p>
+                      <p className="text-xs text-pc-muted">Current Expected: {currentQty}</p>
+                    </div>
+                    <div className="w-24">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Set to..."
+                        value={editCounts[product.id] !== undefined ? editCounts[product.id] : ''}
+                        onChange={e => setEditCounts(prev => ({ ...prev, [product.id]: parseInt(e.target.value) || 0 }))}
+                        className="w-full bg-pc-dark border border-pc-border rounded-lg px-2 py-1.5 text-white text-center text-sm focus:outline-none focus:border-white/50"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setEditModalBoxId(null)}
+                className="flex-1 border border-pc-border text-white rounded-lg py-3 font-bold hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitEdit}
+                className="flex-1 bg-white text-black py-3 rounded-lg font-bold hover:bg-gray-200 transition-colors"
+              >
+                Save Overrides
               </button>
             </div>
           </div>
