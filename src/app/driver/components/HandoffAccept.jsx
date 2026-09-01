@@ -37,35 +37,6 @@ export default function HandoffAccept({ handoff, driverId, onAccepted }) {
     }
   };
 
-  const cancelHandoff = async () => {
-    if (!confirm('Are you sure you want to reject this handoff? The box will be returned to the sending driver.')) return;
-    setLoading(true);
-    try {
-      const res = await fetch('/api/driver/handoff', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${driverId}`
-        },
-        body: JSON.stringify({
-          action: 'CANCEL',
-          handoffId: handoff.id
-        })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert('Handoff cancelled. The box has been returned to the sender.');
-        onAccepted();
-      } else {
-        alert(data.error);
-      }
-    } catch (err) {
-      alert('Error cancelling handoff');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-pc-dark border border-pc-border rounded-3xl p-8 shadow-2xl">
@@ -95,23 +66,13 @@ export default function HandoffAccept({ handoff, driverId, onAccepted }) {
           })}
         </div>
 
-        <div className="flex flex-col gap-3">
-          <button 
-            onClick={acceptHandoff}
-            disabled={loading}
-            className="w-full bg-yellow-500 text-black py-3 rounded-lg font-bold text-lg hover:bg-yellow-400 transition-colors"
-          >
-            {loading ? 'Processing...' : 'I Confirm This Count'}
-          </button>
-
-          <button 
-            onClick={cancelHandoff}
-            disabled={loading}
-            className="w-full border border-pc-border text-pc-muted py-3 rounded-lg font-bold hover:bg-white/5 transition-colors"
-          >
-            Reject & Return Box
-          </button>
-        </div>
+        <button 
+          onClick={acceptHandoff}
+          disabled={loading}
+          className="w-full bg-yellow-500 text-black py-3 rounded-lg font-bold text-lg hover:bg-yellow-400 transition-colors"
+        >
+          {loading ? 'Accepting...' : 'I Confirm This Count'}
+        </button>
       </div>
     </div>
   );

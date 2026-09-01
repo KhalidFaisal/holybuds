@@ -61,6 +61,12 @@ export async function POST(request) {
         });
       }
 
+      // Cancel any pending handoffs for this box since admin manually intervened
+      await prisma.handoff.updateMany({
+        where: { boxId, status: 'PENDING' },
+        data: { status: 'CANCELLED' }
+      });
+
       const box = await prisma.inventoryBox.update({
         where: { id: boxId },
         data: { currentDriverId: targetDriverId }
