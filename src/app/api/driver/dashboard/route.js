@@ -63,7 +63,12 @@ export async function POST(request) {
 
     const pendingHandoffs = await prisma.handoff.findMany({
       where: { toDriverId: driver.id, status: 'PENDING' },
-      include: { fromDriver: true, box: true }
+      include: { 
+        fromDriver: true, 
+        box: {
+          include: { items: { include: { product: true } } }
+        } 
+      }
     });
 
     return NextResponse.json({

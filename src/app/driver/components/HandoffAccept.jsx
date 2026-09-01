@@ -54,16 +54,16 @@ export default function HandoffAccept({ handoff, driverId, onAccepted }) {
         </div>
 
         <div className="bg-pc-black rounded-xl p-4 border border-pc-border space-y-3 mb-6 max-h-64 overflow-y-auto">
-          {Object.entries(actualCounts).map(([productId, count]) => (
-            <div key={productId} className="flex justify-between items-center text-sm border-b border-white/5 pb-2 last:border-0 last:pb-0">
-               {/* We don't have the product name here easily without passing it, but actualCounts usually comes from the previous state. 
-                   Wait, we didn't include product info in actualCounts. 
-                   Ah, we can just show product IDs or we need to update the API to return product names in handoff. 
-                   Actually, the driver can just read the quantity. We should probably fetch product names or store them in details. */}
-               <span className="text-pc-muted font-mono">{productId}</span>
-               <span className="text-white font-bold bg-white/10 px-3 py-1 rounded">{count} Items</span>
-            </div>
-          ))}
+          {Object.entries(actualCounts).map(([productId, count]) => {
+            const product = box.items?.find(i => i.productId === productId)?.product;
+            const productName = product ? product.name : productId;
+            return (
+              <div key={productId} className="flex justify-between items-center text-sm border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                 <span className="text-pc-muted font-bold">{productName}</span>
+                 <span className="text-white font-bold bg-white/10 px-3 py-1 rounded">{count} Items</span>
+              </div>
+            );
+          })}
         </div>
 
         <button 
