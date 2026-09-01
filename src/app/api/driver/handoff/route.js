@@ -157,6 +157,47 @@ export async function POST(request) {
       return NextResponse.json({ success: true });
     }
 
+    if (action === 'CANCEL') {
+      const { handoffId } = data;
+      const handoff = await prisma.handoff.findUnique({
+        where: { id: handoffId }
+      });
+
+      if (!handoff || handoff.toDriverId !== driver.id) {
+        return NextResponse.json({ error: 'Handoff not found or unauthorized' }, { status: 403 });
+      }
+
+      if (handoff.status !== 'PENDING') {
+        return NextResponse.json({ error: 'Handoff is not pending' }, { status: 400 });
+      }
+
+      await prisma.$transaction(async (tx) => {
+        await tx.handoff.update({
+          where: { id: handoffId },
+          data: { status: 'CANCELLED' }
+        });
+
+        await tx.inventoryBox.update({
+          where: { id: handoff.boxId },
+          data: { currentDriverId: handoff.fromDriverId }
+        });
+
+        await tx.boxLog.create({
+          data: {
+            boxId: handoff.boxId,
+            type: 'AUDIT',
+            details: JSON.stringify({ 
+              note: 'Handoff cancelled by receiving driver',
+              from: handoff.fromDriverId,
+              to: handoff.toDriverId
+            })
+          }
+        });
+      });
+
+      return NextResponse.json({ success: true });
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     console.error('Error handling handoff:', error);
