@@ -93,8 +93,8 @@ export default function AdminInventory() {
     fetchData();
   }, []);
 
-  async function fetchData() {
-    setLoading(true);
+  async function fetchData(silent = false) {
+    if (!silent) setLoading(true);
     try {
       const [bRes, dRes, pRes] = await Promise.all([
         fetch('/api/admin/inventory/boxes'),
@@ -115,7 +115,7 @@ export default function AdminInventory() {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -282,14 +282,14 @@ export default function AdminInventory() {
             
             {expandedBoxes[box.id] && (
               <div className="space-y-2">
-                {box.items.map(item => (
+                {[...box.items].sort((a, b) => a.product.name.localeCompare(b.product.name)).map(item => (
                   <div key={item.id} className="flex justify-between items-center bg-pc-black rounded-lg p-3 border border-pc-border">
                     <span className="text-white text-sm">{item.product.name}</span>
                     <InlineEditQuantity 
                       boxId={box.id} 
                       productId={item.productId} 
                       initialQuantity={item.expectedQuantity} 
-                      onUpdate={fetchData} 
+                      onUpdate={() => fetchData(true)} 
                     />
                   </div>
                 ))}
