@@ -3,20 +3,20 @@
 import { useState, useEffect } from 'react';
 
 function InlineEditQuantity({ boxId, productId, initialQuantity, onUpdate }) {
-  const [value, setValue] = useState(initialQuantity);
+  const [editValue, setEditValue] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Sync state if initialQuantity changes from outside (e.g. after refresh)
-  useEffect(() => {
-    setValue(initialQuantity);
-  }, [initialQuantity]);
+  const startEditing = () => {
+    setEditValue(initialQuantity);
+    setIsEditing(true);
+  };
 
   const handleBlur = async () => {
     setIsEditing(false);
-    const parsed = parseInt(value, 10);
+    const parsed = parseInt(editValue, 10);
     if (isNaN(parsed) || parsed === initialQuantity) {
-      setValue(initialQuantity);
+      setEditValue(null);
       return;
     }
     
@@ -34,11 +34,11 @@ function InlineEditQuantity({ boxId, productId, initialQuantity, onUpdate }) {
       if (res.ok) {
         onUpdate();
       } else {
-        setValue(initialQuantity);
+        setEditValue(null);
       }
     } catch (err) {
       console.error(err);
-      setValue(initialQuantity);
+      setEditValue(null);
     } finally {
       setIsSaving(false);
     }
@@ -50,13 +50,13 @@ function InlineEditQuantity({ boxId, productId, initialQuantity, onUpdate }) {
         autoFocus
         type="number"
         min="0"
-        value={value}
-        onChange={e => setValue(e.target.value)}
+        value={editValue !== null ? editValue : initialQuantity}
+        onChange={e => setEditValue(e.target.value)}
         onBlur={handleBlur}
         onKeyDown={e => {
           if (e.key === 'Enter') handleBlur();
           if (e.key === 'Escape') {
-            setValue(initialQuantity);
+            setEditValue(null);
             setIsEditing(false);
           }
         }}
@@ -68,11 +68,11 @@ function InlineEditQuantity({ boxId, productId, initialQuantity, onUpdate }) {
 
   return (
     <span 
-      onClick={() => setIsEditing(true)}
+      onClick={startEditing}
       className={`font-bold text-white bg-white/10 hover:bg-white/20 cursor-pointer px-3 py-1 rounded transition-colors ${isSaving ? 'opacity-50 animate-pulse' : ''}`}
       title="Click to edit"
     >
-      {value}
+      {initialQuantity}
     </span>
   );
 }
