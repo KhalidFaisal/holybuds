@@ -249,7 +249,12 @@ export default function AdminInventory() {
                   Logs
                 </button>
                 {(() => {
-                  const lowStockCount = box.items.filter(i => i.expectedQuantity <= 2 && i.product.stock >= 5).length;
+                  const lowStockCount = box.items.filter(i => 
+                    i.product.stock >= 5 && (
+                      (i.product.category === 'flowers' && i.expectedQuantity <= 2) || 
+                      (i.product.category !== 'flowers' && i.expectedQuantity < 2)
+                    )
+                  ).length;
                   if (lowStockCount === 0) return null;
                   return (
                     <button 
@@ -459,7 +464,12 @@ export default function AdminInventory() {
             <p className="text-pc-muted mb-4">Items running low in this box but available in main site inventory.</p>
             
             <div className="flex-1 overflow-y-auto space-y-1 pr-1">
-              {alertsModalBox.items.filter(i => i.expectedQuantity <= 2 && i.product.stock >= 5).map(item => (
+              {alertsModalBox.items.filter(i => 
+                i.product.stock >= 5 && (
+                  (i.product.category === 'flowers' && i.expectedQuantity <= 2) || 
+                  (i.product.category !== 'flowers' && i.expectedQuantity < 2)
+                )
+              ).map(item => (
                 <div key={item.id} className="bg-pc-black border border-pc-border rounded-md px-3 py-2 flex justify-between items-center">
                   <div className="truncate pr-3">
                     <h3 className="font-bold text-white text-sm truncate" title={item.product.name}>{item.product.name}</h3>
