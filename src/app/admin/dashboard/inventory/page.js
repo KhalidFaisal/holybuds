@@ -458,16 +458,21 @@ export default function AdminInventory() {
             <h2 className="text-xl font-bold text-white mb-2">Restock Alerts: {alertsModalBox.name}</h2>
             <p className="text-pc-muted mb-4">Items running low in this box but available in main site inventory.</p>
             
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+            <div className="flex-1 overflow-y-auto space-y-1 pr-1">
               {alertsModalBox.items.filter(i => i.expectedQuantity <= 2 && i.product.stock >= 5).map(item => (
-                <div key={item.id} className="bg-pc-black border border-pc-border rounded-lg p-4 flex justify-between items-center">
-                  <div>
-                    <h3 className="font-bold text-white text-lg">{item.product.name}</h3>
-                    <p className="text-sm text-pc-muted mt-1">Current Box Qty: <span className="text-red-400 font-bold text-base">{item.expectedQuantity}</span></p>
+                <div key={item.id} className="bg-pc-black border border-pc-border rounded-md px-3 py-2 flex justify-between items-center">
+                  <div className="truncate pr-3">
+                    <h3 className="font-bold text-white text-sm truncate" title={item.product.name}>{item.product.name}</h3>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs font-bold text-pc-muted uppercase tracking-wider mb-1">Site Stock</p>
-                    <p className="font-black text-pc-green text-xl">{item.product.stock}</p>
+                  <div className="flex items-center gap-4 flex-shrink-0 text-sm">
+                    <div className="text-right">
+                      <span className="text-pc-muted text-[11px] uppercase mr-1">Box</span>
+                      <span className="text-red-400 font-bold">{item.expectedQuantity}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-pc-muted text-[11px] uppercase mr-1">Site</span>
+                      <span className="text-pc-green font-bold">{item.product.stock}</span>
+                    </div>
                   </div>
                 </div>
               ))}
