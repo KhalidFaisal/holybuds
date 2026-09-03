@@ -88,6 +88,7 @@ export default function AdminInventory() {
   const [restockCounts, setRestockCounts] = useState({});
   const [expandedBoxes, setExpandedBoxes] = useState({});
   const [logsModalBox, setLogsModalBox] = useState(null);
+  const [alertsModalBox, setAlertsModalBox] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -247,6 +248,19 @@ export default function AdminInventory() {
                 >
                   Logs
                 </button>
+                {(() => {
+                  const lowStockCount = box.items.filter(i => i.expectedQuantity <= 2 && i.product.stock >= 5).length;
+                  if (lowStockCount === 0) return null;
+                  return (
+                    <button 
+                      onClick={() => setAlertsModalBox(box)}
+                      className="text-[11px] font-bold text-orange-700 bg-orange-100 border border-orange-200 hover:bg-orange-200 px-2 py-1 rounded transition-colors animate-pulse"
+                      title="Low Stock Alerts"
+                    >
+                      Alerts ({lowStockCount})
+                    </button>
+                  );
+                })()}
                 <button 
                   onClick={() => openRestock(box.id)}
                   className="text-[11px] font-bold text-pc-green bg-pc-green/10 border border-pc-green/20 hover:bg-pc-green/20 px-2 py-1 rounded transition-colors"
@@ -432,6 +446,50 @@ export default function AdminInventory() {
                   }
                 });
               })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Alerts Modal */}
+      {alertsModalBox && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-pc-dark w-full max-w-lg rounded-2xl p-6 border border-pc-border shadow-2xl relative max-h-[90vh] flex flex-col">
+            <h2 className="text-xl font-bold text-white mb-2">Restock Alerts: {alertsModalBox.name}</h2>
+            <p className="text-pc-muted mb-4">Items running low in this box but available in main site inventory.</p>
+            
+            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+              {alertsModalBox.items.filter(i => i.expectedQuantity <= 2 && i.product.stock >= 5).map(item => (
+                <div key={item.id} className="bg-pc-black border border-pc-border rounded-lg p-4 flex justify-between items-center">
+                  <div>
+                    <h3 className="font-bold text-white text-lg">{item.product.name}</h3>
+                    <p className="text-sm text-pc-muted mt-1">Current Box Qty: <span className="text-red-400 font-bold text-base">{item.expectedQuantity}</span></p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-bold text-pc-muted uppercase tracking-wider mb-1">Site Stock</p>
+                    <p className="font-black text-pc-green text-xl">{item.product.stock}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button 
+                onClick={() => {
+                  const box = alertsModalBox;
+                  setAlertsModalBox(null);
+                  openRestock(box.id);
+                }}
+                className="flex-1 py-3 bg-pc-green text-black rounded-lg font-bold hover:bg-pc-green/90 transition-colors"
+              >
+                Restock Now
+              </button>
+              <button 
+                onClick={() => setAlertsModalBox(null)}
+                className="flex-1 py-3 bg-pc-black border border-pc-border rounded-lg text-white font-bold hover:bg-pc-border transition-colors"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
