@@ -400,58 +400,58 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-pc-dark/50 p-4 rounded-xl border border-pc-border">
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+      <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-4 mb-6 bg-pc-dark/50 p-4 rounded-xl border border-pc-border">
+        <div className="flex flex-col xl:flex-row xl:items-center gap-4 w-full overflow-hidden">
           <input 
             type="text" 
             placeholder="Search orders..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="input-field w-full sm:w-64"
+            className="input-field w-full xl:w-64 shrink-0"
           />
-          <div className="flex bg-pc-black rounded-lg p-1 border border-pc-border w-full sm:w-auto overflow-x-auto">
+          <div className="flex bg-pc-black rounded-lg p-1 border border-pc-border w-full overflow-x-auto custom-scrollbar">
           {STATUSES.map((status) => {
             const count = status === 'ALL' ? orders.length : orders.filter((o) => o.status === status).length;
             return (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
                   statusFilter === status
-                    ? 'bg-pc-green text-black'
-                    : 'text-pc-muted hover:text-white hover:bg-pc-card border border-pc-border'
+                    ? 'bg-pc-green text-black shadow-sm'
+                    : 'text-pc-muted hover:text-white hover:bg-pc-card/50'
                 }`}
               >
                 {status === 'ALL' ? 'All' : status.charAt(0) + status.slice(1).toLowerCase()} ({count})
               </button>
             );
           })}
-        </div>
+          </div>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center bg-pc-card border border-pc-border rounded-lg px-3 py-1">
-            <span className="text-xs text-pc-muted font-semibold uppercase mr-2">From</span>
+        <div className="flex items-center gap-2 shrink-0 overflow-x-auto pb-1 2xl:pb-0">
+          <div className="flex items-center bg-pc-card border border-pc-border rounded-lg px-3 py-1.5 shrink-0">
+            <span className="text-xs text-pc-muted font-semibold uppercase mr-2 shrink-0">From</span>
             <input 
               type="date" 
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="bg-transparent text-white text-sm focus:outline-none focus:ring-0 outline-none"
+              className="bg-transparent text-white text-sm focus:outline-none focus:ring-0 outline-none w-[115px]"
             />
           </div>
-          <div className="flex items-center bg-pc-card border border-pc-border rounded-lg px-3 py-1">
-            <span className="text-xs text-pc-muted font-semibold uppercase mr-2">To</span>
+          <div className="flex items-center bg-pc-card border border-pc-border rounded-lg px-3 py-1.5 shrink-0">
+            <span className="text-xs text-pc-muted font-semibold uppercase mr-2 shrink-0">To</span>
             <input 
               type="date" 
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="bg-transparent text-white text-sm focus:outline-none focus:ring-0 outline-none"
+              className="bg-transparent text-white text-sm focus:outline-none focus:ring-0 outline-none w-[115px]"
             />
           </div>
           {(startDate || endDate) && (
             <button 
               onClick={() => { setStartDate(''); setEndDate(''); }}
-              className="text-pc-muted hover:text-white transition-colors"
+              className="text-pc-muted hover:text-white transition-colors p-1 shrink-0"
               title="Clear dates"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
