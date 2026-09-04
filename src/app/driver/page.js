@@ -24,16 +24,24 @@ export default function DriverPortal() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: p, pin: n })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Login failed');
+      const data = await res.json().catch(() => null);
+      
+      if (!res.ok) {
+        const err = new Error(data?.error || 'Login failed');
+        err.status = res.status;
+        throw err;
+      }
       
       setDriver(data);
       localStorage.setItem('driver_auth_phone', p);
       localStorage.setItem('driver_auth_pin', n);
     } catch (err) {
-      setError(err.message);
-      localStorage.removeItem('driver_auth_phone');
-      localStorage.removeItem('driver_auth_pin');
+      setError(err.message || 'Network error');
+      // Only clear credentials if they are explicitly rejected (e.g. 401 Invalid, 403 Deactivated, 400 Bad Request)
+      if (err.status >= 400 && err.status < 500) {
+        localStorage.removeItem('driver_auth_phone');
+        localStorage.removeItem('driver_auth_pin');
+      }
     } finally {
       setLoading(false);
       setIsCheckingAuth(false);
