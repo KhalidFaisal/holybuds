@@ -409,7 +409,7 @@ export default function AdminOrdersPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="input-field w-full xl:w-64 shrink-0"
           />
-          <div className="flex bg-pc-black rounded-lg p-1 border border-pc-border w-full overflow-x-auto custom-scrollbar">
+          <div className="flex bg-pc-black rounded-lg p-1 border border-pc-border overflow-x-auto custom-scrollbar max-w-full">
           {STATUSES.map((status) => {
             const count = status === 'ALL' ? orders.length : orders.filter((o) => o.status === status).length;
             return (
