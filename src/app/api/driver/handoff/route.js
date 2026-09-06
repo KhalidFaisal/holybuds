@@ -88,6 +88,81 @@ export async function POST(request) {
         }
       });
 
+      // Calculate shift sales and log summary
+      let shiftStartTime = null;
+      
+      const lastHandoffAccept = await prisma.boxLog.findFirst({
+        where: {
+          boxId,
+          type: 'HANDOFF',
+          details: { contains: `"to":"${driver.id}"` }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      
+      const lastAssign = await prisma.boxLog.findFirst({
+        where: {
+          boxId,
+          type: 'ASSIGN',
+          details: { contains: `"driverId":"${driver.id}"` }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      if (lastHandoffAccept && lastAssign) {
+        shiftStartTime = new Date(Math.max(lastHandoffAccept.createdAt.getTime(), lastAssign.createdAt.getTime()));
+      } else if (lastHandoffAccept) {
+        shiftStartTime = lastHandoffAccept.createdAt;
+      } else if (lastAssign) {
+        shiftStartTime = lastAssign.createdAt;
+      } else {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        shiftStartTime = today;
+      }
+
+      const orders = await prisma.order.findMany({
+        where: {
+          driverId: driver.id,
+          boxId: boxId,
+          status: 'DELIVERED',
+          createdAt: { gte: shiftStartTime }
+        },
+        include: { items: { include: { product: true } } }
+      });
+
+      const salesSummary = {};
+      let totalSalesAmount = 0;
+      
+      for (const order of orders) {
+        totalSalesAmount += order.total;
+        for (const item of order.items) {
+          if (!salesSummary[item.productId]) {
+            salesSummary[item.productId] = {
+              name: item.product?.name || 'Unknown Product',
+              qty: 0,
+              totalValue: 0
+            };
+          }
+          salesSummary[item.productId].qty += item.quantity;
+          salesSummary[item.productId].totalValue += (item.price * item.quantity);
+        }
+      }
+
+      await prisma.boxLog.create({
+        data: {
+          boxId,
+          type: 'SHIFT_SUMMARY',
+          details: JSON.stringify({
+            note: `${driver.name} ended shift and initiated handoff.`,
+            driverName: driver.name,
+            totalSalesAmount,
+            sales: salesSummary,
+            shiftStartTime: shiftStartTime.toISOString()
+          })
+        }
+      });
+
       // Remove currentDriverId from Box to mark it as in transit/limbo
       await prisma.inventoryBox.update({
         where: { id: boxId },

@@ -67,10 +67,28 @@ export async function POST(request) {
         data: { status: 'CANCELLED' }
       });
 
+      let driverName = null;
+      if (targetDriverId) {
+        const d = await prisma.driver.findUnique({ where: { id: targetDriverId } });
+        driverName = d?.name || 'Unknown Driver';
+      }
+
       const box = await prisma.inventoryBox.update({
         where: { id: boxId },
         data: { currentDriverId: targetDriverId }
       });
+
+      await prisma.boxLog.create({
+        data: {
+          boxId,
+          type: 'ASSIGN',
+          details: JSON.stringify({ 
+            note: targetDriverId ? `Admin assigned box to driver: ${driverName}` : 'Admin unassigned box from driver',
+            driverId: targetDriverId
+          })
+        }
+      });
+
       return NextResponse.json({ success: true, box });
     }
 

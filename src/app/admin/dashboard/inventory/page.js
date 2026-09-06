@@ -430,6 +430,23 @@ export default function AdminInventory() {
                               }
                             })}
                           </div>
+                        ) : item.type === 'SHIFT_SUMMARY' && detailsObj.sales ? (
+                          <div className="text-sm text-pc-muted mt-2">
+                            <p className="font-semibold text-white mb-1">{detailsObj.note}</p>
+                            <div className="bg-white/5 rounded p-3 mt-2 border border-white/10">
+                              <p className="font-bold text-pc-green mb-2">Total Sales: ${detailsObj.totalSalesAmount?.toFixed(2)}</p>
+                              {Object.keys(detailsObj.sales).length > 0 ? (
+                                Object.entries(detailsObj.sales).map(([pid, data]) => (
+                                  <div key={pid} className="flex justify-between items-center text-xs mb-1">
+                                    <span>• {data.name}</span>
+                                    <span className="text-white">{data.qty} sold (${data.totalValue?.toFixed(2)})</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-xs text-gray-400 italic">No sales recorded during this shift.</p>
+                              )}
+                            </div>
+                          </div>
                         ) : (
                           <p className="text-sm text-pc-muted mt-2">{detailsObj.note || item.details}</p>
                         )}
