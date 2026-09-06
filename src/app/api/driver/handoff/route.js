@@ -39,7 +39,7 @@ export async function POST(request) {
     
     const driver = await prisma.driver.findUnique({
       where: { id: token },
-      include: { currentBox: { include: { items: true } } }
+      include: { currentBox: { include: { items: { include: { product: true } } } } }
     });
 
     if (!driver) {
@@ -68,6 +68,7 @@ export async function POST(request) {
         const actual = actualInventory[item.productId] || 0;
         if (actual !== item.expectedQuantity) {
           discrepancies[item.productId] = {
+            name: item.product?.name || 'Unknown Product',
             expected: item.expectedQuantity,
             actual: actual,
             diff: actual - item.expectedQuantity
