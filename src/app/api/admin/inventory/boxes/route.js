@@ -123,17 +123,39 @@ export async function POST(request) {
     if (action === 'EDIT_COUNTS') {
       const { itemsToSet } = data;
       await prisma.$transaction(async (tx) => {
+        const pids = Object.keys(itemsToSet);
+        const productsList = await tx.product.findMany({ where: { id: { in: pids } } });
+        const pMap = {};
+        productsList.forEach(p => pMap[p.id] = p.name);
+
+        const editsLog = {};
+
         for (const [productId, quantity] of Object.entries(itemsToSet)) {
-          if (Number(quantity) > 0) {
+          const newQty = Number(quantity);
+          const existingItem = await tx.boxItem.findUnique({
+            where: { boxId_productId: { boxId, productId } }
+          });
+          const oldQty = existingItem ? existingItem.expectedQuantity : 0;
+
+          if (oldQty !== newQty) {
+            editsLog[productId] = {
+              name: pMap[productId] || 'Unknown Product',
+              old: oldQty,
+              new: newQty,
+              diff: newQty - oldQty
+            };
+          }
+
+          if (newQty > 0) {
             await tx.boxItem.upsert({
               where: {
                 boxId_productId: { boxId, productId }
               },
-              update: { expectedQuantity: Number(quantity) },
+              update: { expectedQuantity: newQty },
               create: {
                 boxId,
                 productId,
-                expectedQuantity: Number(quantity)
+                expectedQuantity: newQty
               }
             });
           } else {
@@ -143,13 +165,15 @@ export async function POST(request) {
           }
         }
 
-        await tx.boxLog.create({
-          data: {
-            boxId,
-            type: 'AUDIT',
-            details: JSON.stringify({ note: 'Manual Admin Inventory Override', edits: itemsToSet })
-          }
-        });
+        if (Object.keys(editsLog).length > 0) {
+          await tx.boxLog.create({
+            data: {
+              boxId,
+              type: 'AUDIT',
+              details: JSON.stringify({ note: 'Manual Admin Inventory Override', edits: editsLog })
+            }
+          });
+        }
       });
 
       return NextResponse.json({ success: true });

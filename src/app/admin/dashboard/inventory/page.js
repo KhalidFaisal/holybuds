@@ -409,6 +409,27 @@ export default function AdminInventory() {
                               return <div key={pid}>• {pName}: +{qty}</div>
                             })}
                           </div>
+                        ) : item.type === 'AUDIT' && detailsObj.edits ? (
+                          <div className="text-sm text-pc-muted mt-2">
+                            <p className="font-semibold text-white mb-1">{detailsObj.note || 'Audit Edits:'}</p>
+                            {Object.entries(detailsObj.edits).map(([pid, val]) => {
+                              if (typeof val === 'object' && val !== null) {
+                                const pName = val.name || products.find(p => p.id === pid)?.name || `Product ${pid.slice(-6)}`;
+                                const sign = val.diff > 0 ? '+' : '';
+                                return (
+                                  <div key={pid} className="flex justify-between items-center text-xs mb-1">
+                                    <span>• {pName}</span>
+                                    <span className={val.diff > 0 ? 'text-pc-green font-bold' : val.diff < 0 ? 'text-red-400 font-bold' : 'text-gray-400'}>
+                                      {val.old} → {val.new} ({sign}{val.diff})
+                                    </span>
+                                  </div>
+                                );
+                              } else {
+                                const pName = products.find(p => p.id === pid)?.name || `Product ${pid.slice(-6)}`;
+                                return <div key={pid} className="text-xs mb-1">• {pName}: set to {val}</div>
+                              }
+                            })}
+                          </div>
                         ) : (
                           <p className="text-sm text-pc-muted mt-2">{detailsObj.note || item.details}</p>
                         )}
