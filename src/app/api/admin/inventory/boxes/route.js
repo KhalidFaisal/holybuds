@@ -77,8 +77,21 @@ export async function POST(request) {
     if (action === 'RESTOCK') {
       // itemsToAdd = { [productId]: quantityToAdd }
       await prisma.$transaction(async (tx) => {
+        // Fetch products to include names in the log
+        const pids = Object.keys(itemsToAdd);
+        const productsList = await tx.product.findMany({ where: { id: { in: pids } } });
+        const pMap = {};
+        productsList.forEach(p => pMap[p.id] = p.name);
+
+        const logDetails = {};
+
         for (const [productId, quantity] of Object.entries(itemsToAdd)) {
           if (quantity > 0) {
+            logDetails[productId] = {
+              qty: Number(quantity),
+              name: pMap[productId] || 'Unknown Product'
+            };
+
             await tx.boxItem.upsert({
               where: {
                 boxId_productId: { boxId, productId }
@@ -93,13 +106,15 @@ export async function POST(request) {
           }
         }
 
-        await tx.boxLog.create({
-          data: {
-            boxId,
-            type: 'RESTOCK',
-            details: JSON.stringify(itemsToAdd)
-          }
-        });
+        if (Object.keys(logDetails).length > 0) {
+          await tx.boxLog.create({
+            data: {
+              boxId,
+              type: 'RESTOCK',
+              details: JSON.stringify(logDetails)
+            }
+          });
+        }
       });
 
       return NextResponse.json({ success: true });

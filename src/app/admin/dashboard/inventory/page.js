@@ -402,8 +402,10 @@ export default function AdminInventory() {
                         {item.type === 'RESTOCK' ? (
                           <div className="text-sm text-pc-muted mt-2">
                             <p className="font-semibold text-white mb-1">Items Restocked:</p>
-                            {Object.entries(detailsObj).map(([pid, qty]) => {
-                              const pName = products.find(p => p.id === pid)?.name || `Product ${pid.slice(-6)}`;
+                            {Object.entries(detailsObj).map(([pid, val]) => {
+                              const qty = typeof val === 'object' ? val.qty : val;
+                              const savedName = typeof val === 'object' ? val.name : null;
+                              const pName = savedName || products.find(p => p.id === pid)?.name || `Product ${pid.slice(-6)}`;
                               return <div key={pid}>• {pName}: +{qty}</div>
                             })}
                           </div>
