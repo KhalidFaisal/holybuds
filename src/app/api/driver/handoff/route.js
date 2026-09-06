@@ -57,6 +57,15 @@ export async function POST(request) {
         return NextResponse.json({ error: 'You do not have a box to hand off' }, { status: 400 });
       }
 
+      // Ensure the driver has no active PROCESSING orders
+      const activeOrders = await prisma.order.findMany({
+        where: { driverId: driver.id, status: 'PROCESSING' }
+      });
+
+      if (activeOrders.length > 0) {
+        return NextResponse.json({ error: 'You must mark all active orders as Delivered (or cancel them) before you can hand off your box.' }, { status: 400 });
+      }
+
       const boxId = driver.currentBox.id;
       
       // Compute expected inventory and discrepancies
