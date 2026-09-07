@@ -142,9 +142,16 @@ export async function POST(request) {
 
       const salesSummary = {};
       let totalSalesAmount = 0;
+      let totalCash = 0;
+      let totalZelle = 0;
+      let totalOwed = 0;
       
       for (const order of orders) {
         totalSalesAmount += order.total;
+        totalCash += order.paidCash || 0;
+        totalZelle += order.paidZelle || 0;
+        totalOwed += order.amountOwed || 0;
+
         for (const item of order.items) {
           if (!salesSummary[item.productId]) {
             salesSummary[item.productId] = {
@@ -166,6 +173,9 @@ export async function POST(request) {
             note: `${driver.name} ended shift and initiated handoff.`,
             driverName: driver.name,
             totalSalesAmount,
+            totalCash,
+            totalZelle,
+            totalOwed,
             sales: salesSummary,
             shiftStartTime: shiftStartTime.toISOString()
           })

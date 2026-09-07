@@ -24,13 +24,6 @@ export default function PushNotificationManager() {
   const [subscription, setSubscription] = useState(null);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-      setIsSupported(true);
-      registerServiceWorker();
-    }
-  }, []);
-
   async function registerServiceWorker() {
     try {
       const registration = await navigator.serviceWorker.register('/sw.js', {
@@ -43,6 +36,14 @@ export default function PushNotificationManager() {
       console.error('Service Worker registration failed:', error);
     }
   }
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsSupported(true);
+      registerServiceWorker();
+    }
+  }, []);
 
   async function subscribeToPush() {
     if (!publicVapidKey) {

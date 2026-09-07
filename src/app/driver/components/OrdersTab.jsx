@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import DeliveryModal from './DeliveryModal';
 
-export default function OrdersTab({ driverId }) {
+export default function OrdersTab({ driver }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('AVAILABLE'); // AVAILABLE or MY_ORDERS
+  const [deliveringOrder, setDeliveringOrder] = useState(null);
 
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -15,7 +17,7 @@ export default function OrdersTab({ driverId }) {
     const fetchOrders = async () => {
       try {
         const res = await fetch(`/api/driver/orders?filter=${filter}`, {
-          headers: { 'Authorization': `Bearer ${driverId}` }
+          headers: { 'Authorization': `Bearer ${driver.id}` }
         });
         const data = await res.json();
         if (!ignore && res.ok) {
@@ -31,21 +33,22 @@ export default function OrdersTab({ driverId }) {
     fetchOrders();
 
     return () => { ignore = true; };
-  }, [filter, driverId, refreshKey]);
+  }, [filter, driver.id, refreshKey]);
 
-  const handleAction = async (orderId, action) => {
+  const handleAction = async (orderId, action, extraData = {}) => {
     try {
       const res = await fetch('/api/driver/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${driverId}`
+          'Authorization': `Bearer ${driver.id}`
         },
-        body: JSON.stringify({ orderId, action })
+        body: JSON.stringify({ orderId, action, ...extraData })
       });
       const data = await res.json();
       if (res.ok) {
         setLoading(true);
+        setDeliveringOrder(null);
         setRefreshKey(prev => prev + 1);
       } else {
         alert(data.error);
@@ -55,8 +58,13 @@ export default function OrdersTab({ driverId }) {
     }
   };
 
+  const handleCompleteDelivery = (extraData) => {
+    if (!deliveringOrder) return;
+    handleAction(deliveringOrder.id, 'DELIVER', extraData);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       <div className="flex gap-4 border-b border-pc-border pb-4">
         <button 
           onClick={() => {
@@ -118,7 +126,7 @@ export default function OrdersTab({ driverId }) {
               ) : (
                 (order.status !== 'COMPLETED' && order.status !== 'DELIVERED') && (
                   <button 
-                    onClick={() => handleAction(order.id, 'DELIVER')}
+                    onClick={() => setDeliveringOrder(order)}
                     className="w-full bg-pc-green text-black rounded-lg py-2 font-bold hover:bg-pc-green/90"
                   >
                     Mark as Delivered
@@ -128,6 +136,15 @@ export default function OrdersTab({ driverId }) {
             </div>
           ))}
         </div>
+      )}
+
+      {deliveringOrder && (
+        <DeliveryModal 
+          order={deliveringOrder} 
+          driver={driver} 
+          onClose={() => setDeliveringOrder(null)} 
+          onSubmit={handleCompleteDelivery} 
+        />
       )}
     </div>
   );

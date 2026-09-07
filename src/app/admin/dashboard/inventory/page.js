@@ -434,7 +434,22 @@ export default function AdminInventory() {
                           <div className="text-sm text-pc-muted mt-2">
                             <p className="font-semibold text-white mb-1">{detailsObj.note}</p>
                             <div className="bg-white/5 rounded p-3 mt-2 border border-white/10">
-                              <p className="font-bold text-pc-green mb-2">Total Sales: ${detailsObj.totalSalesAmount?.toFixed(2)}</p>
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="font-bold text-pc-green">Total Sales:</span>
+                                <span className="font-bold text-pc-green">${detailsObj.totalSalesAmount?.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs text-pc-muted mb-1">
+                                <span>Cash:</span>
+                                <span>${(detailsObj.totalCash || 0).toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs text-pc-muted mb-1">
+                                <span>Zelle:</span>
+                                <span>${(detailsObj.totalZelle || 0).toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs text-red-400 font-bold mb-3 pb-2 border-b border-white/10">
+                                <span>Owed:</span>
+                                <span>${(detailsObj.totalOwed || 0).toFixed(2)}</span>
+                              </div>
                               {Object.keys(detailsObj.sales).length > 0 ? (
                                 Object.entries(detailsObj.sales).map(([pid, data]) => (
                                   <div key={pid} className="flex justify-between items-center text-xs mb-1">
@@ -445,6 +460,14 @@ export default function AdminInventory() {
                               ) : (
                                 <p className="text-xs text-gray-400 italic">No sales recorded during this shift.</p>
                               )}
+                            </div>
+                          </div>
+                        ) : item.type === 'ORDER_SWAP' ? (
+                          <div className="text-sm text-pc-muted mt-2">
+                            <p className="font-semibold text-white mb-1">{detailsObj.note}</p>
+                            <div className="bg-white/5 rounded p-3 mt-2 border border-white/10">
+                              <p className="text-xs text-red-400 mb-1 line-through"><span className="text-gray-500">Original:</span> {detailsObj.original}</p>
+                              <p className="text-xs text-pc-green"><span className="text-gray-400">Swapped To:</span> {detailsObj.swapped}</p>
                             </div>
                           </div>
                         ) : (

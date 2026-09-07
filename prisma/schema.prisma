@@ -45,6 +45,10 @@ model Order {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   
+  paidCash        Float       @default(0)
+  paidZelle       Float       @default(0)
+  amountOwed      Float       @default(0)
+
   driverId        String?
   driver          Driver?     @relation("OrderFulfillment", fields: [driverId], references: [id])
   boxId           String?

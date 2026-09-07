@@ -99,6 +99,8 @@ export async function POST(request) {
     }
 
     if (action === 'DELIVER') {
+      const { updatedItems, newTotal, paidCash, paidZelle, amountOwed } = data;
+
       const order = await prisma.order.findUnique({
         where: { id: orderId },
         include: { items: true }
@@ -116,9 +118,49 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Order is not associated with a box' }, { status: 400 });
       }
 
-      // Deduct items from Box
       await prisma.$transaction(async (tx) => {
-        for (const item of order.items) {
+        let finalItems = order.items;
+        let finalTotal = order.total;
+
+        // 1. Swap items if requested
+        if (updatedItems && Array.isArray(updatedItems)) {
+          finalTotal = newTotal !== undefined ? Number(newTotal) : order.total;
+          
+          await tx.order.update({
+            where: { id: orderId },
+            data: {
+              items: {
+                deleteMany: {},
+                create: updatedItems.map(i => ({
+                  productId: i.productId,
+                  quantity: Number(i.quantity),
+                  price: Number(i.price)
+                }))
+              }
+            }
+          });
+          finalItems = updatedItems;
+
+          const originalStr = order.items.map(i => `${i.quantity}x ${i.product?.name || 'Unknown'}`).join(', ');
+          const swappedStr = updatedItems.map(i => `${i.quantity}x ${i.name || 'Unknown'}`).join(', ');
+
+          await tx.boxLog.create({
+            data: {
+              boxId: order.boxId,
+              type: 'ORDER_SWAP',
+              details: JSON.stringify({
+                note: `Driver ${driver.name} swapped items for Order ${order.orderNumber}.`,
+                driverName: driver.name,
+                orderNumber: order.orderNumber,
+                original: originalStr,
+                swapped: swappedStr
+              })
+            }
+          });
+        }
+
+        // 2. Deduct items from Box
+        for (const item of finalItems) {
           const boxItem = await tx.boxItem.findUnique({
             where: {
               boxId_productId: {
@@ -131,15 +173,21 @@ export async function POST(request) {
           if (boxItem) {
             await tx.boxItem.update({
               where: { id: boxItem.id },
-              data: { expectedQuantity: { decrement: item.quantity } }
+              data: { expectedQuantity: { decrement: Number(item.quantity) } }
             });
           }
         }
 
-        // Update order status
+        // 3. Update order status and payment fields
         await tx.order.update({
           where: { id: orderId },
-          data: { status: 'DELIVERED' }
+          data: { 
+            status: 'DELIVERED',
+            total: finalTotal,
+            paidCash: Number(paidCash || 0),
+            paidZelle: Number(paidZelle || 0),
+            amountOwed: Number(amountOwed || 0)
+          }
         });
       });
 
