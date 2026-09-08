@@ -100,7 +100,7 @@ function CheckoutContent() {
   const [selectedReward, setSelectedReward] = useState(null);
   const [showFullLoyaltyPanel, setShowFullLoyaltyPanel] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
-  const [driverReferralDiscount, setDriverReferralDiscount] = useState(0);
+  const [referralData, setReferralData] = useState(null);
   const [useStoreCredit, setUseStoreCredit] = useState(false);
 
   useEffect(() => {
@@ -112,7 +112,7 @@ function CheckoutContent() {
     }
   }, []);
 
-  // Fetch driver referral discount if applicable
+  // Fetch referral details & min spend if applicable
   useEffect(() => {
     if (isNewCustomer && form.referredByCode) {
       const fetchDiscount = async () => {
@@ -120,19 +120,19 @@ function CheckoutContent() {
           const res = await fetch(`/api/referral?code=${form.referredByCode}`);
           if (res.ok) {
             const data = await res.json();
-            setDriverReferralDiscount(data.discountAmount);
+            setReferralData(data);
           } else {
-            setDriverReferralDiscount(0);
+            setReferralData(null);
           }
         } catch (e) {
-          setDriverReferralDiscount(0);
+          setReferralData(null);
         }
       };
       const timeoutId = setTimeout(fetchDiscount, 500);
       return () => clearTimeout(timeoutId);
     } else {
       const resetId = setTimeout(() => {
-        setDriverReferralDiscount(0);
+        setReferralData(null);
       }, 0);
       return () => clearTimeout(resetId);
     }
@@ -207,12 +207,12 @@ function CheckoutContent() {
 
   // If a reward is selected, calculate its discount
   const rewardDiscount = calcRewardDiscount(selectedReward, items);
-  const appliedDriverDiscount = driverReferralDiscount;
+  const minSpendRequired = referralData?.minSpend || 0;
+  const meetsMinSpend = total >= minSpendRequired;
+  const appliedReferralDiscount = isNewCustomer && referralData && meetsMinSpend ? referralData.discountAmount : 0;
   
-  // To avoid double dipping, if a standard promo code discount exists, we just sum them.
-  // Wait, let's just make the final total subtract both.
   const isDelivery = form.deliveryMethod === 'DELIVERY';
-  let effectiveTotal = total - rewardDiscount - appliedDriverDiscount;
+  let effectiveTotal = total - rewardDiscount - appliedReferralDiscount;
   if (effectiveTotal < 0) effectiveTotal = 0;
   
   const deliveryFee = isDelivery && effectiveTotal < 100 ? 10 : 0;
@@ -459,7 +459,24 @@ function CheckoutContent() {
                   <div className="animate-fade-in-up">
                     <label className="block text-sm font-medium text-pc-muted mb-1 text-pc-gold">Referral Code (Optional)</label>
                     <input name="referredByCode" value={form.referredByCode} onChange={handleChange} className="input-field border-pc-gold/30 focus:border-pc-gold focus:ring-pc-gold/20" placeholder="e.g. HOLY-A1B2C" />
-                    <p className="text-xs text-pc-muted mt-1">Referred by a friend? Enter their code so they get 100 points!</p>
+                    
+                    {referralData && meetsMinSpend && (
+                      <div className="mt-2 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
+                        <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <span>${referralData.discountAmount.toFixed(2)} Referral discount unlocked!</span>
+                      </div>
+                    )}
+
+                    {referralData && !meetsMinSpend && (
+                      <div className="mt-2 p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs flex items-center gap-2">
+                        <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <span>Add ${(minSpendRequired - total).toFixed(2)} more to unlock your ${referralData.discountAmount.toFixed(2)} discount (min order: ${minSpendRequired}).</span>
+                      </div>
+                    )}
+
+                    {!referralData && (
+                      <p className="text-xs text-pc-muted mt-1">Referred by a friend? Enter their code for $10 off your first order of $100+!</p>
+                    )}
                   </div>
                 )}
 
@@ -701,10 +718,10 @@ function CheckoutContent() {
                     <span>-${rewardDiscount.toFixed(2)}</span>
                   </div>
                 )}
-                {appliedDriverDiscount > 0 && (
+                {appliedReferralDiscount > 0 && (
                   <div className="flex justify-between text-pc-green">
                     <span>Referral Discount</span>
-                    <span>-${appliedDriverDiscount.toFixed(2)}</span>
+                    <span>-${appliedReferralDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 {deliveryFee > 0 && (

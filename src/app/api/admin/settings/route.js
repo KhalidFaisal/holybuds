@@ -50,6 +50,7 @@ export async function GET(request) {
       promoCustomerReferralCredit: settings.promoCustomerReferralCredit ?? 10.0,
       promoCustomerReferralDiscount: settings.promoCustomerReferralDiscount ?? 10.0,
       standardCustomerReferralPoints: settings.standardCustomerReferralPoints ?? 500,
+      customerReferralMinSpend: settings.customerReferralMinSpend ?? 100.0,
       driverBonusThreshold: settings.driverBonusThreshold ?? 10,
       driverBonusAmount: settings.driverBonusAmount ?? 100.0,
       wholesalePassword: settings.wholesalePassword || 'Onlyholy'
@@ -169,6 +170,10 @@ export async function POST(request) {
 
     if (data.standardCustomerReferralPoints !== undefined) {
       updateData.standardCustomerReferralPoints = parseInt(data.standardCustomerReferralPoints, 10);
+    }
+
+    if (data.customerReferralMinSpend !== undefined) {
+      updateData.customerReferralMinSpend = parseFloat(data.customerReferralMinSpend);
     }
 
     if (data.driverBonusThreshold !== undefined) {

@@ -198,6 +198,7 @@ export async function POST(request) {
     const promoCustomerReferralCredit = settings?.promoCustomerReferralCredit ?? 10.0;
     const promoCustomerReferralDiscount = settings?.promoCustomerReferralDiscount ?? 10.0;
     const standardCustomerReferralPoints = settings?.standardCustomerReferralPoints ?? 500;
+    const customerReferralMinSpend = settings?.customerReferralMinSpend ?? 100.0;
 
     let pointsEarned = 0;
     if (loyaltyEnabled) {
@@ -269,7 +270,10 @@ export async function POST(request) {
           where: { referralCode: data.referredByCode.toUpperCase() }
         }) : null;
 
-        if ((validDriver && validDriver.isActive) || validCustomer) {
+        const isDriverQualifying = validDriver && validDriver.isActive;
+        const isCustomerQualifying = validCustomer && subtotal >= customerReferralMinSpend;
+
+        if (isDriverQualifying || isCustomerQualifying) {
           // If valid customer, apply promo discount if active, otherwise standard
           let discountToApply = customerReferralDiscount;
           if (validCustomer && isPromoActive) {
@@ -407,13 +411,14 @@ export async function POST(request) {
               pendingPayout: { increment: earnedAmount }
             }
           });
-        } else {
-           // Check if it's a customer referral
+        } else if (subtotal >= customerReferralMinSpend) {
+           // Check if it's a customer referral and order meets minimum spend requirement
            const referrerCustomer = await tx.customer.findUnique({
              where: { referralCode: data.referredByCode.toUpperCase() }
            });
            
-           if (referrerCustomer) {
+           // Ensure referrer exists and prevent self-referral
+           if (referrerCustomer && referrerCustomer.id !== customer.id) {
              let creditReward = 0;
              let pointsReward = 0;
              if (isPromoActive) {

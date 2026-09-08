@@ -461,7 +461,7 @@ function AccountContent() {
                         </div>
                         <div>
                           <h3 className="text-lg font-bold text-white mb-1">Refer a Friend</h3>
-                          <p className="text-sm text-pc-muted">Give this code to a friend. When they place their first order, you get rewards! Keep an eye out for special Store Credit Promos!</p>
+                          <p className="text-sm text-pc-muted">Give this code to a friend. When they place their first order of $100 or more, they get $10 off and you get $10 Store Credit!</p>
                         </div>
                       </div>
                       

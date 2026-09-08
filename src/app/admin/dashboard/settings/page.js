@@ -61,6 +61,7 @@ export default function SettingsPage() {
   const [promoCustomerReferralCredit, setPromoCustomerReferralCredit] = useState(10);
   const [promoCustomerReferralDiscount, setPromoCustomerReferralDiscount] = useState(10);
   const [standardCustomerReferralPoints, setStandardCustomerReferralPoints] = useState(500);
+  const [customerReferralMinSpend, setCustomerReferralMinSpend] = useState(100);
   const [driverBonusThreshold, setDriverBonusThreshold] = useState(10);
   const [driverBonusAmount, setDriverBonusAmount] = useState(100);
   const [loadingDriverPromo, setLoadingDriverPromo] = useState(false);
@@ -158,6 +159,7 @@ export default function SettingsPage() {
           if (data.promoCustomerReferralCredit !== undefined) setPromoCustomerReferralCredit(data.promoCustomerReferralCredit);
           if (data.promoCustomerReferralDiscount !== undefined) setPromoCustomerReferralDiscount(data.promoCustomerReferralDiscount);
           if (data.standardCustomerReferralPoints !== undefined) setStandardCustomerReferralPoints(data.standardCustomerReferralPoints);
+          if (data.customerReferralMinSpend !== undefined) setCustomerReferralMinSpend(data.customerReferralMinSpend);
           
           if (data.driverBonusThreshold !== undefined) setDriverBonusThreshold(data.driverBonusThreshold);
           if (data.driverBonusAmount !== undefined) setDriverBonusAmount(data.driverBonusAmount);
@@ -554,7 +556,8 @@ export default function SettingsPage() {
           referralPromoEndDate: referralPromoEndDate || null,
           promoCustomerReferralCredit: parseFloat(promoCustomerReferralCredit),
           promoCustomerReferralDiscount: parseFloat(promoCustomerReferralDiscount),
-          standardCustomerReferralPoints: parseInt(standardCustomerReferralPoints, 10)
+          standardCustomerReferralPoints: parseInt(standardCustomerReferralPoints, 10),
+          customerReferralMinSpend: parseFloat(customerReferralMinSpend)
         }),
       });
 
@@ -851,6 +854,24 @@ export default function SettingsPage() {
                 required
               />
               <p className="text-[11px] text-pc-muted/70 mt-1">Points awarded when no promo active</p>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">
+                Minimum Order Spend Requirement ($)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={customerReferralMinSpend}
+                onChange={(e) => setCustomerReferralMinSpend(e.target.value)}
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green transition-colors"
+                required
+              />
+              <p className="text-[11px] text-pc-muted/70 mt-1">
+                Referees must place an actual qualifying order of at least this amount to unlock their discount &amp; award referrer credit/points.
+              </p>
             </div>
           </div>
 

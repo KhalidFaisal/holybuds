@@ -10,24 +10,59 @@ export async function GET(request) {
   }
 
   try {
+    const upperCode = code.toUpperCase();
+
+    // Check Driver
     const driver = await prisma.driver.findUnique({
-      where: { referralCode: code.toUpperCase() }
+      where: { referralCode: upperCode }
     });
 
-    if (!driver || !driver.isActive) {
-      return NextResponse.json({ error: 'Invalid or inactive referral code' }, { status: 404 });
+    // Check Customer
+    const customer = !driver ? await prisma.customer.findUnique({
+      where: { referralCode: upperCode }
+    }) : null;
+
+    if (!driver && !customer) {
+      return NextResponse.json({ error: 'Invalid referral code' }, { status: 404 });
+    }
+
+    if (driver && !driver.isActive) {
+      return NextResponse.json({ error: 'Inactive referral code' }, { status: 404 });
     }
 
     const settings = await prisma.siteSettings.findUnique({
       where: { id: 'global' },
-      select: { customerReferralDiscount: true }
+      select: { 
+        customerReferralDiscount: true,
+        promoCustomerReferralDiscount: true,
+        referralPromoEndDate: true,
+        customerReferralMinSpend: true
+      }
     });
 
-    const discountAmount = settings?.customerReferralDiscount ?? 5.0;
+    const isPromo = settings?.referralPromoEndDate ? new Date() < new Date(settings.referralPromoEndDate) : false;
+    const minSpend = settings?.customerReferralMinSpend ?? 100.0;
 
-    return NextResponse.json({ 
-      driverName: driver.name,
-      discountAmount 
+    let discountAmount = settings?.customerReferralDiscount ?? 5.0;
+    if (customer && isPromo) {
+      discountAmount = settings?.promoCustomerReferralDiscount ?? 10.0;
+    }
+
+    if (driver) {
+      return NextResponse.json({ 
+        driverName: driver.name,
+        discountAmount,
+        minSpend: 0,
+        type: 'driver'
+      });
+    }
+
+    return NextResponse.json({
+      referrerName: customer.name || 'Friend',
+      discountAmount,
+      minSpend,
+      type: 'customer',
+      isPromo
     });
   } catch (error) {
     console.error('Error fetching referral:', error);

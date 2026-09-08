@@ -120,6 +120,7 @@ model SiteSettings {
   promoCustomerReferralCredit    Float     @default(10.0)
   promoCustomerReferralDiscount  Float     @default(10.0)
   standardCustomerReferralPoints Int       @default(500)
+  customerReferralMinSpend       Float     @default(100.0)
   driverBonusThreshold           Int       @default(10)
   driverBonusAmount        Float   @default(100.0)
   wholesalePassword        String  @default("Onlyholy")
