@@ -11,13 +11,23 @@ export async function PATCH(request, { params }) {
     const { id } = await params;
     const body = await request.json();
 
-    if (typeof body.points !== 'number') {
-      return NextResponse.json({ error: 'Invalid points value' }, { status: 400 });
+    const updateData = {};
+
+    if (typeof body.points === 'number') {
+      updateData.points = Math.max(0, Math.floor(body.points));
+    }
+
+    if (typeof body.storeCredit === 'number') {
+      updateData.storeCredit = Math.max(0, parseFloat(body.storeCredit.toFixed(2)));
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'No valid fields provided to update' }, { status: 400 });
     }
 
     const updated = await prisma.customer.update({
       where: { id },
-      data: { points: body.points }
+      data: updateData
     });
 
     return NextResponse.json(updated);
