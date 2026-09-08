@@ -585,177 +585,14 @@ export default function SettingsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-      {/* Loyalty & Rewards Section */}
-      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
-        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-yellow-500"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-          Loyalty & Rewards
-        </h2>
-        <p className="text-pc-muted mb-6 text-sm min-h-[4rem]">
-          Configure the points system and sign-up bonuses. Turn it off if you do not wish to offer rewards.
-        </p>
-
-        <form onSubmit={handleLoyaltySubmit} className="space-y-4 flex flex-col flex-grow">
-          <div className="flex items-center justify-between mb-6 bg-pc-black border border-pc-border p-4 rounded-xl">
-            <span className="text-white font-medium">Enable Loyalty Program</span>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={loyaltyEnabled}
-                onChange={(e) => setLoyaltyEnabled(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pc-green"></div>
-            </label>
-          </div>
-
-          {loyaltyEnabled && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex flex-col justify-end h-full">
-                <label className="block text-sm font-medium text-pc-muted mb-1">Points Earned Per $1 Spent</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={pointsPerDollar}
-                  onChange={(e) => setPointsPerDollar(e.target.value)}
-                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
-                  required
-                />
-              </div>
-              
-              <div className="flex flex-col justify-end h-full">
-                <label className="block text-sm font-medium text-pc-muted mb-1">New Customer Sign-Up Bonus (Points)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={signupBonus}
-                  onChange={(e) => setSignupBonus(e.target.value)}
-                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
-                  required
-                />
-              </div>
-            </div>
-          )}
-
-          {messageLoyalty && (
-            <div className={`p-3 rounded-lg text-sm mt-4 ${messageLoyalty.includes('success') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-              {messageLoyalty}
-            </div>
-          )}
-
-          <div className="mt-auto pt-4">
-            <button
-              type="submit"
-              disabled={loadingLoyalty}
-              className="btn-primary w-full py-3"
-            >
-              {loadingLoyalty ? 'Saving...' : 'Update Loyalty Settings'}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Driver Referral Program Section */}
-      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
-        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-green-500"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Driver Referral Program
-        </h2>
-        <p className="text-pc-muted mb-6 text-sm min-h-[4rem]">
-          Configure commission payouts for drivers who refer new customers, and bonuses for reaching referral milestones.
-        </p>
-
-        <form onSubmit={handleDriverPromoSubmit} className="space-y-4 flex flex-col flex-grow">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">
-                Driver Reward ($)
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={driverReferralReward}
-                onChange={(e) => setDriverReferralReward(e.target.value)}
-                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green transition-colors"
-                required
-              />
-              <p className="text-[11px] text-pc-muted/70 mt-1">Per successful driver referral</p>
-            </div>
-            
-            <div>
-              <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">
-                Customer Discount ($)
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={customerReferralDiscount}
-                onChange={(e) => setCustomerReferralDiscount(e.target.value)}
-                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green transition-colors"
-                required
-              />
-              <p className="text-[11px] text-pc-muted/70 mt-1">Off first order via driver code</p>
-            </div>
-            
-            <div>
-              <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">
-                Bonus Threshold
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={driverBonusThreshold}
-                onChange={(e) => setDriverBonusThreshold(e.target.value)}
-                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green transition-colors"
-                required
-              />
-              <p className="text-[11px] text-pc-muted/70 mt-1">Referral milestone (e.g., 10 orders)</p>
-            </div>
-            
-            <div>
-              <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">
-                Milestone Bonus ($)
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={driverBonusAmount}
-                onChange={(e) => setDriverBonusAmount(e.target.value)}
-                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green transition-colors"
-                required
-              />
-              <p className="text-[11px] text-pc-muted/70 mt-1">Payout upon reaching milestone</p>
-            </div>
-          </div>
-
-          {messageDriverPromo && (
-            <div className={`p-3 rounded-lg text-sm mt-4 ${messageDriverPromo.includes('success') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-              {messageDriverPromo}
-            </div>
-          )}
-
-          <div className="mt-auto pt-4">
-            <button
-              type="submit"
-              disabled={loadingDriverPromo}
-              className="btn-primary w-full py-3"
-            >
-              {loadingDriverPromo ? 'Saving...' : 'Update Driver Referrals'}
-            </button>
-          </div>
-        </form>
-      </div>
-
+      {/* ROW 1: Customer Referrals & Promo + Driver Referral Program */}
       {/* Customer Referrals & Promo Section */}
       <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
         <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-yellow-400"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
           Customer Referrals & Promo
         </h2>
-        <p className="text-pc-muted mb-4 text-sm min-h-[4rem]">
+        <p className="text-pc-muted mb-4 text-sm min-h-[3rem]">
           Run limited-time refer-a-friend promotions with store credit and discounts. When the promo ends, rewards automatically revert to standard loyalty points.
         </p>
 
@@ -893,15 +730,180 @@ export default function SettingsPage() {
         </form>
       </div>
 
+      {/* Driver Referral Program Section */}
+      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
+        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-green-500"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Driver Referral Program
+        </h2>
+        <p className="text-pc-muted mb-6 text-sm min-h-[3rem]">
+          Configure commission payouts for drivers who refer new customers, and bonuses for reaching referral milestones.
+        </p>
+
+        <form onSubmit={handleDriverPromoSubmit} className="space-y-4 flex flex-col flex-grow">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">
+                Driver Reward ($)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={driverReferralReward}
+                onChange={(e) => setDriverReferralReward(e.target.value)}
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green transition-colors"
+                required
+              />
+              <p className="text-[11px] text-pc-muted/70 mt-1">Per successful driver referral</p>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">
+                Customer Discount ($)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={customerReferralDiscount}
+                onChange={(e) => setCustomerReferralDiscount(e.target.value)}
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green transition-colors"
+                required
+              />
+              <p className="text-[11px] text-pc-muted/70 mt-1">Off first order via driver code</p>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">
+                Bonus Threshold
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={driverBonusThreshold}
+                onChange={(e) => setDriverBonusThreshold(e.target.value)}
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green transition-colors"
+                required
+              />
+              <p className="text-[11px] text-pc-muted/70 mt-1">Referral milestone (e.g., 10 orders)</p>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">
+                Milestone Bonus ($)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={driverBonusAmount}
+                onChange={(e) => setDriverBonusAmount(e.target.value)}
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green transition-colors"
+                required
+              />
+              <p className="text-[11px] text-pc-muted/70 mt-1">Payout upon reaching milestone</p>
+            </div>
+          </div>
+
+          {messageDriverPromo && (
+            <div className={`p-3 rounded-lg text-sm mt-4 ${messageDriverPromo.includes('success') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+              {messageDriverPromo}
+            </div>
+          )}
+
+          <div className="mt-auto pt-4">
+            <button
+              type="submit"
+              disabled={loadingDriverPromo}
+              className="btn-primary w-full py-3"
+            >
+              {loadingDriverPromo ? 'Saving...' : 'Update Driver Referrals'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* ROW 2: Loyalty & Rewards + AI Auto-Select Staff Picks */}
+      {/* Loyalty & Rewards Section */}
+      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
+        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-yellow-500"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+          Loyalty & Rewards
+        </h2>
+        <p className="text-pc-muted mb-6 text-sm min-h-[3rem]">
+          Configure the points system and sign-up bonuses. Turn it off if you do not wish to offer rewards.
+        </p>
+
+        <form onSubmit={handleLoyaltySubmit} className="space-y-4 flex flex-col flex-grow">
+          <div className="flex items-center justify-between mb-6 bg-pc-black border border-pc-border p-4 rounded-xl">
+            <span className="text-white font-medium">Enable Loyalty Program</span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={loyaltyEnabled}
+                onChange={(e) => setLoyaltyEnabled(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pc-green"></div>
+            </label>
+          </div>
+
+          {loyaltyEnabled && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col justify-end h-full">
+                <label className="block text-sm font-medium text-pc-muted mb-1">Points Earned Per $1 Spent</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={pointsPerDollar}
+                  onChange={(e) => setPointsPerDollar(e.target.value)}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+                  required
+                />
+              </div>
+              
+              <div className="flex flex-col justify-end h-full">
+                <label className="block text-sm font-medium text-pc-muted mb-1">New Customer Sign-Up Bonus (Points)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={signupBonus}
+                  onChange={(e) => setSignupBonus(e.target.value)}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+                  required
+                />
+              </div>
+            </div>
+          )}
+
+          {messageLoyalty && (
+            <div className={`p-3 rounded-lg text-sm mt-4 ${messageLoyalty.includes('success') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+              {messageLoyalty}
+            </div>
+          )}
+
+          <div className="mt-auto pt-4">
+            <button
+              type="submit"
+              disabled={loadingLoyalty}
+              className="btn-primary w-full py-3"
+            >
+              {loadingLoyalty ? 'Saving...' : 'Update Loyalty Settings'}
+            </button>
+          </div>
+        </form>
+      </div>
+
       {/* AI Staff Picks Section */}
       <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
         <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-purple-400"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 3.86-12A2 2 0 0 1 15 2a22 22 0 0 1 12 3.86c0 1.22-.78 2.36-1.93 2.53A22 22 0 0 1 15 12z"/><path d="M16 11c1.5 0 3-.5 3-3s-1.5-3-3-3-3 1.5-3 3 1.5 3 3 3z"/></svg>
           AI Auto-Select Staff Picks
         </h2>
-        <p className="text-pc-muted mb-6 text-sm min-h-[4rem]">
+        <p className="text-pc-muted mb-6 text-sm min-h-[3rem]">
           Let AI automatically pick 10 exciting, diverse products to feature as &quot;Staff Picks&quot; on your homepage. 
-          When enabled, the picks will automatically update once a week.
+          When enabled, picks automatically update weekly.
         </p>
 
         <form onSubmit={handleAiPicksSubmit} className="space-y-4 flex flex-col flex-grow">
@@ -945,13 +947,14 @@ export default function SettingsPage() {
         </form>
       </div>
 
-      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6">
+      {/* ROW 3: Site Access Password + Admin Dashboard Password */}
+      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
         <h2 className="text-xl font-semibold text-white mb-4">Site Access Password</h2>
-        <p className="text-pc-muted mb-6 text-sm">
+        <p className="text-pc-muted mb-6 text-sm min-h-[3rem]">
           Change the password required for users to enter the site. The current password is <span className="text-pc-green font-bold font-mono px-1">{currentPassword}</span>.
         </p>
 
-        <form onSubmit={handleSiteSubmit} className="space-y-4">
+        <form onSubmit={handleSiteSubmit} className="space-y-4 flex flex-col flex-grow">
           <div>
             <label className="block text-sm font-medium text-pc-muted mb-1">New Password</label>
             <input
@@ -982,23 +985,25 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loadingSite}
-            className="btn-primary w-full py-3"
-          >
-            {loadingSite ? 'Saving...' : 'Update Site Password'}
-          </button>
+          <div className="mt-auto pt-4">
+            <button
+              type="submit"
+              disabled={loadingSite}
+              className="btn-primary w-full py-3"
+            >
+              {loadingSite ? 'Saving...' : 'Update Site Password'}
+            </button>
+          </div>
         </form>
       </div>
 
-      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6">
+      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
         <h2 className="text-xl font-semibold text-white mb-4">Admin Dashboard Password</h2>
-        <p className="text-pc-muted mb-6 text-sm">
+        <p className="text-pc-muted mb-6 text-sm min-h-[3rem]">
           Change the password you use to log into this admin dashboard.
         </p>
 
-        <form onSubmit={handleAdminSubmit} className="space-y-4">
+        <form onSubmit={handleAdminSubmit} className="space-y-4 flex flex-col flex-grow">
           <div>
             <label className="block text-sm font-medium text-pc-muted mb-1">New Admin Password</label>
             <input
@@ -1029,23 +1034,26 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loadingAdmin}
-            className="btn-secondary w-full py-3"
-          >
-            {loadingAdmin ? 'Saving...' : 'Update Admin Password'}
-          </button>
+          <div className="mt-auto pt-4">
+            <button
+              type="submit"
+              disabled={loadingAdmin}
+              className="btn-secondary w-full py-3"
+            >
+              {loadingAdmin ? 'Saving...' : 'Update Admin Password'}
+            </button>
+          </div>
         </form>
       </div>
 
-      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6">
+      {/* ROW 4: Wholesale Access Password + Timezone */}
+      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
         <h2 className="text-xl font-semibold text-white mb-4">Wholesale Access Password</h2>
-        <p className="text-pc-muted mb-6 text-sm">
+        <p className="text-pc-muted mb-6 text-sm min-h-[3rem]">
           Change the passcode required for users to enter the wholesale section. The current passcode is <span className="text-pc-green font-bold font-mono px-1">{currentWholesalePassword}</span>.
         </p>
 
-        <form onSubmit={handleWholesaleSubmit} className="space-y-4">
+        <form onSubmit={handleWholesaleSubmit} className="space-y-4 flex flex-col flex-grow">
           <div>
             <label className="block text-sm font-medium text-pc-muted mb-1">New Wholesale Passcode</label>
             <input
@@ -1076,25 +1084,29 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loadingWholesale}
-            className="btn-secondary w-full py-3"
-          >
-            {loadingWholesale ? 'Saving...' : 'Update Wholesale Passcode'}
-          </button>
+          <div className="mt-auto pt-4">
+            <button
+              type="submit"
+              disabled={loadingWholesale}
+              className="btn-secondary w-full py-3"
+            >
+              {loadingWholesale ? 'Saving...' : 'Update Wholesale Passcode'}
+            </button>
+          </div>
         </form>
       </div>
 
       {/* Timezone Section */}
-      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 lg:col-span-2">
-        <h2 className="text-xl font-semibold text-white mb-4">Timezone</h2>
-        <p className="text-pc-muted mb-6 text-sm">
-          Set the global timezone for your store. This affects how dates and times are displayed.
-          The current timezone is <span className="text-pc-green font-bold font-mono px-1">{currentTimezone}</span>.
+      <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
+        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-blue-400"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Timezone
+        </h2>
+        <p className="text-pc-muted mb-6 text-sm min-h-[3rem]">
+          Set global timezone. Current timezone: <span className="text-pc-green font-bold font-mono px-1">{currentTimezone}</span>.
         </p>
 
-        <form onSubmit={handleTimezoneSubmit} className="space-y-4">
+        <form onSubmit={handleTimezoneSubmit} className="space-y-4 flex flex-col flex-grow">
           <div>
             <label className="block text-sm font-medium text-pc-muted mb-1">Store Timezone (IANA Format)</label>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -1125,13 +1137,15 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loadingTimezone}
-            className="btn-primary w-full py-3"
-          >
-            {loadingTimezone ? 'Saving...' : 'Update Timezone'}
-          </button>
+          <div className="mt-auto pt-4">
+            <button
+              type="submit"
+              disabled={loadingTimezone}
+              className="btn-primary w-full py-3"
+            >
+              {loadingTimezone ? 'Saving...' : 'Update Timezone'}
+            </button>
+          </div>
         </form>
       </div>
 
