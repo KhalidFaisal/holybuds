@@ -31,6 +31,12 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityFilter, setActivityFilter] = useState('ALL');
 
+  // Export State
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const customersWithEmail = useMemo(() => {
+    return customers.filter(c => c.email && c.email.trim().length > 0);
+  }, [customers]);
+
   // Format date helper
   const formatDate = (dateStr, includeTime = true) => {
     if (!dateStr) return '—';
@@ -97,6 +103,55 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
     }
   }, []);
 
+
+  // Export Customers to CSV
+  const handleExportCSV = (onlyWithEmails = false) => {
+    const exportData = onlyWithEmails ? customersWithEmail : customers;
+
+    if (exportData.length === 0) {
+      alert(onlyWithEmails ? 'No customers found with an email address.' : 'No customers to export.');
+      return;
+    }
+
+    const headers = [
+      'Name',
+      'Email',
+      'Phone',
+      'Total Orders',
+      'Loyalty Points',
+      'Store Credit ($)',
+      'Referral Code',
+      'Referred By',
+      'Address',
+      'Sign Up Date'
+    ];
+
+    const rows = exportData.map(c => [
+      `"${(c.name || '').replace(/"/g, '""')}"`,
+      `"${(c.email || '').replace(/"/g, '""')}"`,
+      `"${(c.phone || '').replace(/"/g, '""')}"`,
+      c.totalOrders || 0,
+      c.points || 0,
+      (c.storeCredit || 0).toFixed(2),
+      `"${(c.referralCode || '').replace(/"/g, '""')}"`,
+      `"${(c.referredByCode || '').replace(/"/g, '""')}"`,
+      `"${(c.address || '').replace(/"/g, '""')}"`,
+      `"${c.createdAt ? formatDate(c.createdAt, false) : ''}"`
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = onlyWithEmails
+      ? `customers_with_emails_${new Date().toISOString().split('T')[0]}.csv`
+      : `customers_all_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   // Open Edit Modal
   const openEditModal = (customer) => {
@@ -244,6 +299,68 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Export Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="btn-secondary px-4 py-2 text-sm font-medium flex items-center gap-2"
+            >
+              <svg className="w-4 h-4 text-pc-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Export CSV
+              <svg className="w-3.5 h-3.5 text-pc-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {showExportMenu && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setShowExportMenu(false)} />
+                <div className="absolute right-0 mt-2 w-64 bg-pc-card border border-pc-border rounded-xl shadow-2xl z-30 overflow-hidden py-1">
+                  <div className="px-3 py-2 border-b border-pc-border/60 bg-white/5">
+                    <p className="text-[11px] font-bold text-pc-muted uppercase tracking-wider">Export Customers</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      handleExportCSV(true);
+                      setShowExportMenu(false);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-xs text-white hover:bg-white/5 flex items-center justify-between gap-3 transition-colors"
+                  >
+                    <span className="flex items-center gap-2 font-medium">
+                      <svg className="w-4 h-4 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      With Emails Only
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-pc-green/20 text-pc-green font-mono font-bold text-[11px]">
+                      {customersWithEmail.length}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleExportCSV(false);
+                      setShowExportMenu(false);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-xs text-white hover:bg-white/5 flex items-center justify-between gap-3 border-t border-pc-border/40 transition-colors"
+                  >
+                    <span className="flex items-center gap-2 font-medium">
+                      <svg className="w-4 h-4 text-pc-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      All Customers
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-white/10 text-pc-muted font-mono font-bold text-[11px]">
+                      {customers.length}
+                    </span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
           <button
             onClick={handleMigrate}
             disabled={saving}
