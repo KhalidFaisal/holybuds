@@ -57,6 +57,10 @@ export default function SettingsPage() {
 
   const [driverReferralReward, setDriverReferralReward] = useState(10);
   const [customerReferralDiscount, setCustomerReferralDiscount] = useState(5);
+  const [referralPromoEndDate, setReferralPromoEndDate] = useState('');
+  const [promoCustomerReferralCredit, setPromoCustomerReferralCredit] = useState(10);
+  const [promoCustomerReferralDiscount, setPromoCustomerReferralDiscount] = useState(10);
+  const [standardCustomerReferralPoints, setStandardCustomerReferralPoints] = useState(500);
   const [driverBonusThreshold, setDriverBonusThreshold] = useState(10);
   const [driverBonusAmount, setDriverBonusAmount] = useState(100);
   const [loadingDriverPromo, setLoadingDriverPromo] = useState(false);
@@ -130,6 +134,17 @@ export default function SettingsPage() {
           if (data.aiStaffPicksEnabled !== undefined) setAiStaffPicksEnabled(data.aiStaffPicksEnabled);
           if (data.driverReferralReward !== undefined) setDriverReferralReward(data.driverReferralReward);
           if (data.customerReferralDiscount !== undefined) setCustomerReferralDiscount(data.customerReferralDiscount);
+          
+          if (data.referralPromoEndDate) {
+            // Convert to YYYY-MM-DD for input type="date"
+            setReferralPromoEndDate(data.referralPromoEndDate.split('T')[0]);
+          } else {
+            setReferralPromoEndDate('');
+          }
+          if (data.promoCustomerReferralCredit !== undefined) setPromoCustomerReferralCredit(data.promoCustomerReferralCredit);
+          if (data.promoCustomerReferralDiscount !== undefined) setPromoCustomerReferralDiscount(data.promoCustomerReferralDiscount);
+          if (data.standardCustomerReferralPoints !== undefined) setStandardCustomerReferralPoints(data.standardCustomerReferralPoints);
+          
           if (data.driverBonusThreshold !== undefined) setDriverBonusThreshold(data.driverBonusThreshold);
           if (data.driverBonusAmount !== undefined) setDriverBonusAmount(data.driverBonusAmount);
           if (data.wholesalePassword) setCurrentWholesalePassword(data.wholesalePassword);
@@ -497,6 +512,10 @@ export default function SettingsPage() {
         body: JSON.stringify({ 
           driverReferralReward: parseFloat(driverReferralReward),
           customerReferralDiscount: parseFloat(customerReferralDiscount),
+          referralPromoEndDate: referralPromoEndDate || null,
+          promoCustomerReferralCredit: parseFloat(promoCustomerReferralCredit),
+          promoCustomerReferralDiscount: parseFloat(promoCustomerReferralDiscount),
+          standardCustomerReferralPoints: parseInt(standardCustomerReferralPoints),
           driverBonusThreshold: parseInt(driverBonusThreshold),
           driverBonusAmount: parseFloat(driverBonusAmount)
         }),
@@ -657,6 +676,61 @@ export default function SettingsPage() {
                 className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
                 required
               />
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-pc-border mt-4">
+            <h3 className="text-lg font-medium text-white mb-4">Customer Referrals & Promo</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              <div className="flex flex-col justify-end h-full">
+                <label className="block text-sm font-medium text-pc-muted mb-1">Promo End Date</label>
+                <input
+                  type="date"
+                  value={referralPromoEndDate}
+                  onChange={(e) => setReferralPromoEndDate(e.target.value)}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+                />
+                <p className="text-xs text-pc-muted mt-1">Leave blank for no promo.</p>
+              </div>
+
+              <div className="flex flex-col justify-end h-full">
+                <label className="block text-sm font-medium text-pc-muted mb-1">Promo Friend Discount ($ off)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={promoCustomerReferralDiscount}
+                  onChange={(e) => setPromoCustomerReferralDiscount(e.target.value)}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col justify-end h-full">
+                <label className="block text-sm font-medium text-pc-muted mb-1">Promo Referrer Credit ($ credit)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={promoCustomerReferralCredit}
+                  onChange={(e) => setPromoCustomerReferralCredit(e.target.value)}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col justify-end h-full">
+                <label className="block text-sm font-medium text-pc-muted mb-1">Standard Referrer Reward (Points)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={standardCustomerReferralPoints}
+                  onChange={(e) => setStandardCustomerReferralPoints(e.target.value)}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+                  required
+                />
+              </div>
             </div>
           </div>
 

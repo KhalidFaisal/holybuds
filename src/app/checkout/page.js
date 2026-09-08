@@ -101,9 +101,10 @@ function CheckoutContent() {
   const [showFullLoyaltyPanel, setShowFullLoyaltyPanel] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [driverReferralDiscount, setDriverReferralDiscount] = useState(0);
+  const [useStoreCredit, setUseStoreCredit] = useState(false);
 
   useEffect(() => {
-    const code = localStorage.getItem('driver_referral_code');
+    const code = localStorage.getItem('driver_referral_code') || localStorage.getItem('customer_referral_code');
     if (code) {
       setTimeout(() => {
         setForm(prev => ({ ...prev, referredByCode: code }));
@@ -211,9 +212,18 @@ function CheckoutContent() {
   // To avoid double dipping, if a standard promo code discount exists, we just sum them.
   // Wait, let's just make the final total subtract both.
   const isDelivery = form.deliveryMethod === 'DELIVERY';
-  const effectiveTotal = total - rewardDiscount - appliedDriverDiscount;
+  let effectiveTotal = total - rewardDiscount - appliedDriverDiscount;
+  if (effectiveTotal < 0) effectiveTotal = 0;
+  
   const deliveryFee = isDelivery && effectiveTotal < 100 ? 10 : 0;
-  const finalTotal = Math.max(0, effectiveTotal) + deliveryFee;
+  
+  let finalTotal = effectiveTotal + deliveryFee;
+  let creditToApply = 0;
+
+  if (useStoreCredit && customerProfile?.storeCredit > 0) {
+    creditToApply = Math.min(customerProfile.storeCredit, finalTotal);
+    finalTotal -= creditToApply;
+  }
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -245,9 +255,11 @@ function CheckoutContent() {
           deliveryAddress: isDelivery ? `${form.deliveryAddress}, ${form.town}, ${form.zipCode}` : form.town,
           pointsUsed: selectedReward ? selectedReward.points : 0,
           rewardUsed: selectedReward ? selectedReward.label : null,
+          creditUsed: creditToApply,
           items: items.map((item) => ({
             productId: item.id,
             quantity: item.quantity,
+            price: item.price
           })),
         }),
       });
@@ -701,6 +713,36 @@ function CheckoutContent() {
                     <span>${deliveryFee.toFixed(2)}</span>
                   </div>
                 )}
+                
+                {customerProfile?.storeCredit > 0 && (
+                  <div className="py-2 mt-2 border-t border-pc-border/50">
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="text-pc-green font-medium flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Use Store Credit (${customerProfile.storeCredit.toFixed(2)})
+                      </span>
+                      <div className="relative inline-flex items-center">
+                        <input 
+                          type="checkbox" 
+                          checked={useStoreCredit}
+                          onChange={(e) => setUseStoreCredit(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-pc-dark border border-pc-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pc-green"></div>
+                      </div>
+                    </label>
+                  </div>
+                )}
+
+                {creditToApply > 0 && (
+                  <div className="flex justify-between text-pc-green font-bold">
+                    <span>Store Credit Applied</span>
+                    <span>-${creditToApply.toFixed(2)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between text-white font-bold text-lg pt-2 border-t border-pc-border">
                   <span>Total</span>
                   <span>${finalTotal.toFixed(2)}</span>

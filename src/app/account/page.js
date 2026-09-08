@@ -467,9 +467,17 @@ function AccountContent() {
                         </div>
                         <div>
                           <h3 className="text-lg font-bold text-white mb-1">Refer a Friend</h3>
-                          <p className="text-sm text-pc-muted">Give this code to a friend. When they place their first order, you get 100 points!</p>
+                          <p className="text-sm text-pc-muted">Give this code to a friend. When they place their first order, you get rewards! Keep an eye out for special Store Credit Promos!</p>
                         </div>
                       </div>
+                      
+                      {customerProfile.storeCredit > 0 && (
+                        <div className="mt-4 p-4 bg-pc-green/10 border border-pc-green/20 rounded-xl">
+                          <p className="text-xs font-semibold text-pc-muted uppercase tracking-wider mb-1">Your Store Credit</p>
+                          <p className="text-2xl font-bold text-pc-green">${customerProfile.storeCredit.toFixed(2)}</p>
+                          <p className="text-xs text-pc-muted mt-1">Available to use at checkout!</p>
+                        </div>
+                      )}
                       
                       <div className="mt-6">
                         <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">Your Unique Code</label>

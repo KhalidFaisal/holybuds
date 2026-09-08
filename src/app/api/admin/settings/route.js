@@ -46,6 +46,10 @@ export async function GET(request) {
       aiStaffPicksLastUpdate: settings.aiStaffPicksLastUpdate || null,
       driverReferralReward: settings.driverReferralReward ?? 10.0,
       customerReferralDiscount: settings.customerReferralDiscount ?? 5.0,
+      referralPromoEndDate: settings.referralPromoEndDate ? settings.referralPromoEndDate.toISOString() : null,
+      promoCustomerReferralCredit: settings.promoCustomerReferralCredit ?? 10.0,
+      promoCustomerReferralDiscount: settings.promoCustomerReferralDiscount ?? 10.0,
+      standardCustomerReferralPoints: settings.standardCustomerReferralPoints ?? 500,
       driverBonusThreshold: settings.driverBonusThreshold ?? 10,
       driverBonusAmount: settings.driverBonusAmount ?? 100.0,
       wholesalePassword: settings.wholesalePassword || 'Onlyholy'
@@ -149,6 +153,22 @@ export async function POST(request) {
 
     if (data.customerReferralDiscount !== undefined) {
       updateData.customerReferralDiscount = parseFloat(data.customerReferralDiscount);
+    }
+
+    if (data.referralPromoEndDate !== undefined) {
+      updateData.referralPromoEndDate = data.referralPromoEndDate ? new Date(data.referralPromoEndDate) : null;
+    }
+
+    if (data.promoCustomerReferralCredit !== undefined) {
+      updateData.promoCustomerReferralCredit = parseFloat(data.promoCustomerReferralCredit);
+    }
+
+    if (data.promoCustomerReferralDiscount !== undefined) {
+      updateData.promoCustomerReferralDiscount = parseFloat(data.promoCustomerReferralDiscount);
+    }
+
+    if (data.standardCustomerReferralPoints !== undefined) {
+      updateData.standardCustomerReferralPoints = parseInt(data.standardCustomerReferralPoints, 10);
     }
 
     if (data.driverBonusThreshold !== undefined) {

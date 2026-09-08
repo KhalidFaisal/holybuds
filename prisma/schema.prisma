@@ -42,6 +42,7 @@ model Order {
   pointsEarned    Int         @default(0)
   pointsUsed      Int         @default(0)
   rewardUsed      String?
+  creditUsed      Float       @default(0)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   
@@ -54,8 +55,9 @@ model Order {
   boxId           String?
   box             InventoryBox? @relation(fields: [boxId], references: [id])
   
-  items           OrderItem[]
-  driverReferrals DriverReferral[]
+  items             OrderItem[]
+  driverReferrals   DriverReferral[]
+  customerReferrals CustomerReferral[]
 }
 
 model OrderItem {
@@ -112,9 +114,13 @@ model SiteSettings {
   signupBonus           Int     @default(50)
   aiStaffPicksEnabled   Boolean @default(false)
   aiStaffPicksLastUpdate DateTime?
-  driverReferralReward     Float   @default(10.0)
-  customerReferralDiscount Float   @default(5.0)
-  driverBonusThreshold     Int     @default(10)
+  driverReferralReward           Float     @default(10.0)
+  customerReferralDiscount       Float     @default(5.0)
+  referralPromoEndDate           DateTime?
+  promoCustomerReferralCredit    Float     @default(10.0)
+  promoCustomerReferralDiscount  Float     @default(10.0)
+  standardCustomerReferralPoints Int       @default(500)
+  driverBonusThreshold           Int       @default(10)
   driverBonusAmount        Float   @default(100.0)
   wholesalePassword        String  @default("Onlyholy")
 }
@@ -137,6 +143,7 @@ model Customer {
   name            String
   address         String?
   points          Int      @default(0)
+  storeCredit     Float    @default(0)
   totalOrders     Int      @default(0)
   referralCode    String?  @unique
   referredByCode  String?
@@ -145,6 +152,8 @@ model Customer {
   updatedAt       DateTime @updatedAt
   orders          Order[]
   driverReferrals DriverReferral[]
+  referralsMade   CustomerReferral[] @relation("Referrer")
+  referralsReceived CustomerReferral[] @relation("Referee")
   
   userId          String?  @unique
   user            User?    @relation(fields: [userId], references: [id])
@@ -193,6 +202,19 @@ model DriverReferral {
   order        Order?    @relation(fields: [orderId], references: [id])
   rewardAmount Float
   createdAt    DateTime @default(now())
+}
+
+model CustomerReferral {
+  id               String   @id @default(cuid())
+  referrerId       String
+  referrer         Customer @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  refereeId        String?
+  referee          Customer? @relation("Referee", fields: [refereeId], references: [id])
+  orderId          String?
+  order            Order?    @relation(fields: [orderId], references: [id])
+  rewardCredit     Float    @default(0) // Store credit awarded
+  rewardPoints     Int      @default(0) // Loyalty points awarded
+  createdAt        DateTime @default(now())
 }
 
 model DriverBonus {

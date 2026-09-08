@@ -193,6 +193,11 @@ export async function POST(request) {
     const customerReferralDiscount = settings?.customerReferralDiscount ?? 5.0;
     const driverBonusThreshold = settings?.driverBonusThreshold ?? 10;
     const driverBonusAmount = settings?.driverBonusAmount ?? 100.0;
+    const referralPromoEndDate = settings?.referralPromoEndDate ? new Date(settings.referralPromoEndDate) : null;
+    const isPromoActive = referralPromoEndDate ? new Date() < referralPromoEndDate : false;
+    const promoCustomerReferralCredit = settings?.promoCustomerReferralCredit ?? 10.0;
+    const promoCustomerReferralDiscount = settings?.promoCustomerReferralDiscount ?? 10.0;
+    const standardCustomerReferralPoints = settings?.standardCustomerReferralPoints ?? 500;
 
     let pointsEarned = 0;
     if (loyaltyEnabled) {
@@ -246,6 +251,12 @@ export async function POST(request) {
         throw new Error('Insufficient points for this reward');
       }
 
+      // Validate Store Credit
+      let creditUsed = parseFloat(data.creditUsed || 0);
+      if (creditUsed > customer.storeCredit) {
+        throw new Error('Insufficient store credit');
+      }
+
       // Check if this is their first order and they have a valid referral code to apply discount
       let finalDiscountAmount = bestDiscountAmount;
       let finalDiscountName = bestDiscountName;
@@ -254,14 +265,22 @@ export async function POST(request) {
         const validDriver = await tx.driver.findUnique({
           where: { referralCode: data.referredByCode.toUpperCase() }
         });
-        if (validDriver && validDriver.isActive) {
-          // It's their first order and they used a valid driver code
-          // Add the driver discount
-          finalDiscountAmount += customerReferralDiscount;
+        const validCustomer = !validDriver ? await tx.customer.findUnique({
+          where: { referralCode: data.referredByCode.toUpperCase() }
+        }) : null;
+
+        if ((validDriver && validDriver.isActive) || validCustomer) {
+          // If valid customer, apply promo discount if active, otherwise standard
+          let discountToApply = customerReferralDiscount;
+          if (validCustomer && isPromoActive) {
+            discountToApply = promoCustomerReferralDiscount;
+          }
+
+          finalDiscountAmount += discountToApply;
           if (finalDiscountName) {
             finalDiscountName += ` & Referral Discount`;
           } else {
-            finalDiscountName = `Referral Discount ($${customerReferralDiscount} off)`;
+            finalDiscountName = `Referral Discount ($${discountToApply} off)`;
           }
 
           // Ensure we don't discount more than the subtotal
@@ -282,6 +301,12 @@ export async function POST(request) {
         }
       }
 
+      // Now subtract creditUsed from total
+      if (creditUsed > total) {
+        creditUsed = total; // Don't use more credit than the total
+      }
+      total -= creditUsed;
+
       // Create Order
       const newOrder = await tx.order.create({
         data: {
@@ -298,6 +323,7 @@ export async function POST(request) {
           pointsEarned: loyaltyEnabled ? pointsEarned : 0,
           pointsUsed: pointsUsed,
           rewardUsed: rewardUsed,
+          creditUsed: creditUsed,
           items: {
             create: itemsData.map(i => ({
               productId: i.productId,
@@ -318,6 +344,9 @@ export async function POST(request) {
           points: {
             increment: (loyaltyEnabled ? pointsEarned : 0) - pointsUsed
           },
+          storeCredit: {
+            decrement: creditUsed
+          },
           totalOrders: {
             increment: 1
           },
@@ -333,7 +362,7 @@ export async function POST(request) {
         });
       }
 
-      // Handle Driver Referral
+      // Handle Driver or Customer Referral Rewards
       if (data.referredByCode && customer.totalOrders === 0) { // Local object still has pre-increment value
         const driver = await tx.driver.findUnique({
           where: { referralCode: data.referredByCode.toUpperCase() }
@@ -378,6 +407,39 @@ export async function POST(request) {
               pendingPayout: { increment: earnedAmount }
             }
           });
+        } else {
+           // Check if it's a customer referral
+           const referrerCustomer = await tx.customer.findUnique({
+             where: { referralCode: data.referredByCode.toUpperCase() }
+           });
+           
+           if (referrerCustomer) {
+             let creditReward = 0;
+             let pointsReward = 0;
+             if (isPromoActive) {
+               creditReward = promoCustomerReferralCredit;
+             } else {
+               pointsReward = standardCustomerReferralPoints;
+             }
+
+             await tx.customerReferral.create({
+               data: {
+                 referrerId: referrerCustomer.id,
+                 refereeId: customer.id,
+                 orderId: newOrder.id,
+                 rewardCredit: creditReward,
+                 rewardPoints: pointsReward
+               }
+             });
+
+             await tx.customer.update({
+               where: { id: referrerCustomer.id },
+               data: {
+                 storeCredit: { increment: creditReward },
+                 points: { increment: pointsReward }
+               }
+             });
+           }
         }
       }
 
