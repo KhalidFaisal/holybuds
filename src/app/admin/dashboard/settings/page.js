@@ -621,7 +621,7 @@ export default function SettingsPage() {
         )}
 
         <form onSubmit={handleCustomerPromoSubmit} className="space-y-4 flex flex-col flex-grow">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider">
@@ -693,7 +693,7 @@ export default function SettingsPage() {
               <p className="text-[11px] text-pc-muted/70 mt-1">Points awarded when no promo active</p>
             </div>
 
-            <div className="sm:col-span-2 lg:col-span-1 xl:col-span-2">
+            <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">
                 Minimum Order Spend Requirement ($)
               </label>
@@ -741,7 +741,7 @@ export default function SettingsPage() {
         </p>
 
         <form onSubmit={handleDriverPromoSubmit} className="space-y-4 flex flex-col flex-grow">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">
                 Driver Reward ($)
@@ -806,6 +806,35 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Live Milestone & Commission Preview Box */}
+          <div className="bg-pc-black/80 border border-pc-border rounded-xl p-3.5 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-white text-xs flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Driver Incentive Structure
+              </span>
+              <span className="px-2 py-0.5 rounded bg-pc-green/10 text-pc-green text-[10px] font-bold uppercase tracking-wider">Active</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-pc-border/50 text-[11px]">
+              <div>
+                <span className="text-pc-muted block text-[10px]">Driver Earns:</span>
+                <span className="text-white font-mono font-bold">${driverReferralReward || 0} / referral</span>
+              </div>
+              <div>
+                <span className="text-pc-muted block text-[10px]">Referee Gets:</span>
+                <span className="text-white font-mono font-bold">${customerReferralDiscount || 0} off</span>
+              </div>
+              <div className="col-span-2 bg-pc-dark/70 rounded-lg p-2 border border-pc-border/40">
+                <span className="text-pc-muted block text-[10px] uppercase font-semibold">Milestone Payout:</span>
+                <span className="text-emerald-400 font-medium text-[11px]">
+                  ${driverBonusAmount || 0} cash bonus every {driverBonusThreshold || 10} referred orders
+                </span>
+              </div>
+            </div>
+          </div>
+
           {messageDriverPromo && (
             <div className={`p-3 rounded-lg text-sm mt-4 ${messageDriverPromo.includes('success') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
               {messageDriverPromo}
@@ -835,7 +864,7 @@ export default function SettingsPage() {
         </p>
 
         <form onSubmit={handleLoyaltySubmit} className="space-y-4 flex flex-col flex-grow">
-          <div className="flex items-center justify-between mb-6 bg-pc-black border border-pc-border p-4 rounded-xl">
+          <div className="flex items-center justify-between mb-4 bg-pc-black border border-pc-border p-4 rounded-xl">
             <span className="text-white font-medium">Enable Loyalty Program</span>
             <label className="relative inline-flex items-center cursor-pointer">
               <input 
@@ -849,31 +878,64 @@ export default function SettingsPage() {
           </div>
 
           {loyaltyEnabled && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
-              <div className="flex flex-col justify-end h-full">
-                <label className="block text-sm font-medium text-pc-muted mb-1">Points Earned Per $1 Spent</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={pointsPerDollar}
-                  onChange={(e) => setPointsPerDollar(e.target.value)}
-                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
-                  required
-                />
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="flex flex-col justify-end h-full">
+                  <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">Points Per $1 Spent</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={pointsPerDollar}
+                    onChange={(e) => setPointsPerDollar(e.target.value)}
+                    className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green transition-colors"
+                    required
+                  />
+                  <p className="text-[11px] text-pc-muted/70 mt-1">Rate points accumulate</p>
+                </div>
+                
+                <div className="flex flex-col justify-end h-full">
+                  <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">Sign-Up Bonus (Points)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={signupBonus}
+                    onChange={(e) => setSignupBonus(e.target.value)}
+                    className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green transition-colors"
+                    required
+                  />
+                  <p className="text-[11px] text-pc-muted/70 mt-1">Granted on registration</p>
+                </div>
               </div>
-              
-              <div className="flex flex-col justify-end h-full">
-                <label className="block text-sm font-medium text-pc-muted mb-1">New Customer Sign-Up Bonus (Points)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={signupBonus}
-                  onChange={(e) => setSignupBonus(e.target.value)}
-                  className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
-                  required
-                />
+
+              {/* Live Points Economics & Redemption Preview Box */}
+              <div className="bg-pc-black/80 border border-pc-border rounded-xl p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-white text-xs flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Points Economics &amp; Value
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-yellow-500/10 text-yellow-400 text-[10px] font-bold uppercase tracking-wider">100 Pts = $1</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-pc-border/50 text-[11px]">
+                  <div>
+                    <span className="text-pc-muted block text-[10px]">Welcome Bonus:</span>
+                    <span className="text-white font-mono font-bold">${((signupBonus || 0) / 100).toFixed(2)} store credit</span>
+                  </div>
+                  <div>
+                    <span className="text-pc-muted block text-[10px]">Rewards Return:</span>
+                    <span className="text-white font-mono font-bold">{((pointsPerDollar || 1) * 1).toFixed(1)}% Back</span>
+                  </div>
+                  <div className="col-span-2 bg-pc-dark/70 rounded-lg p-2 border border-pc-border/40">
+                    <span className="text-pc-muted block text-[10px] uppercase font-semibold">Reward Goal:</span>
+                    <span className="text-yellow-300 font-medium text-[11px]">
+                      Customer spends ${(100 / (pointsPerDollar || 1)).toFixed(0)} to unlock $1.00 checkout discount
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
+            </>
           )}
 
           {messageLoyalty && (
