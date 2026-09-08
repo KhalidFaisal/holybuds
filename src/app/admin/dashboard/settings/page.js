@@ -575,10 +575,10 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-fade-in pb-12">
+    <div className="space-y-8 animate-fade-in pb-12">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
+          <h1 className="text-3xl font-black text-white mb-2">Settings</h1>
           <p className="text-pc-muted">Manage global site settings.</p>
         </div>
       </div>
