@@ -142,12 +142,6 @@ function AccountContent() {
   }, [status, router]);
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    }
-  }, [status, router]);
-
-  useEffect(() => {
     if (tabParam) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTab(tabParam);

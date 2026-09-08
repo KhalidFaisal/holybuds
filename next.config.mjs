@@ -24,6 +24,15 @@ const nextConfig = {
       }
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/rewards',
+        destination: '/account?tab=rewards',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
