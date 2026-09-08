@@ -105,11 +105,37 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
 
 
   // Export Customers to CSV
-  const handleExportCSV = (onlyWithEmails = false) => {
-    const exportData = onlyWithEmails ? customersWithEmail : customers;
+  const handleExportCSV = (mode = 'name_email') => {
+    if (mode === 'name_email') {
+      const exportData = customersWithEmail;
 
-    if (exportData.length === 0) {
-      alert(onlyWithEmails ? 'No customers found with an email address.' : 'No customers to export.');
+      if (exportData.length === 0) {
+        alert('No customers found with an email address.');
+        return;
+      }
+
+      const headers = ['Name', 'Email'];
+      const rows = exportData.map(c => [
+        `"${(c.name || '').replace(/"/g, '""')}"`,
+        `"${(c.email || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `customers_name_and_email_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    // Full export mode
+    if (customers.length === 0) {
+      alert('No customers to export.');
       return;
     }
 
@@ -126,7 +152,7 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
       'Sign Up Date'
     ];
 
-    const rows = exportData.map(c => [
+    const rows = customers.map(c => [
       `"${(c.name || '').replace(/"/g, '""')}"`,
       `"${(c.email || '').replace(/"/g, '""')}"`,
       `"${(c.phone || '').replace(/"/g, '""')}"`,
@@ -144,9 +170,7 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = onlyWithEmails
-      ? `customers_with_emails_${new Date().toISOString().split('T')[0]}.csv`
-      : `customers_all_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `customers_all_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -323,17 +347,20 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
                   </div>
                   <button
                     onClick={() => {
-                      handleExportCSV(true);
+                      handleExportCSV('name_email');
                       setShowExportMenu(false);
                     }}
-                    className="w-full text-left px-4 py-2.5 text-xs text-white hover:bg-white/5 flex items-center justify-between gap-3 transition-colors"
+                    className="w-full text-left px-4 py-3 text-xs text-white hover:bg-white/5 flex items-center justify-between gap-3 transition-colors"
                   >
-                    <span className="flex items-center gap-2 font-medium">
-                      <svg className="w-4 h-4 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="flex items-center gap-2.5">
+                      <svg className="w-4 h-4 text-pc-green shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                      With Emails Only
-                    </span>
+                      <div>
+                        <p className="font-bold text-white">Name &amp; Email Only</p>
+                        <p className="text-[10px] text-pc-muted">Only Name and Email columns</p>
+                      </div>
+                    </div>
                     <span className="px-2 py-0.5 rounded-full bg-pc-green/20 text-pc-green font-mono font-bold text-[11px]">
                       {customersWithEmail.length}
                     </span>
@@ -341,17 +368,20 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
 
                   <button
                     onClick={() => {
-                      handleExportCSV(false);
+                      handleExportCSV('full');
                       setShowExportMenu(false);
                     }}
-                    className="w-full text-left px-4 py-2.5 text-xs text-white hover:bg-white/5 flex items-center justify-between gap-3 border-t border-pc-border/40 transition-colors"
+                    className="w-full text-left px-4 py-3 text-xs text-white hover:bg-white/5 flex items-center justify-between gap-3 border-t border-pc-border/40 transition-colors"
                   >
-                    <span className="flex items-center gap-2 font-medium">
-                      <svg className="w-4 h-4 text-pc-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="flex items-center gap-2.5">
+                      <svg className="w-4 h-4 text-pc-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      All Customers
-                    </span>
+                      <div>
+                        <p className="font-medium text-pc-light">All Customer Details</p>
+                        <p className="text-[10px] text-pc-muted">All columns (Phone, Points, Credit...)</p>
+                      </div>
+                    </div>
                     <span className="px-2 py-0.5 rounded-full bg-white/10 text-pc-muted font-mono font-bold text-[11px]">
                       {customers.length}
                     </span>
