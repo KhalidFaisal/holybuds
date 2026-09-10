@@ -396,7 +396,13 @@ export default function AdminInventory() {
                     return (
                       <div key={`log-${item.id}`} className="bg-pc-black border border-pc-border rounded-lg p-4">
                         <div className="flex justify-between items-start mb-2">
-                          <span className="font-bold text-white bg-white/10 px-2 py-1 rounded text-xs">{item.type}</span>
+                          <span className={`font-bold px-2 py-1 rounded text-xs ${
+                            item.type === 'RESTOCK' ? 'text-pc-green bg-pc-green/10 border border-pc-green/20' :
+                            item.type === 'ORDER_CLAIM' ? 'text-blue-400 bg-blue-500/10 border border-blue-500/20' :
+                            item.type === 'ORDER_SWAP' ? 'text-orange-400 bg-orange-500/10 border border-orange-500/20' :
+                            item.type === 'AUDIT' ? 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20' :
+                            'text-white bg-white/10'
+                          }`}>{item.type}</span>
                           <span className="text-xs text-pc-muted">{date}</span>
                         </div>
                         {item.type === 'RESTOCK' ? (
@@ -469,6 +475,20 @@ export default function AdminInventory() {
                               <p className="text-xs text-red-400 mb-1 line-through"><span className="text-gray-500">Original:</span> {detailsObj.original}</p>
                               <p className="text-xs text-pc-green"><span className="text-gray-400">Swapped To:</span> {detailsObj.swapped}</p>
                             </div>
+                          </div>
+                        ) : item.type === 'ORDER_CLAIM' ? (
+                          <div className="text-sm text-pc-muted mt-2">
+                            <p className="font-semibold text-white mb-1">{detailsObj.note}</p>
+                            {Array.isArray(detailsObj.deductions) && detailsObj.deductions.length > 0 && (
+                              <div className="bg-white/5 rounded p-3 mt-2 border border-white/10 space-y-1">
+                                {detailsObj.deductions.map((d, i) => (
+                                  <div key={i} className="flex justify-between items-center text-xs">
+                                    <span className="text-white">• {d.name}</span>
+                                    <span className="font-bold text-red-400">-{d.quantity} units</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <p className="text-sm text-pc-muted mt-2">{detailsObj.note || item.details}</p>

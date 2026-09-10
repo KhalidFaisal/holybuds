@@ -80,41 +80,78 @@ export async function POST(request) {
       // Check if order is still PENDING
       const order = await prisma.order.findUnique({
         where: { id: orderId },
-        include: { items: true }
+        include: { 
+          items: {
+            include: { product: true }
+          }
+        }
       });
       if (!order || order.status !== 'PENDING') {
         return NextResponse.json({ error: 'Order is no longer available' }, { status: 400 });
       }
       
-      if (!driver.currentBox) {
+      let box = driver.currentBox;
+      if (!box) {
+        box = await prisma.inventoryBox.findFirst({
+          where: { currentDriverId: driver.id }
+        });
+      }
+
+      if (!box) {
         return NextResponse.json({ error: 'You must have an assigned box to claim orders' }, { status: 400 });
       }
 
       const updated = await prisma.$transaction(async (tx) => {
-        // Deduct items from driver's box upon CLAIM
+        const deductions = [];
+
+        // Deduct items from driver's box upon CLAIM using upsert (so missing boxItem rows are never silently skipped)
         for (const item of order.items) {
-          const boxItem = await tx.boxItem.findUnique({
+          const qty = Number(item.quantity) || 0;
+          if (qty <= 0) continue;
+
+          await tx.boxItem.upsert({
             where: {
               boxId_productId: {
-                boxId: driver.currentBox.id,
+                boxId: box.id,
                 productId: item.productId
               }
+            },
+            update: {
+              expectedQuantity: { decrement: qty }
+            },
+            create: {
+              boxId: box.id,
+              productId: item.productId,
+              expectedQuantity: -qty
             }
           });
 
-          if (boxItem) {
-            await tx.boxItem.update({
-              where: { id: boxItem.id },
-              data: { expectedQuantity: { decrement: Number(item.quantity) } }
-            });
-          }
+          deductions.push({
+            productId: item.productId,
+            name: item.product?.name || 'Product',
+            quantity: qty
+          });
         }
+
+        // Record BoxLog so deductions are tracked in box history
+        await tx.boxLog.create({
+          data: {
+            boxId: box.id,
+            type: 'ORDER_CLAIM',
+            details: JSON.stringify({
+              note: `Driver ${driver.name} claimed Order #${order.orderNumber}`,
+              orderNumber: order.orderNumber,
+              driverName: driver.name,
+              deductions
+            })
+          }
+        });
 
         return await tx.order.update({
           where: { id: orderId },
           data: {
             driverId: driver.id,
-            boxId: driver.currentBox.id,
+            boxId: box.id,
             status: 'PROCESSING'
           }
         });
@@ -139,7 +176,15 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Order already delivered or completed' }, { status: 400 });
       }
 
-      if (!order.boxId) {
+      let boxId = order.boxId;
+      if (!boxId) {
+        const box = driver.currentBox || await prisma.inventoryBox.findFirst({
+          where: { currentDriverId: driver.id }
+        });
+        boxId = box?.id;
+      }
+
+      if (!boxId) {
         return NextResponse.json({ error: 'Order is not associated with a box' }, { status: 400 });
       }
 
@@ -165,20 +210,22 @@ export async function POST(request) {
 
           for (const [productId, delta] of Object.entries(itemDeltas)) {
             if (delta === 0) continue;
-            const boxItem = await tx.boxItem.findUnique({
+            await tx.boxItem.upsert({
               where: {
                 boxId_productId: {
-                  boxId: order.boxId,
+                  boxId,
                   productId
                 }
+              },
+              update: {
+                expectedQuantity: { decrement: delta }
+              },
+              create: {
+                boxId,
+                productId,
+                expectedQuantity: -delta
               }
             });
-            if (boxItem) {
-              await tx.boxItem.update({
-                where: { id: boxItem.id },
-                data: { expectedQuantity: { decrement: delta } }
-              });
-            }
           }
 
           await tx.order.update({
@@ -201,7 +248,7 @@ export async function POST(request) {
 
           await tx.boxLog.create({
             data: {
-              boxId: order.boxId,
+              boxId,
               type: 'ORDER_SWAP',
               details: JSON.stringify({
                 note: `Driver ${driver.name} swapped items for Order ${order.orderNumber}.`,
