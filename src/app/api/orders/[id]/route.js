@@ -35,12 +35,14 @@ export async function PUT(request, { params }) {
     const order = await prisma.$transaction(async (tx) => {
       const currentOrder = await tx.order.findUnique({
         where: { id },
-        include: { items: true, customer: true },
+        include: { items: { include: { product: true } }, customer: true },
       });
 
       if (!currentOrder) {
         throw new Error('Order not found');
       }
+
+      const updateData = {};
 
       if (data.items) {
         // Edit order items
@@ -150,9 +152,60 @@ export async function PUT(request, { params }) {
           }
         });
       } else if (data.status) {
+        updateData.status = data.status;
         // Status updates
-        if (data.status === 'CANCELLED' && currentOrder.status !== 'CANCELLED') {
-          // Cancelled: restore inventory
+        if (data.status === 'PENDING' && currentOrder.status !== 'PENDING') {
+          // If the order was claimed by a driver / assigned to a box:
+          if (currentOrder.boxId && ['PROCESSING', 'READY'].includes(currentOrder.status)) {
+            const restored = [];
+            for (const item of currentOrder.items) {
+              const qty = Number(item.quantity) || 0;
+              if (qty <= 0) continue;
+
+              await tx.boxItem.upsert({
+                where: {
+                  boxId_productId: {
+                    boxId: currentOrder.boxId,
+                    productId: item.productId
+                  }
+                },
+                update: {
+                  expectedQuantity: { increment: qty }
+                },
+                create: {
+                  boxId: currentOrder.boxId,
+                  productId: item.productId,
+                  expectedQuantity: qty
+                }
+              });
+
+              restored.push({
+                productId: item.productId,
+                name: item.product?.name || 'Product',
+                quantity: qty
+              });
+            }
+
+            // Create BoxLog entry for the unclaim / restore
+            await tx.boxLog.create({
+              data: {
+                boxId: currentOrder.boxId,
+                type: 'ORDER_UNCLAIM',
+                details: JSON.stringify({
+                  note: `Order #${currentOrder.orderNumber} reset to PENDING by Admin. Items returned to box.`,
+                  orderNumber: currentOrder.orderNumber,
+                  restored
+                })
+              }
+            });
+          }
+
+          // Unassign driver and box so the order is removed from driver's "My Orders"
+          // and becomes available in "Available Orders" for any driver to claim again
+          updateData.driverId = null;
+          updateData.boxId = null;
+        } else if (data.status === 'CANCELLED' && currentOrder.status !== 'CANCELLED') {
+          // Cancelled: restore warehouse inventory
           for (const item of currentOrder.items) {
             await tx.product.update({
               where: { id: item.productId },
@@ -189,9 +242,6 @@ export async function PUT(request, { params }) {
           }
         }
       }
-
-      const updateData = {};
-      if (data.status) updateData.status = data.status;
 
       const updatedOrder = await tx.order.update({
         where: { id },
