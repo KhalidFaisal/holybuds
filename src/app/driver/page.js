@@ -264,7 +264,7 @@ export default function DriverPortal() {
           </div>
         )}
 
-        {activeTab === 'ORDERS' && <OrdersTab driver={driver} />}
+        {activeTab === 'ORDERS' && <OrdersTab driver={driver} refreshDriver={refreshDriver} />}
         
         {activeTab === 'INVENTORY' && <InventoryTab driver={driver} refreshDriver={refreshDriver} />}
 

@@ -78,7 +78,10 @@ export async function POST(request) {
 
     if (action === 'CLAIM') {
       // Check if order is still PENDING
-      const order = await prisma.order.findUnique({ where: { id: orderId } });
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: { items: true }
+      });
       if (!order || order.status !== 'PENDING') {
         return NextResponse.json({ error: 'Order is no longer available' }, { status: 400 });
       }
@@ -87,14 +90,36 @@ export async function POST(request) {
         return NextResponse.json({ error: 'You must have an assigned box to claim orders' }, { status: 400 });
       }
 
-      const updated = await prisma.order.update({
-        where: { id: orderId },
-        data: {
-          driverId: driver.id,
-          boxId: driver.currentBox.id,
-          status: 'PROCESSING'
+      const updated = await prisma.$transaction(async (tx) => {
+        // Deduct items from driver's box upon CLAIM
+        for (const item of order.items) {
+          const boxItem = await tx.boxItem.findUnique({
+            where: {
+              boxId_productId: {
+                boxId: driver.currentBox.id,
+                productId: item.productId
+              }
+            }
+          });
+
+          if (boxItem) {
+            await tx.boxItem.update({
+              where: { id: boxItem.id },
+              data: { expectedQuantity: { decrement: Number(item.quantity) } }
+            });
+          }
         }
+
+        return await tx.order.update({
+          where: { id: orderId },
+          data: {
+            driverId: driver.id,
+            boxId: driver.currentBox.id,
+            status: 'PROCESSING'
+          }
+        });
       });
+
       return NextResponse.json({ success: true, order: updated });
     }
 
@@ -126,6 +151,36 @@ export async function POST(request) {
         if (updatedItems && Array.isArray(updatedItems)) {
           finalTotal = newTotal !== undefined ? Number(newTotal) : order.total;
           
+          // Calculate delta for box inventory adjustments
+          // Because items were already deducted on CLAIM:
+          // Any increase in item quantity needs to be decremented from the box.
+          // Any decrease/removal of item quantity needs to be incremented back into the box.
+          const itemDeltas = {};
+          for (const orig of order.items) {
+            itemDeltas[orig.productId] = (itemDeltas[orig.productId] || 0) - orig.quantity;
+          }
+          for (const updated of updatedItems) {
+            itemDeltas[updated.productId] = (itemDeltas[updated.productId] || 0) + Number(updated.quantity);
+          }
+
+          for (const [productId, delta] of Object.entries(itemDeltas)) {
+            if (delta === 0) continue;
+            const boxItem = await tx.boxItem.findUnique({
+              where: {
+                boxId_productId: {
+                  boxId: order.boxId,
+                  productId
+                }
+              }
+            });
+            if (boxItem) {
+              await tx.boxItem.update({
+                where: { id: boxItem.id },
+                data: { expectedQuantity: { decrement: delta } }
+              });
+            }
+          }
+
           await tx.order.update({
             where: { id: orderId },
             data: {
@@ -159,24 +214,8 @@ export async function POST(request) {
           });
         }
 
-        // 2. Deduct items from Box
-        for (const item of finalItems) {
-          const boxItem = await tx.boxItem.findUnique({
-            where: {
-              boxId_productId: {
-                boxId: order.boxId,
-                productId: item.productId
-              }
-            }
-          });
-
-          if (boxItem) {
-            await tx.boxItem.update({
-              where: { id: boxItem.id },
-              data: { expectedQuantity: { decrement: Number(item.quantity) } }
-            });
-          }
-        }
+        // 2. Note: Box items were already deducted when CLAIMED.
+        // We do NOT deduct them again upon delivery.
 
         // 3. Update order status and payment fields
         await tx.order.update({

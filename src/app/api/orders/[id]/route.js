@@ -159,6 +159,26 @@ export async function PUT(request, { params }) {
               data: { stock: { increment: item.quantity } },
             });
           }
+
+          // If claimed into a box and in PROCESSING/READY, restore box inventory as well
+          if (currentOrder.boxId && ['PROCESSING', 'READY'].includes(currentOrder.status)) {
+            for (const item of currentOrder.items) {
+              const boxItem = await tx.boxItem.findUnique({
+                where: {
+                  boxId_productId: {
+                    boxId: currentOrder.boxId,
+                    productId: item.productId
+                  }
+                }
+              });
+              if (boxItem) {
+                await tx.boxItem.update({
+                  where: { id: boxItem.id },
+                  data: { expectedQuantity: { increment: Number(item.quantity) } }
+                });
+              }
+            }
+          }
         } else if (data.status !== 'CANCELLED' && currentOrder.status === 'CANCELLED') {
           // Un-cancelled: reserve inventory again
           for (const item of currentOrder.items) {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import DeliveryModal from './DeliveryModal';
 
-export default function OrdersTab({ driver }) {
+export default function OrdersTab({ driver, refreshDriver }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('AVAILABLE'); // AVAILABLE or MY_ORDERS
@@ -50,6 +50,9 @@ export default function OrdersTab({ driver }) {
         setLoading(true);
         setDeliveringOrder(null);
         setRefreshKey(prev => prev + 1);
+        if (typeof refreshDriver === 'function') {
+          refreshDriver();
+        }
       } else {
         alert(data.error);
       }
