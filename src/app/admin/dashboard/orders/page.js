@@ -26,6 +26,7 @@ export default function AdminOrdersPage() {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [copiedOrderId, setCopiedOrderId] = useState(null);
   const [selectedOrders, setSelectedOrders] = useState([]);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -142,30 +143,39 @@ export default function AdminOrdersPage() {
   };
 
   const updateSelectedOrdersStatus = async (newStatus) => {
-    if (selectedOrders.length === 0) return;
+    if (selectedOrders.length === 0 || isBulkUpdating) return;
     if (!window.confirm(`Are you sure you want to mark ${selectedOrders.length} orders as ${newStatus}?`)) return;
     
-    // Process sequentially to not overload DB/API and ensure webhooks trigger correctly
-    for (const id of selectedOrders) {
-      try {
-        const res = await fetch(`/api/orders/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ status: newStatus }),
-        });
+    setIsBulkUpdating(true);
+    try {
+      const res = await fetch('/api/orders/bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          orderIds: selectedOrders,
+          status: newStatus,
+        }),
+      });
 
-        if (res.ok) {
-          const updated = await res.json();
-          setOrders((prev) => prev.map((o) => (o.id === id ? updated : o)));
-        }
-      } catch (e) {
-        console.error(`Error updating order ${id}`, e);
+      if (res.ok) {
+        const data = await res.json();
+        const updatedList = data.updatedOrders || [];
+        const updatedMap = new Map(updatedList.map((o) => [o.id, o]));
+        setOrders((prev) => prev.map((o) => updatedMap.get(o.id) || o));
+        setSelectedOrders([]);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || 'Failed to update orders in bulk');
       }
+    } catch (e) {
+      console.error('Error updating bulk orders status:', e);
+      alert('Network error while updating orders');
+    } finally {
+      setIsBulkUpdating(false);
     }
-    setSelectedOrders([]);
   };
 
   const copyOrderDetails = async (order) => {
@@ -367,15 +377,16 @@ export default function AdminOrdersPage() {
           {selectedOrders.length > 0 && (
             <>
               <select
+                disabled={isBulkUpdating}
                 onChange={(e) => {
                   if (e.target.value) {
                     updateSelectedOrdersStatus(e.target.value);
                     e.target.value = ''; // reset selection
                   }
                 }}
-                className="px-4 py-2 bg-pc-card border border-pc-border rounded-xl font-bold text-white transition-colors text-sm focus:outline-none cursor-pointer"
+                className={`px-4 py-2 bg-pc-card border border-pc-border rounded-xl font-bold text-white transition-colors text-sm focus:outline-none ${isBulkUpdating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                <option value="">Update Status...</option>
+                <option value="">{isBulkUpdating ? 'Updating...' : 'Update Status...'}</option>
                 {STATUSES.filter(s => s !== 'ALL').map(status => (
                   <option key={status} value={status}>
                     Mark as {status.charAt(0) + status.slice(1).toLowerCase()}
@@ -383,14 +394,16 @@ export default function AdminOrdersPage() {
                 ))}
               </select>
               <button 
+                disabled={isBulkUpdating}
                 onClick={deleteSelectedOrders}
-                className="px-4 py-2 bg-red-500/20 text-red-500 border border-red-500/50 rounded-xl font-bold hover:bg-red-500 hover:text-white transition-colors text-sm"
+                className={`px-4 py-2 bg-red-500/20 text-red-500 border border-red-500/50 rounded-xl font-bold transition-colors text-sm ${isBulkUpdating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-500 hover:text-white'}`}
               >
                 Delete Selected ({selectedOrders.length})
               </button>
               <button 
+                disabled={isBulkUpdating}
                 onClick={exportSelectedOrders}
-                className="px-4 py-2 bg-pc-green text-black rounded-xl font-bold hover:bg-pc-green/90 transition-colors text-sm"
+                className={`px-4 py-2 bg-pc-green text-black rounded-xl font-bold transition-colors text-sm ${isBulkUpdating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-pc-green/90'}`}
               >
                 Export Selected ({selectedOrders.length})
               </button>

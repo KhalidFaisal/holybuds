@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
+import { syncCompletedOrdersToGoogleSheets } from '@/lib/googleSheets';
 
 export async function GET(request, { params }) {
   try {
@@ -31,6 +32,7 @@ export async function PUT(request, { params }) {
 
     const { id } = await params;
     const data = await request.json();
+    let shouldSyncGoogleSheet = false;
 
     const order = await prisma.$transaction(async (tx) => {
       const currentOrder = await tx.order.findUnique({
@@ -251,10 +253,10 @@ export async function PUT(request, { params }) {
         },
       });
 
-      // TRIGGER GOOGLE SHEETS WEBHOOK ON COMPLETION
+      // Handle referral points on completion
       if (data.status === 'COMPLETED' && currentOrder.status !== 'COMPLETED') {
-        
-        // Handle referral points if applicable
+        shouldSyncGoogleSheet = true;
+
         if (currentOrder.customer && currentOrder.customer.referredByCode && !currentOrder.customer.referralPaidOut) {
           const referrer = await tx.customer.findUnique({
             where: { referralCode: currentOrder.customer.referredByCode }
@@ -271,70 +273,15 @@ export async function PUT(request, { params }) {
             });
           }
         }
-
-        const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
-        if (webhookUrl) {
-          try {
-            const itemsSubtotal = updatedOrder.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const rawDeliveryFee = updatedOrder.total + updatedOrder.discountAmount - itemsSubtotal;
-            const deliveryFee = rawDeliveryFee > 0 ? Math.round(rawDeliveryFee * 100) / 100 : 0;
-            // Reconstruct discount per item
-            let discount = null;
-            if (updatedOrder.discountName) {
-              discount = await tx.discount.findFirst({ where: { name: updatedOrder.discountName } });
-            }
-            
-            let qualifyingTotal = 0;
-            let targetIds = [];
-            if (discount && discount.targetType === 'SPECIFIC_PRODUCTS' && discount.targetProductIds) {
-              try { targetIds = JSON.parse(discount.targetProductIds); } catch(e){}
-            }
-
-            const itemEligibility = updatedOrder.items.map(item => {
-              let eligible = false;
-              if (discount) {
-                if (discount.targetType === 'ENTIRE_ORDER') eligible = true;
-                else if (discount.targetType === 'CATEGORY' && item.product.category === discount.targetCategory) eligible = true;
-                else if (discount.targetType === 'SPECIFIC_PRODUCTS' && targetIds.includes(item.productId)) eligible = true;
-              }
-              const lineTotal = item.price * item.quantity;
-              if (eligible) qualifyingTotal += lineTotal;
-              return { ...item, eligible, lineTotal };
-            });
-
-            const rows = itemEligibility.map(item => {
-              let itemDiscount = 0;
-              if (item.eligible && qualifyingTotal > 0 && updatedOrder.discountAmount > 0) {
-                const proportion = item.lineTotal / qualifyingTotal;
-                itemDiscount = proportion * updatedOrder.discountAmount;
-              }
-              const finalLineTotal = item.lineTotal - itemDiscount;
-              const finalUnitPrice = finalLineTotal / item.quantity;
-
-              const rowData = Array(11).fill(""); // A through K (0 to 10)
-              rowData[2] = item.product.name; // C column
-              rowData[3] = item.quantity; // D column
-              rowData[4] = Math.round(finalLineTotal * 100) / 100; // E column (discounted line total)
-              rowData[6] = updatedOrder.customerName; // G column
-              rowData[10] = deliveryFee > 0 ? deliveryFee : ""; // K column
-              return rowData;
-            });
-
-            // Await the webhook to prevent race conditions in Google Sheets during bulk updates
-            await fetch(webhookUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(rows)
-            }).catch(err => console.error("Webhook error:", err));
-
-          } catch (webhookErr) {
-            console.error('Failed to construct webhook payload:', webhookErr);
-          }
-        }
       }
 
       return updatedOrder;
     });
+
+    // OUTSIDE DB TRANSACTION: Sync to Google Sheets
+    if (shouldSyncGoogleSheet && order) {
+      await syncCompletedOrdersToGoogleSheets([order]);
+    }
 
     return NextResponse.json(order);
   } catch (error) {
