@@ -15,12 +15,22 @@ export async function GET() {
         customer: {
           include: {
             orders: {
-              take: 10,
+              take: 25,
               orderBy: { createdAt: 'desc' },
               include: {
                 items: {
                   include: { product: true }
                 }
+              }
+            },
+            referralsMade: {
+              orderBy: { createdAt: 'desc' },
+              take: 10,
+              select: {
+                id: true,
+                rewardCredit: true,
+                rewardPoints: true,
+                createdAt: true,
               }
             }
           }
@@ -37,16 +47,33 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      user: { id: user.id, name: user.name, email: user.email },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+      },
       customer: user.customer ? {
         id: user.customer.id,
         phone: user.customer.phone,
+        phoneVerified: user.customer.phoneVerified,
         name: user.customer.name,
+        address: user.customer.address,
         points: user.customer.points,
+        storeCredit: user.customer.storeCredit,
+        totalOrders: user.customer.totalOrders,
         referralCode: user.customer.referralCode,
+        createdAt: user.customer.createdAt,
+        referralsMade: user.customer.referralsMade || [],
       } : null,
       orders: user.customer?.orders || [],
-      settings: settings ? { pointsPerDollar: settings.pointsPerDollar } : null,
+      settings: settings ? {
+        pointsPerDollar: settings.pointsPerDollar,
+        customerReferralDiscount: settings.customerReferralDiscount,
+        promoCustomerReferralCredit: settings.promoCustomerReferralCredit,
+        promoCustomerReferralDiscount: settings.promoCustomerReferralDiscount,
+        referralPromoEndDate: settings.referralPromoEndDate,
+      } : null,
     });
   } catch (error) {
     console.error('Me endpoint error:', error);

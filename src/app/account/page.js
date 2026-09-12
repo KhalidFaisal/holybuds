@@ -1,119 +1,19 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, Suspense, useTransition } from 'react';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 import { CartProvider, useCart } from '@/components/CartProvider';
-import ProductCard from '@/components/ProductCard';
 import { getFavoriteProducts } from './actions';
-import { LOYALTY_REWARDS } from '@/lib/loyalty';
-import { useSession, signOut } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
 
-function ProfileTab({ customerProfile, setCustomerProfile }) {
-  const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({ name: '', phone: '', address: '' });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (customerProfile) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFormData({
-        name: customerProfile.name || '',
-        phone: customerProfile.phone || '',
-        address: customerProfile.address || ''
-      });
-    }
-  }, [customerProfile]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    setError('');
-    
-    try {
-      const res = await fetch('/api/account/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      const data = await res.json();
-      
-      if (res.ok) {
-        setCustomerProfile(data.customer);
-        setEditing(false);
-      } else {
-        setError(data.error || 'Failed to update profile');
-      }
-    } catch (err) {
-      setError('An error occurred');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (!customerProfile) return null;
-
-  return (
-    <div className="glass-card p-8 w-full max-w-2xl">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-white">Profile Information</h2>
-        {!editing && (
-          <button onClick={() => setEditing(true)} className="text-pc-green hover:text-white transition-colors">
-            Edit
-          </button>
-        )}
-      </div>
-
-      {error && <div className="text-red-400 text-sm mb-4 bg-red-400/10 p-3 rounded">{error}</div>}
-
-      {editing ? (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-pc-muted mb-1">Name</label>
-            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-pc-black border border-pc-border rounded-lg px-4 py-2 text-white focus:border-pc-green focus:outline-none" />
-          </div>
-          <div>
-            <label className="block text-sm text-pc-muted mb-1">Phone</label>
-            <input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-pc-black border border-pc-border rounded-lg px-4 py-2 text-white focus:border-pc-green focus:outline-none" />
-          </div>
-          <div>
-            <label className="block text-sm text-pc-muted mb-1">Address</label>
-            <textarea value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-pc-black border border-pc-border rounded-lg px-4 py-2 text-white focus:border-pc-green focus:outline-none h-24"></textarea>
-          </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={() => setEditing(false)} className="px-4 py-2 text-pc-muted hover:text-white transition-colors">Cancel</button>
-            <button type="submit" disabled={saving} className="btn-primary px-6 py-2">{saving ? 'Saving...' : 'Save Changes'}</button>
-          </div>
-        </form>
-      ) : (
-        <div className="space-y-6">
-          <div>
-            <p className="text-sm text-pc-muted">Name</p>
-            <p className="text-lg text-white font-medium">{customerProfile.name || 'Not set'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-pc-muted flex justify-between items-center">
-              Phone
-              {customerProfile.phone && (
-                <span className={`text-xs px-2 py-1 rounded-full ${customerProfile.phoneVerified ? 'bg-pc-green/20 text-pc-green' : 'bg-yellow-500/20 text-yellow-500'}`}>
-                  {customerProfile.phoneVerified ? 'Verified' : 'Unverified'}
-                </span>
-              )}
-            </p>
-            <p className="text-lg text-white font-medium">{customerProfile.phone || 'Not set'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-pc-muted">Address</p>
-            <p className="text-lg text-white font-medium">{customerProfile.address || 'Not set'}</p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+import AccountHero from './components/AccountHero';
+import ActiveOrderTracker from './components/ActiveOrderTracker';
+import OrdersTab from './components/OrdersTab';
+import RewardsTab from './components/RewardsTab';
+import ProfileTab from './components/ProfileTab';
+import FavoritesTab from './components/FavoritesTab';
 
 function AccountContent() {
   const { data: session, status } = useSession();
@@ -121,19 +21,29 @@ function AccountContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
 
-  const [activeTab, setActiveTab] = useState(tabParam || 'profile');
+  const [activeTab, setActiveTab] = useState(tabParam || 'orders');
+  const [, startTransition] = useTransition();
+
+  const [customerProfile, setCustomerProfile] = useState(null);
   const [recentOrders, setRecentOrders] = useState([]);
+  const [siteSettings, setSiteSettings] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [loadingFavs, setLoadingFavs] = useState(false);
-  
-  const [customerProfile, setCustomerProfile] = useState(null);
-  const [pointsPerDollar, setPointsPerDollar] = useState(1);
-  const [loadingLoyalty, setLoadingLoyalty] = useState(false);
+  const [loadingUserData, setLoadingUserData] = useState(true);
+
+  // Phone linking state
   const [phoneInput, setPhoneInput] = useState('');
-  const [copySuccess, setCopySuccess] = useState(false);
   const [linkingPhone, setLinkingPhone] = useState(false);
 
-  const { items: cartItems, addItem, clearCart, setIsOpen } = useCart();
+  // Toast feedback
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const { addItem, setIsOpen } = useCart();
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -148,417 +58,423 @@ function AccountContent() {
     }
   }, [tabParam]);
 
-  useEffect(() => {
-    if (status === 'authenticated') {
-      const fetchUserData = async () => {
-        setLoadingLoyalty(true);
-        try {
-          const res = await fetch('/api/account/me');
-          if (res.ok) {
-            const data = await res.json();
-            if (data.customer) {
-              setCustomerProfile(data.customer);
-              setRecentOrders(data.orders || []);
-            }
-            if (data.settings?.pointsPerDollar) {
-              setPointsPerDollar(data.settings.pointsPerDollar);
-            }
-          }
-        } catch (e) {
-        } finally {
-          setLoadingLoyalty(false);
-        }
-      };
-      fetchUserData();
-    }
-  }, [status]);
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    startTransition(() => {
+      const params = new URLSearchParams(window.location.search);
+      params.set('tab', tab);
+      window.history.replaceState(null, '', `?${params.toString()}`);
+    });
+  };
 
-  const loadFavs = async () => {
-    setLoadingFavs(true);
+  const refreshUserData = async () => {
     try {
-      const favIds = JSON.parse(localStorage.getItem('holybuds_favorites') || '[]');
-      if (favIds.length > 0) {
-        const products = await getFavoriteProducts(favIds);
-        setFavorites(products);
-      } else {
-        setFavorites([]);
+      const res = await fetch('/api/account/me');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.customer) {
+          setCustomerProfile(data.customer);
+          setRecentOrders(data.orders || []);
+        }
+        if (data.settings) {
+          setSiteSettings(data.settings);
+        }
       }
     } catch (e) {
-    } finally {
-      setLoadingFavs(false);
+      console.error('Failed to refresh user account:', e);
     }
   };
 
   useEffect(() => {
-    if (activeTab === 'favorites') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      loadFavs();
+    if (status !== 'authenticated') return;
+    let ignore = false;
+
+    async function loadUserData() {
+      try {
+        const res = await fetch('/api/account/me');
+        if (res.ok && !ignore) {
+          const data = await res.json();
+          if (data.customer) {
+            setCustomerProfile(data.customer);
+            setRecentOrders(data.orders || []);
+          }
+          if (data.settings) {
+            setSiteSettings(data.settings);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load user account:', e);
+      } finally {
+        if (!ignore) {
+          setLoadingUserData(false);
+        }
+      }
     }
+
+    loadUserData();
+
+    return () => {
+      ignore = true;
+    };
+  }, [status]);
+
+  useEffect(() => {
+    if (activeTab !== 'favorites') return;
+    let ignore = false;
+
+    async function loadFavs() {
+      try {
+        const favIds = JSON.parse(localStorage.getItem('holybuds_favorites') || '[]');
+        if (favIds.length > 0) {
+          const products = await getFavoriteProducts(favIds);
+          if (!ignore) setFavorites(products || []);
+        } else {
+          if (!ignore) setFavorites([]);
+        }
+      } catch {
+        if (!ignore) setFavorites([]);
+      } finally {
+        if (!ignore) setLoadingFavs(false);
+      }
+    }
+
+    loadFavs();
+
+    return () => {
+      ignore = true;
+    };
   }, [activeTab]);
+
+  const handleClearFavorites = () => {
+    if (window.confirm('Clear all saved favorites?')) {
+      localStorage.removeItem('holybuds_favorites');
+      setFavorites([]);
+      showToast('Favorites cleared');
+    }
+  };
 
   const handlePhoneSubmit = async (e) => {
     e.preventDefault();
     if (!phoneInput) return;
     setLinkingPhone(true);
-    
+
     try {
       const res = await fetch('/api/account/link-phone', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phoneInput })
+        body: JSON.stringify({ phone: phoneInput }),
       });
-      
+
       if (res.ok) {
-        // reload the me endpoint to get the customer details
-        const meRes = await fetch('/api/account/me');
-        if (meRes.ok) {
-          const data = await meRes.json();
-          if (data.customer) {
-            setCustomerProfile(data.customer);
-            setRecentOrders(data.orders || []);
-          }
-        }
+        await refreshUserData();
+        showToast('Phone number linked successfully!');
       } else {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({}));
         alert(err.error || 'Failed to link phone');
       }
-    } catch (err) {
-      alert('Network error');
+    } catch {
+      alert('Network error while linking phone');
     } finally {
       setLinkingPhone(false);
     }
   };
 
-  const handleCopyCode = async (code) => {
-    if (navigator.clipboard && window.isSecureContext) {
-      try {
-        await navigator.clipboard.writeText(code);
-        setCopySuccess(true);
-        setTimeout(() => setCopySuccess(false), 2000);
-      } catch (err) {}
+  const handleReorderOrder = (order) => {
+    let addedCount = 0;
+    (order.items || []).forEach(item => {
+      if (item.product && item.product.stock > 0) {
+        addItem(item.product);
+        addedCount++;
+      }
+    });
+
+    if (addedCount > 0) {
+      setIsOpen(true);
+      showToast(`Added ${addedCount} available item${addedCount !== 1 ? 's' : ''} to your cart!`);
+    } else {
+      showToast('Items from this order are currently out of stock.');
     }
   };
 
-  const reorderEntireOrder = (order) => {
-    order.items?.forEach(item => {
-      if (item.product && item.product.stock > 0) {
-        addItem(item.product);
-      }
-    });
-    setIsOpen(true);
-  };
-
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
-    });
-  };
-
-  if (status === 'loading') {
+  if (status === 'loading' || (status === 'authenticated' && loadingUserData && !customerProfile)) {
     return (
-      <div className="min-h-screen pt-24 pb-16 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-pc-green border-t-transparent rounded-full animate-spin"></div>
-      </div>
+      <>
+        <Navbar />
+        <main className="min-h-screen pt-28 pb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 animate-pulse">
+            <div className="h-44 bg-pc-card/50 rounded-3xl border border-pc-border" />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="h-60 bg-pc-card/40 rounded-2xl border border-pc-border hidden md:block" />
+              <div className="md:col-span-3 h-96 bg-pc-card/40 rounded-2xl border border-pc-border" />
+            </div>
+          </div>
+        </main>
+      </>
     );
   }
 
   if (status === 'unauthenticated') {
-    return null; // Will redirect
+    return null;
   }
 
-  // If user hasn't linked a phone number yet, force them to do it.
-  if (!customerProfile && !loadingLoyalty) {
+  // Force phone link if user is not linked to a Customer record yet
+  if (!customerProfile && !loadingUserData) {
     return (
-      <main className="min-h-screen pt-24 pb-16 px-4">
-        <div className="max-w-md mx-auto glass-card p-8 text-center animate-fade-in-up mt-12">
-          <div className="w-16 h-16 bg-pc-green/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
+      <>
+        <Navbar />
+        <main className="min-h-screen pt-28 pb-16 px-4 flex items-center justify-center">
+          <div className="max-w-md w-full glass-card p-8 text-center animate-fade-in-up border-pc-green/30 shadow-2xl">
+            <div className="w-16 h-16 bg-pc-green/20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-pc-green border border-pc-green/30 text-3xl">
+              📱
+            </div>
+            <h1 className="text-2xl font-black text-white mb-2">Connect Your Phone</h1>
+            <p className="text-xs text-pc-muted mb-6 leading-relaxed">
+              Link your mobile phone number to unlock your past orders, delivery tracking, and loyalty reward points.
+            </p>
+
+            <form onSubmit={handlePhoneSubmit} className="space-y-4">
+              <input
+                type="tel"
+                required
+                placeholder="(555) 555-5555"
+                value={phoneInput}
+                onChange={e => setPhoneInput(e.target.value)}
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-3 text-white focus:border-pc-green focus:outline-none text-center text-lg font-mono tracking-wider"
+              />
+              <button
+                type="submit"
+                disabled={linkingPhone}
+                className="w-full btn-primary py-3 font-black text-sm shadow-md shadow-pc-green/20"
+              >
+                {linkingPhone ? 'Connecting...' : 'Link Phone Number'}
+              </button>
+              <button
+                type="button"
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className="w-full btn-secondary py-2.5 text-xs font-bold"
+              >
+                Sign Out
+              </button>
+            </form>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Link Your Phone</h1>
-          <p className="text-pc-muted mb-6">To access your past orders and loyalty points, please link your phone number to your account.</p>
-          
-          <form onSubmit={handlePhoneSubmit} className="space-y-4">
-            <input
-              type="tel"
-              required
-              placeholder="(555) 555-5555"
-              value={phoneInput}
-              onChange={e => setPhoneInput(e.target.value)}
-              className="w-full bg-pc-dark border border-pc-border rounded-xl px-4 py-3 text-white focus:border-pc-green focus:outline-none text-center text-lg"
-            />
-            <button
-              type="submit"
-              disabled={linkingPhone}
-              className="w-full btn-primary py-3 font-bold mb-4"
-            >
-              {linkingPhone ? 'Linking...' : 'Link Phone Number'}
-            </button>
-            <button
-              type="button"
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              className="w-full btn-secondary py-3 font-bold"
-            >
-              Sign Out
-            </button>
-          </form>
-        </div>
-      </main>
+        </main>
+      </>
     );
   }
+
+  const activeOrdersCount = recentOrders.filter(o => 
+    ['PENDING', 'PROCESSING', 'READY', 'DELIVERED'].includes(o.status)
+  ).length;
+
+  const pointsCount = customerProfile?.points || 0;
 
   return (
     <>
       <Navbar />
       <CartDrawer />
-      <main className="min-h-screen pt-24 pb-16">
+
+      {/* Floating Toast */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-pc-green text-pc-black font-black text-xs px-4 py-3 rounded-xl shadow-2xl animate-fade-in flex items-center gap-2">
+          <span>✓</span>
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      <main className="min-h-screen pt-24 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-            <h1 className="text-3xl md:text-5xl font-black text-white">My Account</h1>
+          
+          {/* Top Bar with Sign Out */}
+          <div className="flex justify-between items-center mb-6">
+            <span className="text-xs font-bold uppercase tracking-widest text-pc-green">
+              Customer Portal
+            </span>
             <button 
               onClick={() => signOut({ callbackUrl: '/login' })}
-              className="text-pc-muted hover:text-white transition-colors text-sm font-semibold flex items-center gap-2 bg-pc-dark/50 px-4 py-2 rounded-lg"
+              className="text-pc-muted hover:text-white transition-colors text-xs font-bold flex items-center gap-1.5 bg-pc-dark/60 hover:bg-pc-dark px-3 py-1.5 rounded-xl border border-pc-border"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
               </svg>
               Sign Out
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Sidebar */}
-            <div className="md:col-span-1 flex flex-col gap-6 items-start">
-              <button 
-                onClick={() => setActiveTab('profile')} 
-                className={`text-2xl font-black transition-colors ${activeTab === 'profile' ? 'text-pc-green' : 'text-pc-muted hover:text-pc-green/70'}`}
-              >
-                Profile
-              </button>
-              <button 
-                onClick={() => setActiveTab('orders')} 
-                className={`text-2xl font-black transition-colors ${activeTab === 'orders' ? 'text-pc-green' : 'text-pc-muted hover:text-pc-green/70'}`}
-              >
-                Orders
-              </button>
-              <button 
-                onClick={() => setActiveTab('favorites')} 
-                className={`text-2xl font-black transition-colors ${activeTab === 'favorites' ? 'text-pc-green' : 'text-pc-muted hover:text-pc-green/70'}`}
-              >
-                Favorites
-              </button>
-              <button 
-                onClick={() => setActiveTab('rewards')} 
-                className={`text-2xl font-black transition-colors text-left leading-tight ${activeTab === 'rewards' ? 'text-pc-green' : 'text-pc-muted hover:text-pc-green/70'}`}
-              >
-                Rewards & Referrals
-              </button>
+          {/* Hero Stats Card */}
+          <AccountHero 
+            user={session?.user} 
+            customer={customerProfile} 
+            orders={recentOrders}
+            onSelectTab={handleTabChange}
+          />
+
+          {/* Live Order Tracker Banner (If active orders exist) */}
+          <ActiveOrderTracker 
+            orders={recentOrders} 
+            onSelectOrder={() => handleTabChange('orders')}
+          />
+
+          {/* Main Content Layout with Responsive Navigation */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+            
+            {/* Navigation Tabs */}
+            <div className="lg:col-span-1 sticky top-24 z-20">
+              {/* Mobile Horizontal Scrollable Pills */}
+              <div className="flex lg:hidden overflow-x-auto no-scrollbar gap-2 pb-2 mb-4">
+                <button
+                  onClick={() => handleTabChange('orders')}
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-black whitespace-nowrap flex items-center gap-2 transition-all shrink-0 ${
+                    activeTab === 'orders'
+                      ? 'bg-pc-green text-pc-black shadow-lg shadow-pc-green/20'
+                      : 'bg-pc-card text-pc-muted hover:text-white border border-pc-border'
+                  }`}
+                >
+                  <span>📦 Orders</span>
+                  {activeOrdersCount > 0 && (
+                    <span className="w-2 h-2 rounded-full bg-pc-green animate-ping" />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleTabChange('rewards')}
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-black whitespace-nowrap flex items-center gap-2 transition-all shrink-0 ${
+                    activeTab === 'rewards'
+                      ? 'bg-pc-green text-pc-black shadow-lg shadow-pc-green/20'
+                      : 'bg-pc-card text-pc-muted hover:text-white border border-pc-border'
+                  }`}
+                >
+                  <span>✨ Rewards & Referrals</span>
+                  {pointsCount > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.2 bg-pc-black/20 rounded-md">
+                      {pointsCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleTabChange('favorites')}
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-black whitespace-nowrap flex items-center gap-2 transition-all shrink-0 ${
+                    activeTab === 'favorites'
+                      ? 'bg-pc-green text-pc-black shadow-lg shadow-pc-green/20'
+                      : 'bg-pc-card text-pc-muted hover:text-white border border-pc-border'
+                  }`}
+                >
+                  <span>❤️ Favorites</span>
+                </button>
+
+                <button
+                  onClick={() => handleTabChange('profile')}
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-black whitespace-nowrap flex items-center gap-2 transition-all shrink-0 ${
+                    activeTab === 'profile'
+                      ? 'bg-pc-green text-pc-black shadow-lg shadow-pc-green/20'
+                      : 'bg-pc-card text-pc-muted hover:text-white border border-pc-border'
+                  }`}
+                >
+                  <span>👤 Profile</span>
+                </button>
+              </div>
+
+              {/* Desktop Vertical Tab Menu */}
+              <div className="hidden lg:flex flex-col gap-2 glass-card p-3 rounded-2xl border-pc-border/80">
+                <button
+                  onClick={() => handleTabChange('orders')}
+                  className={`w-full flex items-center justify-between p-3.5 rounded-xl font-bold text-sm transition-all ${
+                    activeTab === 'orders'
+                      ? 'bg-pc-green/15 text-pc-green border border-pc-green/40 shadow-sm'
+                      : 'text-pc-muted hover:text-white hover:bg-pc-dark/60'
+                  }`}
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="text-lg">📦</span>
+                    <span>Order History</span>
+                  </span>
+                  {activeOrdersCount > 0 && (
+                    <span className="text-xs font-black px-2 py-0.5 rounded-full bg-pc-green text-pc-black shadow-sm">
+                      {activeOrdersCount} live
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleTabChange('rewards')}
+                  className={`w-full flex items-center justify-between p-3.5 rounded-xl font-bold text-sm transition-all ${
+                    activeTab === 'rewards'
+                      ? 'bg-pc-green/15 text-pc-green border border-pc-green/40 shadow-sm'
+                      : 'text-pc-muted hover:text-white hover:bg-pc-dark/60'
+                  }`}
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="text-lg">✨</span>
+                    <span>Rewards & Referrals</span>
+                  </span>
+                  <span className="text-xs font-bold text-pc-muted">
+                    {pointsCount.toLocaleString()} pts
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => handleTabChange('favorites')}
+                  className={`w-full flex items-center justify-between p-3.5 rounded-xl font-bold text-sm transition-all ${
+                    activeTab === 'favorites'
+                      ? 'bg-pc-green/15 text-pc-green border border-pc-green/40 shadow-sm'
+                      : 'text-pc-muted hover:text-white hover:bg-pc-dark/60'
+                  }`}
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="text-lg">❤️</span>
+                    <span>Saved Favorites</span>
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => handleTabChange('profile')}
+                  className={`w-full flex items-center justify-between p-3.5 rounded-xl font-bold text-sm transition-all ${
+                    activeTab === 'profile'
+                      ? 'bg-pc-green/15 text-pc-green border border-pc-green/40 shadow-sm'
+                      : 'text-pc-muted hover:text-white hover:bg-pc-dark/60'
+                  }`}
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="text-lg">👤</span>
+                    <span>Delivery & Profile</span>
+                  </span>
+                </button>
+              </div>
             </div>
 
-            {/* Content */}
-            <div className="md:col-span-3">
+            {/* Tab Contents Area */}
+            <div className="lg:col-span-3 min-w-0">
+              {activeTab === 'orders' && (
+                <OrdersTab 
+                  orders={recentOrders} 
+                  onReorder={handleReorderOrder} 
+                />
+              )}
+
+              {activeTab === 'rewards' && (
+                <RewardsTab 
+                  customer={customerProfile} 
+                  settings={siteSettings} 
+                />
+              )}
+
+              {activeTab === 'favorites' && (
+                <FavoritesTab 
+                  favorites={favorites} 
+                  loading={loadingFavs}
+                  onClearFavorites={handleClearFavorites} 
+                />
+              )}
+
               {activeTab === 'profile' && (
-                <ProfileTab customerProfile={customerProfile} setCustomerProfile={setCustomerProfile} />
-              )}
-
-          {activeTab === 'orders' && (
-            <div>
-              {recentOrders.length === 0 ? (
-                <div className="glass-card p-12 text-center">
-                  <p className="text-pc-muted mb-4">You have no recent orders saved on this device.</p>
-                  <Link href="/menu" className="btn-primary inline-block">Browse Menu</Link>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {recentOrders.map((order, idx) => (
-                    <div key={idx} className="glass-card p-6">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-pc-border pb-4">
-                        <div>
-                          <p className="text-pc-green font-bold text-lg mb-1">Order #{order.orderNumber}</p>
-                          <p className="text-sm text-pc-muted">{formatDate(order.createdAt)} • {order.deliveryMethod === 'DELIVERY' ? 'Delivery' : 'Pickup'}</p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="text-2xl font-black text-white">${order.total.toFixed(2)}</span>
-                          <button 
-                            onClick={() => reorderEntireOrder(order)}
-                            className="btn-primary py-2 px-4 text-sm whitespace-nowrap flex items-center gap-2"
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
-                            Buy Again
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {order.items?.map((item, i) => (
-                          <div key={i} className="flex items-center gap-4 bg-pc-dark/50 p-4 rounded-xl">
-                            <div className="w-16 h-16 bg-pc-smoke rounded-lg overflow-hidden shrink-0">
-                              {item.product?.image && (
-                                <>
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
-                                </>
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-bold text-white mb-1">{item.product?.name || 'Unknown Item'}</p>
-                              <p className="text-xs text-pc-muted">Qty: {item.quantity} • ${item.price.toFixed(2)} each</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <ProfileTab 
+                  user={session?.user} 
+                  customerProfile={customerProfile} 
+                  setCustomerProfile={setCustomerProfile} 
+                />
               )}
             </div>
-          )}
 
-          {activeTab === 'favorites' && (
-            <div>
-              {loadingFavs ? (
-                <div className="text-center py-12 text-pc-muted">Loading favorites...</div>
-              ) : favorites.length === 0 ? (
-                <div className="glass-card p-12 text-center">
-                  <p className="text-pc-muted mb-4">You haven&apos;t saved any favorites yet.</p>
-                  <p className="text-sm text-pc-muted/60 mb-6">Click the heart icon on any product to save it here for later.</p>
-                  <Link href="/menu" className="btn-primary inline-block">Browse Menu</Link>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                  {favorites.map(product => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'rewards' && (
-            <div>
-              {loadingLoyalty ? (
-                <div className="text-center py-12 text-pc-muted">Loading your rewards...</div>
-              ) : (
-                <div className="space-y-8">
-                  {/* Point Balance */}
-                  <div className="glass-card p-8 text-center bg-gradient-to-br from-pc-card to-pc-green/10 border-pc-green/30">
-                    <h2 className="text-xl font-bold text-white mb-2">Available Points</h2>
-                    <div className="text-5xl md:text-6xl font-black text-pc-green mb-4">
-                      {customerProfile.points.toLocaleString()}
-                    </div>
-                    <p className="text-pc-muted font-medium">Earn {pointsPerDollar} point{pointsPerDollar !== 1 ? 's' : ''} for every $1 spent!</p>
-                  </div>
-
-                  {/* Referral Section */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="glass-card p-6">
-                      <div className="flex items-start gap-4 mb-4">
-                        <div className="w-12 h-12 rounded-full bg-pc-gold/20 flex items-center justify-center shrink-0">
-                          <svg className="w-6 h-6 text-pc-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-white mb-1">Refer a Friend</h3>
-                          <p className="text-sm text-pc-muted">Give this code to a friend. When they place their first order of $100 or more, they get $10 off and you get $10 Store Credit!</p>
-                        </div>
-                      </div>
-                      
-                      {customerProfile.storeCredit > 0 && (
-                        <div className="mt-4 p-4 bg-pc-green/10 border border-pc-green/20 rounded-xl">
-                          <p className="text-xs font-semibold text-pc-muted uppercase tracking-wider mb-1">Your Store Credit</p>
-                          <p className="text-2xl font-bold text-pc-green">${customerProfile.storeCredit.toFixed(2)}</p>
-                          <p className="text-xs text-pc-muted mt-1">Available to use at checkout!</p>
-                        </div>
-                      )}
-                      
-                      <div className="mt-6">
-                        <label className="block text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">Your Unique Code</label>
-                        <div className="flex gap-2">
-                          <input 
-                            type="text" 
-                            readOnly 
-                            value={customerProfile.referralCode || ''} 
-                            className="form-input flex-1 font-mono text-lg tracking-wider text-center"
-                          />
-                          <button 
-                            onClick={handleCopyCode}
-                            className={`px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 ${copySuccess ? 'bg-pc-green text-pc-dark' : 'bg-pc-smoke text-white hover:bg-pc-smoke/80'}`}
-                          >
-                            {copySuccess ? (
-                              <>
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                                Copied!
-                              </>
-                            ) : (
-                              <>
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" /></svg>
-                                Copy
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="glass-card p-6 flex flex-col justify-center">
-                      <h3 className="text-lg font-bold text-white mb-4">Lifetime Stats</h3>
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center border-b border-pc-border pb-3">
-                          <span className="text-pc-muted">Total Orders</span>
-                          <span className="font-bold text-white text-lg">{customerProfile.totalOrders || 0}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-pc-muted">Member Since</span>
-                          <span className="font-bold text-white">Always 💚</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Rewards Grid */}
-                  <div>
-                    <h3 className="text-2xl font-black text-white mb-2">Unlockable Rewards</h3>
-                    <p className="text-pc-muted mb-6">Rewards can be selected and applied to your total during the Checkout process.</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {LOYALTY_REWARDS.map(reward => {
-                        const isUnlockable = customerProfile.points >= reward.points;
-                        return (
-                          <div 
-                            key={reward.id} 
-                            className={`p-5 rounded-xl border transition-all ${
-                              isUnlockable 
-                                ? 'bg-pc-green/10 border-pc-green/30 hover:border-pc-green/60' 
-                                : 'bg-pc-card/50 border-pc-border opacity-70'
-                            }`}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <span className={`text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wider ${
-                                isUnlockable ? 'bg-pc-green text-pc-dark' : 'bg-pc-smoke text-pc-muted'
-                              }`}>
-                                {reward.points} Pts
-                              </span>
-                              {isUnlockable && (
-                                <svg className="w-5 h-5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-                                </svg>
-                              )}
-                            </div>
-                            <h4 className={`font-bold text-lg mt-3 ${isUnlockable ? 'text-white' : 'text-pc-muted'}`}>
-                              {reward.label}
-                            </h4>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-            </div>
           </div>
 
         </div>
@@ -570,7 +486,11 @@ function AccountContent() {
 export default function AccountPage() {
   return (
     <CartProvider>
-      <Suspense fallback={<div className="min-h-screen pt-24 text-center text-white">Loading...</div>}>
+      <Suspense fallback={
+        <div className="min-h-screen pt-32 text-center text-pc-muted">
+          Loading your account...
+        </div>
+      }>
         <AccountContent />
       </Suspense>
     </CartProvider>
