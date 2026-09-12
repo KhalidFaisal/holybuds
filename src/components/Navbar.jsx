@@ -193,11 +193,12 @@ export default function Navbar() {
                   </svg>
                 </button>
                 {accountDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-pc-dark border border-pc-border rounded-xl shadow-2xl py-2 z-50 animate-scale-in">
-                    <Link href="/account?tab=profile" onClick={() => setAccountDropdownOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-pc-card transition-colors">Profile</Link>
-                    <Link href="/account?tab=orders" onClick={() => setAccountDropdownOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-pc-card transition-colors">Orders</Link>
-                    <Link href="/account?tab=favorites" onClick={() => setAccountDropdownOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-pc-card transition-colors">Favorites</Link>
-                    <Link href="/account?tab=rewards" onClick={() => setAccountDropdownOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-pc-card transition-colors">Rewards & Referrals</Link>
+                  <div className="absolute right-0 mt-2 w-52 bg-pc-dark border border-pc-border rounded-xl shadow-2xl py-2 z-50 animate-scale-in">
+                    <Link href="/account?tab=orders" onClick={() => setAccountDropdownOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-pc-card hover:text-pc-green transition-colors">Orders</Link>
+                    <Link href="/account?tab=rewards" onClick={() => setAccountDropdownOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-pc-card hover:text-pc-green transition-colors">Rewards & Referrals</Link>
+                    <Link href="/account?tab=favorites" onClick={() => setAccountDropdownOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-pc-card hover:text-pc-green transition-colors">Favorites</Link>
+                    <Link href="/account?tab=profile" onClick={() => setAccountDropdownOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-pc-card hover:text-pc-green transition-colors">Profile</Link>
+                    <Link href="/account?tab=settings" onClick={() => setAccountDropdownOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-pc-card hover:text-pc-green transition-colors">Settings</Link>
                     <div className="border-t border-pc-border my-1"></div>
                     <button 
                       onClick={() => { setAccountDropdownOpen(false); signOut({ callbackUrl: '/login' }); }} 
