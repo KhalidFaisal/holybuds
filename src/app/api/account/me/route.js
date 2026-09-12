@@ -12,6 +12,9 @@ export async function GET() {
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       include: {
+        accounts: {
+          select: { provider: true }
+        },
         customer: {
           include: {
             orders: {
@@ -59,6 +62,8 @@ export async function GET() {
         name: user.name,
         email: user.email,
         image: user.image,
+        hasPassword: Boolean(user.passwordHash),
+        authProviders: (user.accounts || []).map(a => a.provider),
       },
       customer: user.customer ? {
         id: user.customer.id,
