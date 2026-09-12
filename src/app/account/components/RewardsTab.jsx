@@ -70,12 +70,12 @@ export default function RewardsTab({ customer, settings }) {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs font-bold uppercase tracking-wider text-pc-green">Spendable Points</span>
-              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${currentTierInfo.badgeClass}`}>
-                <TierIcon type={currentTierInfo.type} className="w-3 h-3" />
-                <span>Tier {currentTierInfo.tier}: {currentTierInfo.name}</span>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black tracking-wide border shadow-sm ${currentTierInfo.badgeClass}`}>
+                <TierIcon type={currentTierInfo.type} className="w-3.5 h-3.5" />
+                <span>{currentTierInfo.name}</span>
               </span>
             </div>
-            <div className="text-4xl md:text-5xl font-black text-white mt-1">
+            <div className="text-4xl md:text-5xl font-black text-slate-900 mt-1">
               {points.toLocaleString()} <span className="text-xl text-pc-muted font-normal">pts</span>
             </div>
             <p className="text-xs text-pc-muted mt-1">
@@ -87,7 +87,7 @@ export default function RewardsTab({ customer, settings }) {
             {storeCredit > 0 && (
               <div className="bg-pc-green/15 border border-pc-green/30 rounded-2xl p-4 text-right">
                 <span className="text-xs font-semibold text-pc-muted uppercase tracking-wider">Available Store Credit</span>
-                <p className="text-2xl md:text-3xl font-black text-pc-green">${storeCredit.toFixed(2)}</p>
+                <p className="text-2xl md:text-3xl font-black text-emerald-800">${storeCredit.toFixed(2)}</p>
                 <p className="text-[11px] text-pc-muted mt-0.5">Automatically deducts at checkout!</p>
               </div>
             )}
@@ -98,10 +98,10 @@ export default function RewardsTab({ customer, settings }) {
         {currentTierInfo.nextTier ? (
           <div className="bg-pc-dark/70 rounded-2xl p-4 border border-pc-border/80">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-bold mb-2 gap-1">
-              <span className="text-white flex items-center gap-1.5">
+              <span className="text-slate-900 flex items-center gap-1.5">
                 <TierIcon type={currentTierInfo.nextTier.type} className="w-4 h-4 shrink-0" />
                 <span>Next Tier Goal:</span>
-                <span className="text-pc-green">Tier {currentTierInfo.nextTier.tier} - {currentTierInfo.nextTier.name}</span>
+                <span className="text-emerald-800 font-black">{currentTierInfo.nextTier.name}</span>
                 <span className="text-pc-muted font-normal">({currentTierInfo.nextTier.rewardLabel})</span>
               </span>
               <span className="text-pc-muted font-medium">
@@ -112,19 +112,19 @@ export default function RewardsTab({ customer, settings }) {
             </div>
             <div className="w-full bg-pc-smoke h-2.5 rounded-full overflow-hidden">
               <div 
-                className="bg-gradient-to-r from-pc-green/80 to-pc-green h-full rounded-full transition-all duration-500 shadow-sm"
+                className="bg-gradient-to-r from-emerald-600 to-emerald-500 h-full rounded-full transition-all duration-500 shadow-sm"
                 style={{ width: `${currentTierInfo.progressPct}%` }}
               />
             </div>
             <div className="flex justify-between items-center mt-2 text-[11px] text-pc-muted">
-              <span>Current Tier: <strong>{currentTierInfo.name}</strong></span>
+              <span>Current Status: <strong className="text-slate-900">{currentTierInfo.name}</strong></span>
               <span className="text-[10px] text-pc-muted/80">VIP Tier is permanent and never decreases when using points</span>
             </div>
           </div>
         ) : (
-          <div className="bg-pc-dark/70 rounded-2xl p-4 border border-purple-500/40 text-center text-xs font-bold text-purple-300 flex items-center justify-center gap-2">
-            <TierIcon type="diamond" className="w-5 h-5 text-purple-400 shrink-0" />
-            <span>You have unlocked Tier 8: Diamond VIP &mdash; our highest loyalty milestone!</span>
+          <div className="bg-pc-dark/70 rounded-2xl p-4 border border-purple-500/40 text-center text-xs font-bold text-purple-900 flex items-center justify-center gap-2">
+            <TierIcon type="diamond" className="w-5 h-5 text-purple-800 shrink-0" />
+            <span>You have unlocked Diamond VIP &mdash; our highest loyalty milestone!</span>
           </div>
         )}
       </div>
@@ -132,11 +132,8 @@ export default function RewardsTab({ customer, settings }) {
       {/* 8-Tier VIP Roadmap */}
       <div>
         <div className="mb-4">
-          <h3 className="text-xl font-black text-white flex items-center gap-2">
-            <span>VIP Loyalty Tiers & Milestones</span>
-            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pc-smoke text-pc-muted border border-pc-border">
-              8 Tiers
-            </span>
+          <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+            <span>VIP Loyalty Milestones</span>
           </h3>
           <p className="text-xs text-pc-muted mt-0.5">
             Advance your tier through points earned or orders completed. Tiers are permanently unlocked and will never decrease when points are spent!
@@ -153,53 +150,50 @@ export default function RewardsTab({ customer, settings }) {
                 key={t.id}
                 className={`p-4 rounded-2xl border transition-all relative ${
                   isCurrent
-                    ? 'bg-pc-card border-pc-green ring-1 ring-pc-green/40 shadow-lg shadow-pc-green/10'
+                    ? 'bg-pc-card border-emerald-600 ring-2 ring-emerald-500/30 shadow-lg shadow-emerald-500/10'
                     : isUnlocked
-                    ? 'bg-pc-card/70 border-pc-border/80'
-                    : 'bg-pc-dark/40 border-pc-border/40 opacity-60'
+                    ? 'bg-pc-card/90 border-slate-200'
+                    : 'bg-slate-50/60 border-slate-200/60 opacity-60'
                 }`}
               >
                 <div className="flex justify-between items-start mb-2.5">
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-xl bg-pc-dark border border-pc-border/60">
+                    <div className="p-1.5 rounded-xl bg-slate-100 border border-slate-200">
                       <TierIcon type={t.type} className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold text-pc-muted uppercase tracking-wider block">
-                        Tier {t.tier}
-                      </span>
-                      <h4 className="text-sm font-black text-white leading-tight">
+                      <h4 className="text-sm font-black text-slate-900 leading-tight">
                         {t.name}
                       </h4>
                     </div>
                   </div>
 
                   {isCurrent ? (
-                    <span className="text-[10px] font-bold bg-pc-green text-pc-black px-2 py-0.5 rounded-full shadow-sm">
+                    <span className="text-[10px] font-black bg-emerald-600 text-white px-2 py-0.5 rounded-full shadow-sm">
                       Current
                     </span>
                   ) : isUnlocked ? (
-                    <span className="text-[10px] font-bold text-pc-green bg-pc-green/10 border border-pc-green/30 px-1.5 py-0.5 rounded-md">
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md">
                       ✓ Unlocked
                     </span>
                   ) : (
-                    <span className="text-[10px] font-medium text-pc-muted bg-pc-smoke px-1.5 py-0.5 rounded-md">
+                    <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md">
                       Locked
                     </span>
                   )}
                 </div>
 
-                <div className="pt-2 border-t border-pc-border/40 text-xs">
-                  <div className="text-[11px] text-pc-muted mb-1">
+                <div className="pt-2 border-t border-slate-100 text-xs">
+                  <div className="text-[11px] text-slate-600 mb-1">
                     {t.tier === 1 ? (
                       <span>Welcome Tier</span>
                     ) : (
                       <span>
-                        <strong className="text-white">{t.points.toLocaleString()} pts</strong> or <strong className="text-white">{t.minOrders} orders</strong>
+                        <strong className="text-slate-900">{t.points.toLocaleString()} pts</strong> or <strong className="text-slate-900">{t.minOrders} orders</strong>
                       </span>
                     )}
                   </div>
-                  <div className="text-pc-green font-semibold text-[11px] leading-snug">
+                  <div className="text-emerald-800 font-bold text-[11px] leading-snug">
                     {t.rewardLabel}
                   </div>
                 </div>
@@ -398,24 +392,24 @@ export default function RewardsTab({ customer, settings }) {
                       {reward.points.toLocaleString()} Pts
                     </span>
                     {reward.tierName && (
-                      <span className="text-[10px] font-bold text-pc-muted bg-pc-dark px-2 py-0.5 rounded-md border border-pc-border/50">
-                        Tier {reward.tierNumber}
+                      <span className="text-[10px] font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                        {reward.tierName} Perk
                       </span>
                     )}
                   </div>
 
                   {isUnlocked ? (
-                    <span className="text-xs font-bold text-pc-green flex items-center gap-1 bg-pc-green/10 border border-pc-green/30 px-2 py-0.5 rounded-md">
+                    <span className="text-xs font-bold text-emerald-800 flex items-center gap-1 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
                       ✓ Ready
                     </span>
                   ) : (
-                    <span className="text-[11px] text-pc-muted font-medium">
+                    <span className="text-[11px] text-slate-500 font-medium">
                       {reward.points - points} pts to go
                     </span>
                   )}
                 </div>
 
-                <h4 className={`text-base font-bold mb-1 ${isUnlocked ? 'text-white' : 'text-pc-muted'}`}>
+                <h4 className={`text-base font-bold mb-1 ${isUnlocked ? 'text-slate-900' : 'text-slate-600'}`}>
                   {reward.label}
                 </h4>
                 <p className="text-[11px] text-pc-muted">
