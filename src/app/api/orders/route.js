@@ -341,7 +341,7 @@ export async function POST(request) {
         },
       });
 
-      // Update customer points and total orders
+      // Update customer points, total orders, name and address
       await tx.customer.update({
         where: { id: customer.id },
         data: {
@@ -354,6 +354,7 @@ export async function POST(request) {
           totalOrders: {
             increment: 1
           },
+          name: data.customerName || customer.name,
           ...(data.deliveryMethod === 'DELIVERY' && data.deliveryAddress ? { address: data.deliveryAddress } : {})
         }
       });

@@ -22,7 +22,7 @@ function CheckoutContent() {
   const [form, setForm] = useState({
     customerName: '',
     customerPhone: '',
-    deliveryMethod: '',
+    deliveryMethod: 'DELIVERY', // Default to DELIVERY so address fields are immediately ready
     deliveryAddress: '',
     town: '',
     zipCode: '',
@@ -32,19 +32,28 @@ function CheckoutContent() {
 
   // Load saved info from local storage for fast checkout
   useEffect(() => {
-    const saved = localStorage.getItem('holybuds_saved_info');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
+    try {
+      const savedStr = localStorage.getItem('holybuds_saved_info');
+      const draftStr = localStorage.getItem('holybuds_checkout_draft');
+      const saved = savedStr ? JSON.parse(savedStr) : null;
+      const draft = draftStr ? JSON.parse(draftStr) : null;
+      const source = saved || draft;
+
+      if (source) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setForm(prev => ({ 
           ...prev, 
-          ...parsed, 
-          notes: '', // Don't prefill notes
-          referredByCode: prev.referredByCode || parsed.referredByCode || '' 
+          customerName: source.customerName || prev.customerName,
+          customerPhone: source.customerPhone || prev.customerPhone,
+          deliveryMethod: source.deliveryMethod || prev.deliveryMethod || 'DELIVERY',
+          deliveryAddress: source.deliveryAddress || prev.deliveryAddress,
+          town: source.town || prev.town,
+          zipCode: source.zipCode || prev.zipCode,
+          referredByCode: prev.referredByCode || source.referredByCode || '',
+          notes: ''
         }));
-      } catch (e) {}
-    }
+      }
+    } catch (e) {}
   }, []);
 
   // Prefill form if session is present
@@ -55,27 +64,31 @@ function CheckoutContent() {
           const res = await fetch('/api/account/me');
           if (res.ok) {
             const data = await res.json();
-            if (data.customer) {
+            const customer = data.customer;
+            const user = data.user;
+
+            if (customer || user) {
               setForm(prev => {
                 let addr = prev.deliveryAddress;
                 let twn = prev.town;
                 let zip = prev.zipCode;
 
-                if (data.customer.address && !addr) {
-                  const parts = data.customer.address.split(',').map(s => s.trim());
+                if (customer?.address) {
+                  const parts = customer.address.split(',').map(s => s.trim());
                   if (parts.length >= 3) {
-                    addr = parts[0];
-                    twn = parts[1];
-                    zip = parts[2];
+                    addr = addr || parts[0];
+                    twn = twn || parts[1];
+                    zip = zip || parts[2];
                   } else {
-                    addr = data.customer.address;
+                    addr = addr || customer.address;
                   }
                 }
 
                 return {
                   ...prev,
-                  customerName: prev.customerName || data.customer.name,
-                  customerPhone: prev.customerPhone || data.customer.phone,
+                  customerName: prev.customerName || customer?.name || user?.name || '',
+                  customerPhone: prev.customerPhone || customer?.phone || '',
+                  deliveryMethod: prev.deliveryMethod || 'DELIVERY',
                   deliveryAddress: addr,
                   town: twn,
                   zipCode: zip
@@ -138,7 +151,7 @@ function CheckoutContent() {
     }
   }, [isNewCustomer, form.referredByCode]);
 
-  // Phone lookup
+  // Phone lookup & customer profile autofill
   useEffect(() => {
     const sanitized = form.customerPhone.replace(/\D/g, '');
     if (sanitized.length >= 10) {
@@ -151,14 +164,31 @@ function CheckoutContent() {
             setCustomerProfile(data.customer);
             setIsNewCustomer(data.isNewCustomer || false);
 
-            if (data.customer?.address) {
+            if (data.customer) {
               setForm(prev => {
-                if (prev.deliveryAddress) return prev;
-                const parts = data.customer.address.split(',').map(s => s.trim());
-                if (parts.length >= 3) {
-                  return { ...prev, deliveryAddress: parts[0], town: parts[1], zipCode: parts[2] };
+                let addr = prev.deliveryAddress;
+                let twn = prev.town;
+                let zip = prev.zipCode;
+
+                if (data.customer.address) {
+                  const parts = data.customer.address.split(',').map(s => s.trim());
+                  if (parts.length >= 3) {
+                    addr = addr || parts[0];
+                    twn = twn || parts[1];
+                    zip = zip || parts[2];
+                  } else {
+                    addr = addr || data.customer.address;
+                  }
                 }
-                return { ...prev, deliveryAddress: data.customer.address };
+
+                return {
+                  ...prev,
+                  customerName: prev.customerName || data.customer.name || '',
+                  deliveryMethod: prev.deliveryMethod || 'DELIVERY',
+                  deliveryAddress: addr,
+                  town: twn,
+                  zipCode: zip
+                };
               });
             }
           } else {
@@ -177,7 +207,7 @@ function CheckoutContent() {
         }
       };
       
-      const timeoutId = setTimeout(fetchLoyalty, 500);
+      const timeoutId = setTimeout(fetchLoyalty, 300);
       return () => clearTimeout(timeoutId);
     } else {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -188,8 +218,24 @@ function CheckoutContent() {
     }
   }, [form.customerPhone]);
 
-  // Sync draft to localStorage so SessionTracker can pick it up
+  // Continuously auto-save contact & delivery info to localStorage so customer never loses it
   useEffect(() => {
+    if (form.customerName || form.customerPhone || form.deliveryAddress || form.town) {
+      try {
+        const saved = JSON.parse(localStorage.getItem('holybuds_saved_info') || '{}');
+        const updated = {
+          ...saved,
+          customerName: form.customerName || saved.customerName || '',
+          customerPhone: form.customerPhone || saved.customerPhone || '',
+          deliveryMethod: form.deliveryMethod || saved.deliveryMethod || 'DELIVERY',
+          deliveryAddress: form.deliveryAddress || saved.deliveryAddress || '',
+          town: form.town || saved.town || '',
+          zipCode: form.zipCode || saved.zipCode || '',
+          referredByCode: form.referredByCode || saved.referredByCode || ''
+        };
+        localStorage.setItem('holybuds_saved_info', JSON.stringify(updated));
+      } catch (e) {}
+    }
     localStorage.setItem('holybuds_checkout_draft', JSON.stringify(form));
   }, [form]);
 
@@ -290,15 +336,19 @@ function CheckoutContent() {
         console.error('Failed to save recent order', e);
       }
 
-      // Save for fast "one-click" checkout next time
-      localStorage.setItem('holybuds_saved_info', JSON.stringify({
-        customerName: form.customerName,
-        customerPhone: form.customerPhone,
-        deliveryMethod: form.deliveryMethod,
-        deliveryAddress: form.deliveryAddress,
-        town: form.town,
-        zipCode: form.zipCode,
-      }));
+      // Save for fast "one-click" checkout next time (non-destructive)
+      try {
+        const prevSaved = JSON.parse(localStorage.getItem('holybuds_saved_info') || '{}');
+        localStorage.setItem('holybuds_saved_info', JSON.stringify({
+          customerName: form.customerName,
+          customerPhone: form.customerPhone,
+          deliveryMethod: form.deliveryMethod,
+          deliveryAddress: form.deliveryAddress || prevSaved.deliveryAddress || '',
+          town: form.town || prevSaved.town || '',
+          zipCode: form.zipCode || prevSaved.zipCode || '',
+          referredByCode: form.referredByCode || prevSaved.referredByCode || '',
+        }));
+      } catch (e) {}
 
       setOrderConfirm(order);
       clearCart();
@@ -442,16 +492,45 @@ function CheckoutContent() {
               </div>
 
               <div className="space-y-4">
-                <h2 className="text-xl font-bold text-white mb-2">Customer Details</h2>
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="text-xl font-bold text-white">Customer Details</h2>
+                  {(customerProfile?.name || form.deliveryAddress || (form.customerName && form.customerPhone)) && (
+                    <span className="text-xs font-semibold text-pc-green bg-pc-green/10 border border-pc-green/20 px-2.5 py-1 rounded-full flex items-center gap-1.5 animate-fade-in">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                      </svg>
+                      Autofilled from saved profile
+                    </span>
+                  )}
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-pc-muted mb-1">Full Name *</label>
-                  <input name="customerName" value={form.customerName} onChange={handleChange} required className="input-field" placeholder="Your name" />
+                  <input 
+                    name="customerName" 
+                    id="customerName"
+                    autoComplete="name"
+                    value={form.customerName} 
+                    onChange={handleChange} 
+                    required 
+                    className="input-field" 
+                    placeholder="Your full name" 
+                  />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-pc-muted mb-1">Phone Number *</label>
-                  <input name="customerPhone" value={form.customerPhone} onChange={handleChange} required className="input-field" placeholder="(555) 123-4567" type="tel" />
+                  <input 
+                    name="customerPhone" 
+                    id="customerPhone"
+                    autoComplete="tel"
+                    value={form.customerPhone} 
+                    onChange={handleChange} 
+                    required 
+                    className="input-field" 
+                    placeholder="(555) 123-4567" 
+                    type="tel" 
+                  />
                 </div>
                 
                 {/* NEW CUSTOMER REFERRAL INPUT */}
@@ -512,8 +591,8 @@ function CheckoutContent() {
                               {customerProfile.totalOrders} Orders
                             </div>
                             <button 
-                              type="button"
-                              onClick={() => setShowFullLoyaltyPanel(false)}
+                              type="button" 
+                              onClick={() => setShowFullLoyaltyPanel(false)} 
                               className="text-pc-muted hover:text-white text-sm underline decoration-pc-muted hover:decoration-white transition-colors"
                             >
                               Hide
@@ -527,8 +606,8 @@ function CheckoutContent() {
                             <div className="text-pc-muted">
                               Give them code 
                               <button 
-                                type="button"
-                                onClick={handleCopyCode}
+                                type="button" 
+                                onClick={handleCopyCode} 
                                 className="mx-1 text-white bg-pc-dark px-2 py-1 rounded hover:bg-pc-dark/70 transition-colors inline-flex items-center gap-1 cursor-pointer"
                                 title="Click to copy"
                               >
@@ -596,16 +675,43 @@ function CheckoutContent() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-pc-muted mb-1">Street Address *</label>
-                      <input name="deliveryAddress" value={form.deliveryAddress} onChange={handleChange} required className="input-field" placeholder="123 Main St, Apt 4" />
+                      <input 
+                        name="deliveryAddress" 
+                        id="deliveryAddress"
+                        autoComplete="address-line1"
+                        value={form.deliveryAddress} 
+                        onChange={handleChange} 
+                        required 
+                        className="input-field" 
+                        placeholder="123 Main St, Apt 4" 
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-pc-muted mb-1">Town / City *</label>
-                        <input name="town" value={form.town} onChange={handleChange} required className="input-field" placeholder="New York" />
+                        <input 
+                          name="town" 
+                          id="town"
+                          autoComplete="address-level2"
+                          value={form.town} 
+                          onChange={handleChange} 
+                          required 
+                          className="input-field" 
+                          placeholder="New York" 
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-pc-muted mb-1">Zip Code *</label>
-                        <input name="zipCode" value={form.zipCode} onChange={handleChange} required className="input-field" placeholder="10001" />
+                        <input 
+                          name="zipCode" 
+                          id="zipCode"
+                          autoComplete="postal-code"
+                          value={form.zipCode} 
+                          onChange={handleChange} 
+                          required 
+                          className="input-field" 
+                          placeholder="10001" 
+                        />
                       </div>
                     </div>
                   </div>
@@ -614,13 +720,21 @@ function CheckoutContent() {
                 {!isDelivery && (
                   <div>
                     <label className="block text-sm font-medium text-pc-muted mb-1">What town are you coming from? *</label>
-                    <input name="town" value={form.town} onChange={handleChange} required className="input-field" placeholder="e.g. West Side, East Town..." />
+                    <input 
+                      name="town" 
+                      id="pickupTown"
+                      value={form.town} 
+                      onChange={handleChange} 
+                      required 
+                      className="input-field" 
+                      placeholder="e.g. West Side, East Town..." 
+                    />
                   </div>
                 )}
 
                 <div>
                   <label className="block text-sm font-medium text-pc-muted mb-1">Notes (optional)</label>
-                  <textarea name="notes" value={form.notes} onChange={handleChange} rows={3} className="input-field resize-none" placeholder={isDelivery ? "Gate code, delivery instructions..." : "Any special requests..."} />
+                  <textarea name="notes" id="notes" value={form.notes} onChange={handleChange} rows={3} className="input-field resize-none" placeholder={isDelivery ? "Gate code, delivery instructions..." : "Any special requests..."} />
                 </div>
               </div>
 
