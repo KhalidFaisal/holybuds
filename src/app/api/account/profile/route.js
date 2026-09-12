@@ -10,7 +10,7 @@ export async function PATCH(request) {
     }
 
     const body = await request.json();
-    const { name, phone, address } = body;
+    const { name, phone, address, birthdate } = body;
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
@@ -27,6 +27,7 @@ export async function PATCH(request) {
         name: name !== undefined ? name : user.customer.name,
         phone: phone !== undefined ? phone : user.customer.phone,
         address: address !== undefined ? address : user.customer.address,
+        birthdate: birthdate !== undefined ? birthdate : user.customer.birthdate,
       }
     });
 

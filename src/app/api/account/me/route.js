@@ -59,6 +59,7 @@ export async function GET() {
         phoneVerified: user.customer.phoneVerified,
         name: user.customer.name,
         address: user.customer.address,
+        birthdate: user.customer.birthdate,
         points: user.customer.points,
         storeCredit: user.customer.storeCredit,
         totalOrders: user.customer.totalOrders,

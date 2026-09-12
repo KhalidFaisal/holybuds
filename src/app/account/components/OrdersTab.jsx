@@ -140,8 +140,22 @@ export default function OrdersTab({ orders = [], onReorder }) {
                         <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${statusConfig.badgeClass}`}>
                           {statusConfig.label}
                         </span>
-                        <span className="text-xs bg-pc-dark/70 text-pc-muted px-2 py-0.5 rounded-md border border-pc-border">
-                          {order.deliveryMethod === 'DELIVERY' ? '🚗 Delivery' : '🏪 Pickup'}
+                        <span className="text-xs bg-pc-dark/70 text-pc-muted px-2 py-0.5 rounded-md border border-pc-border flex items-center gap-1">
+                          {order.deliveryMethod === 'DELIVERY' ? (
+                            <>
+                              <svg className="w-3 h-3 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.25V3.75m0 3.75h4.5m-4.5 0H9.75M9.75 3.75v3.75m0 0H4.5" />
+                              </svg>
+                              <span>Delivery</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3 h-3 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72m-13.5 8.651h.008v.008H6.75v-.008Zm0-4.5h.008v.008H6.75v-.008Zm0-4.5h.008v.008H6.75v-.008Z" />
+                              </svg>
+                              <span>Pickup</span>
+                            </>
+                          )}
                         </span>
                       </div>
                       <p className="text-xs text-pc-muted">
@@ -188,12 +202,14 @@ export default function OrdersTab({ orders = [], onReorder }) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4 pt-4 border-t border-pc-border/40">
                     {order.items?.slice(0, isExpanded ? undefined : 3).map((item, i) => (
                       <div key={i} className="flex items-center gap-3 bg-pc-dark/40 p-2.5 rounded-xl border border-pc-border/40">
-                        <div className="w-12 h-12 bg-pc-smoke rounded-lg overflow-hidden shrink-0">
+                        <div className="w-12 h-12 bg-pc-smoke rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                           {item.product?.image ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-xs text-pc-muted">🍃</div>
+                            <svg className="w-6 h-6 text-pc-muted/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                            </svg>
                           )}
                         </div>
                         <div className="overflow-hidden min-w-0">

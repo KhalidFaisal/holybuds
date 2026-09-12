@@ -224,8 +224,10 @@ function AccountContent() {
         <Navbar />
         <main className="min-h-screen pt-28 pb-16 px-4 flex items-center justify-center">
           <div className="max-w-md w-full glass-card p-8 text-center animate-fade-in-up border-pc-green/30 shadow-2xl">
-            <div className="w-16 h-16 bg-pc-green/20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-pc-green border border-pc-green/30 text-3xl">
-              📱
+            <div className="w-16 h-16 bg-pc-green/20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-pc-green border border-pc-green/30">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+              </svg>
             </div>
             <h1 className="text-2xl font-black text-white mb-2">Connect Your Phone</h1>
             <p className="text-xs text-pc-muted mb-6 leading-relaxed">
@@ -329,7 +331,10 @@ function AccountContent() {
                       : 'bg-pc-card text-pc-muted hover:text-white border border-pc-border'
                   }`}
                 >
-                  <span>📦 Orders</span>
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                  </svg>
+                  <span>Orders</span>
                   {activeOrdersCount > 0 && (
                     <span className="w-2 h-2 rounded-full bg-pc-green animate-ping" />
                   )}
@@ -343,7 +348,10 @@ function AccountContent() {
                       : 'bg-pc-card text-pc-muted hover:text-white border border-pc-border'
                   }`}
                 >
-                  <span>✨ Rewards & Referrals</span>
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0 3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+                  </svg>
+                  <span>Rewards & Referrals</span>
                   {pointsCount > 0 && (
                     <span className="text-[10px] px-1.5 py-0.2 bg-pc-black/20 rounded-md">
                       {pointsCount}
@@ -359,7 +367,10 @@ function AccountContent() {
                       : 'bg-pc-card text-pc-muted hover:text-white border border-pc-border'
                   }`}
                 >
-                  <span>❤️ Favorites</span>
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                  </svg>
+                  <span>Favorites</span>
                 </button>
 
                 <button
@@ -370,7 +381,10 @@ function AccountContent() {
                       : 'bg-pc-card text-pc-muted hover:text-white border border-pc-border'
                   }`}
                 >
-                  <span>👤 Profile</span>
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                  </svg>
+                  <span>Profile</span>
                 </button>
               </div>
 
@@ -385,7 +399,9 @@ function AccountContent() {
                   }`}
                 >
                   <span className="flex items-center gap-3">
-                    <span className="text-lg">📦</span>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                    </svg>
                     <span>Order History</span>
                   </span>
                   {activeOrdersCount > 0 && (
@@ -404,7 +420,9 @@ function AccountContent() {
                   }`}
                 >
                   <span className="flex items-center gap-3">
-                    <span className="text-lg">✨</span>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+                    </svg>
                     <span>Rewards & Referrals</span>
                   </span>
                   <span className="text-xs font-bold text-pc-muted">
@@ -421,7 +439,9 @@ function AccountContent() {
                   }`}
                 >
                   <span className="flex items-center gap-3">
-                    <span className="text-lg">❤️</span>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                    </svg>
                     <span>Saved Favorites</span>
                   </span>
                 </button>
@@ -435,7 +455,9 @@ function AccountContent() {
                   }`}
                 >
                   <span className="flex items-center gap-3">
-                    <span className="text-lg">👤</span>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                    </svg>
                     <span>Delivery & Profile</span>
                   </span>
                 </button>

@@ -1,16 +1,46 @@
 'use client';
 
+function TierIcon({ type }) {
+  if (type === 'diamond') {
+    return (
+      <svg className="w-3.5 h-3.5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 3h12l4 7-10 11L2 10l4-7z" />
+      </svg>
+    );
+  }
+  if (type === 'gold') {
+    return (
+      <svg className="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 18h18M4 7l4 6 4-6 4 6 4-6v10H4V7z" />
+      </svg>
+    );
+  }
+  if (type === 'silver') {
+    return (
+      <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+      </svg>
+    );
+  }
+  return (
+    <svg className="w-3.5 h-3.5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 0 0 9-9c0-4.97-4.03-9-9-9-4.97 0-9 4.03-9 9 0 4.97 4.03 9 9 9z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18" />
+    </svg>
+  );
+}
+
 function getTierInfo(points = 0, totalOrders = 0) {
   if (points >= 2500 || totalOrders >= 15) {
-    return { name: 'Diamond VIP', badgeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/40', icon: '💎' };
+    return { name: 'Diamond VIP', badgeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/40', type: 'diamond' };
   }
   if (points >= 1000 || totalOrders >= 8) {
-    return { name: 'Gold Reserve', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40', icon: '👑' };
+    return { name: 'Gold Reserve', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40', type: 'gold' };
   }
   if (points >= 250 || totalOrders >= 3) {
-    return { name: 'Silver Connoisseur', badgeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40', icon: '✨' };
+    return { name: 'Silver Connoisseur', badgeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40', type: 'silver' };
   }
-  return { name: 'Green Member', badgeClass: 'bg-pc-green/20 text-pc-green border-pc-green/30', icon: '🌿' };
+  return { name: 'Green Member', badgeClass: 'bg-pc-green/20 text-pc-green border-pc-green/30', type: 'green' };
 }
 
 export default function AccountHero({ user, customer, orders = [], onSelectTab }) {
@@ -52,8 +82,8 @@ export default function AccountHero({ user, customer, orders = [], onSelectTab }
                 {userInitial}
               </div>
             )}
-            <div className="absolute -bottom-1 -right-1 bg-pc-black border border-pc-border rounded-full p-1 text-sm shadow">
-              {tier.icon}
+            <div className="absolute -bottom-1 -right-1 bg-pc-black border border-pc-border rounded-full p-1.5 shadow">
+              <TierIcon type={tier.type} />
             </div>
           </div>
 
@@ -62,8 +92,9 @@ export default function AccountHero({ user, customer, orders = [], onSelectTab }
               <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
                 {customer?.name || user?.name || 'Welcome Back'}
               </h1>
-              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${tier.badgeClass}`}>
-                {tier.name}
+              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1.5 ${tier.badgeClass}`}>
+                <TierIcon type={tier.type} />
+                <span>{tier.name}</span>
               </span>
             </div>
             <p className="text-sm text-pc-muted flex items-center gap-2">
