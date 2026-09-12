@@ -56,6 +56,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
+      hasPassword: true,
       message: user.passwordHash
         ? 'Your password has been changed successfully.'
         : 'Password has been set successfully. You can now also log in using your email and password.',

@@ -25,6 +25,7 @@ function AccountContent() {
   const [activeTab, setActiveTab] = useState(tabParam || 'orders');
   const [, startTransition] = useTransition();
 
+  const [accountUser, setAccountUser] = useState(null);
   const [customerProfile, setCustomerProfile] = useState(null);
   const [recentOrders, setRecentOrders] = useState([]);
   const [siteSettings, setSiteSettings] = useState(null);
@@ -73,6 +74,9 @@ function AccountContent() {
       const res = await fetch('/api/account/me');
       if (res.ok) {
         const data = await res.json();
+        if (data.user) {
+          setAccountUser(data.user);
+        }
         if (data.customer) {
           setCustomerProfile(data.customer);
           setRecentOrders(data.orders || []);
@@ -95,6 +99,9 @@ function AccountContent() {
         const res = await fetch('/api/account/me');
         if (res.ok && !ignore) {
           const data = await res.json();
+          if (data.user) {
+            setAccountUser(data.user);
+          }
           if (data.customer) {
             setCustomerProfile(data.customer);
             setRecentOrders(data.orders || []);
@@ -305,7 +312,7 @@ function AccountContent() {
 
           {/* Hero Stats Card */}
           <AccountHero 
-            user={session?.user} 
+            user={accountUser || session?.user} 
             customer={customerProfile} 
             orders={recentOrders}
             onSelectTab={handleTabChange}
@@ -515,7 +522,7 @@ function AccountContent() {
 
               {activeTab === 'profile' && (
                 <ProfileTab 
-                  user={session?.user} 
+                  user={accountUser || session?.user} 
                   customerProfile={customerProfile} 
                   setCustomerProfile={setCustomerProfile} 
                 />
@@ -523,7 +530,7 @@ function AccountContent() {
 
               {activeTab === 'settings' && (
                 <SettingsTab 
-                  user={session?.user} 
+                  user={accountUser || session?.user} 
                   customerProfile={customerProfile} 
                   onRefreshUser={refreshUserData} 
                 />

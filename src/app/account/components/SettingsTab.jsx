@@ -14,7 +14,9 @@ export default function SettingsTab({ user, customerProfile, onRefreshUser }) {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
 
-  const hasPassword = Boolean(user?.hasPassword);
+  const [justSetPassword, setJustSetPassword] = useState(false);
+  const hasPassword = Boolean(user?.hasPassword) || justSetPassword;
+
   const authProviders = user?.authProviders || [];
   const hasGoogle = authProviders.includes('google') || Boolean(user?.image);
 
@@ -46,6 +48,7 @@ export default function SettingsTab({ user, customerProfile, onRefreshUser }) {
 
       const data = await res.json();
       if (res.ok) {
+        setJustSetPassword(true);
         setPasswordSuccess(data.message || 'Password saved successfully.');
         setCurrentPassword('');
         setNewPassword('');
