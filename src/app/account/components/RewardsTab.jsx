@@ -1,29 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import { LOYALTY_REWARDS } from '@/lib/loyalty';
+import { LOYALTY_REWARDS, LOYALTY_TIERS, getTierInfo } from '@/lib/loyalty';
+import { TierIcon } from './AccountHero';
 
 export default function RewardsTab({ customer, settings }) {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
-  const points = customer?.points || 0;
+  const points = customer?.points || 0; // Spendable points
+  const tierPoints = customer?.tierPoints ?? points; // Lifetime tier points
+  const totalOrders = customer?.totalOrders || 0;
   const storeCredit = customer?.storeCredit || 0;
   const referralCode = customer?.referralCode || '';
   const pointsPerDollar = settings?.pointsPerDollar || 1;
+
+  const currentTierInfo = getTierInfo(tierPoints, totalOrders);
 
   // Build full referral link
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.holybuds.net';
   const referralUrl = referralCode ? `${origin}/?ref=${referralCode}` : origin;
   const shareMessage = `Hey! Use my code ${referralCode} to get $10 off your first $100+ order at Holy Buds: ${referralUrl}`;
 
-  // Next reward calculation
+  // Next reward calculation based on spendable points
   const sortedRewards = [...LOYALTY_REWARDS].sort((a, b) => a.points - b.points);
-  const nextReward = sortedRewards.find(r => r.points > points) || null;
-  const nextPointsNeeded = nextReward ? nextReward.points - points : 0;
-  const nextProgressPct = nextReward 
-    ? Math.min(100, Math.round((points / nextReward.points) * 100))
-    : 100;
 
   const handleCopyCode = async () => {
     if (navigator.clipboard && referralCode) {
@@ -64,56 +64,149 @@ export default function RewardsTab({ customer, settings }) {
 
   return (
     <div className="space-y-8">
-      {/* Top Banner: Points & Next Reward Stepper */}
+      {/* Top Banner: Spendable Points & VIP Tier Status */}
       <div className="glass-card p-6 md:p-8 bg-gradient-to-br from-pc-card via-pc-card to-pc-green/10 border-pc-green/30 relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-pc-green">Loyalty Balance</span>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-pc-green">Spendable Points</span>
+              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${currentTierInfo.badgeClass}`}>
+                <TierIcon type={currentTierInfo.type} className="w-3 h-3" />
+                <span>Tier {currentTierInfo.tier}: {currentTierInfo.name}</span>
+              </span>
+            </div>
             <div className="text-4xl md:text-5xl font-black text-white mt-1">
               {points.toLocaleString()} <span className="text-xl text-pc-muted font-normal">pts</span>
             </div>
             <p className="text-xs text-pc-muted mt-1">
-              Earn {pointsPerDollar} point{pointsPerDollar !== 1 ? 's' : ''} for every $1 spent at checkout.
+              Earn {pointsPerDollar} point{pointsPerDollar !== 1 ? 's' : ''} for every $1 spent. Redeemable at checkout!
             </p>
           </div>
 
-          {storeCredit > 0 && (
-            <div className="bg-pc-green/15 border border-pc-green/30 rounded-2xl p-4 text-right">
-              <span className="text-xs font-semibold text-pc-muted uppercase tracking-wider">Available Store Credit</span>
-              <p className="text-2xl md:text-3xl font-black text-pc-green">${storeCredit.toFixed(2)}</p>
-              <p className="text-[11px] text-pc-muted mt-0.5">Automatically deducts at checkout!</p>
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-3">
+            {storeCredit > 0 && (
+              <div className="bg-pc-green/15 border border-pc-green/30 rounded-2xl p-4 text-right">
+                <span className="text-xs font-semibold text-pc-muted uppercase tracking-wider">Available Store Credit</span>
+                <p className="text-2xl md:text-3xl font-black text-pc-green">${storeCredit.toFixed(2)}</p>
+                <p className="text-[11px] text-pc-muted mt-0.5">Automatically deducts at checkout!</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Progress to Next Reward */}
-        {nextReward ? (
+        {/* Progress to Next VIP Tier */}
+        {currentTierInfo.nextTier ? (
           <div className="bg-pc-dark/70 rounded-2xl p-4 border border-pc-border/80">
-            <div className="flex justify-between items-center text-xs font-bold mb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-bold mb-2 gap-1">
               <span className="text-white flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-pc-green shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                </svg>
-                <span>Next Goal:</span>
-                <span className="text-pc-green">{nextReward.label} ({nextReward.points} pts)</span>
+                <TierIcon type={currentTierInfo.nextTier.type} className="w-4 h-4 shrink-0" />
+                <span>Next Tier Goal:</span>
+                <span className="text-pc-green">Tier {currentTierInfo.nextTier.tier} - {currentTierInfo.nextTier.name}</span>
+                <span className="text-pc-muted font-normal">({currentTierInfo.nextTier.rewardLabel})</span>
               </span>
-              <span className="text-pc-muted">{nextPointsNeeded} pts needed</span>
+              <span className="text-pc-muted font-medium">
+                {currentTierInfo.pointsNeeded > 0 && `${currentTierInfo.pointsNeeded.toLocaleString()} pts`}
+                {currentTierInfo.pointsNeeded > 0 && currentTierInfo.ordersNeeded > 0 && ' or '}
+                {currentTierInfo.ordersNeeded > 0 && `${currentTierInfo.ordersNeeded} order${currentTierInfo.ordersNeeded > 1 ? 's' : ''}`} needed
+              </span>
             </div>
             <div className="w-full bg-pc-smoke h-2.5 rounded-full overflow-hidden">
               <div 
                 className="bg-gradient-to-r from-pc-green/80 to-pc-green h-full rounded-full transition-all duration-500 shadow-sm"
-                style={{ width: `${nextProgressPct}%` }}
+                style={{ width: `${currentTierInfo.progressPct}%` }}
               />
+            </div>
+            <div className="flex justify-between items-center mt-2 text-[11px] text-pc-muted">
+              <span>Current Tier: <strong>{currentTierInfo.name}</strong></span>
+              <span className="text-[10px] text-pc-muted/80">VIP Tier is permanent and never decreases when using points</span>
             </div>
           </div>
         ) : (
-          <div className="bg-pc-dark/70 rounded-2xl p-4 border border-pc-green/40 text-center text-xs font-bold text-pc-green flex items-center justify-center gap-2">
-            <svg className="w-4 h-4 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.496m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.496 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 0 0 2.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 0 1 2.916.52 6.003 6.003 0 0 1-5.395 4.972m0 0a6.726 6.726 0 0 1-2.749 1.35m0 0a6.772 6.772 0 0 1-3.044 0" />
-            </svg>
-            <span>You have enough points to unlock our highest loyalty reward!</span>
+          <div className="bg-pc-dark/70 rounded-2xl p-4 border border-purple-500/40 text-center text-xs font-bold text-purple-300 flex items-center justify-center gap-2">
+            <TierIcon type="diamond" className="w-5 h-5 text-purple-400 shrink-0" />
+            <span>You have unlocked Tier 8: Diamond VIP &mdash; our highest loyalty milestone!</span>
           </div>
         )}
+      </div>
+
+      {/* 8-Tier VIP Roadmap */}
+      <div>
+        <div className="mb-4">
+          <h3 className="text-xl font-black text-white flex items-center gap-2">
+            <span>VIP Loyalty Tiers & Milestones</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pc-smoke text-pc-muted border border-pc-border">
+              8 Tiers
+            </span>
+          </h3>
+          <p className="text-xs text-pc-muted mt-0.5">
+            Advance your tier through points earned or orders completed. Tiers are permanently unlocked and will never decrease when points are spent!
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {LOYALTY_TIERS.map(t => {
+            const isCurrent = t.tier === currentTierInfo.tier;
+            const isUnlocked = t.tier <= currentTierInfo.tier;
+
+            return (
+              <div
+                key={t.id}
+                className={`p-4 rounded-2xl border transition-all relative ${
+                  isCurrent
+                    ? 'bg-pc-card border-pc-green ring-1 ring-pc-green/40 shadow-lg shadow-pc-green/10'
+                    : isUnlocked
+                    ? 'bg-pc-card/70 border-pc-border/80'
+                    : 'bg-pc-dark/40 border-pc-border/40 opacity-60'
+                }`}
+              >
+                <div className="flex justify-between items-start mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-xl bg-pc-dark border border-pc-border/60">
+                      <TierIcon type={t.type} className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-pc-muted uppercase tracking-wider block">
+                        Tier {t.tier}
+                      </span>
+                      <h4 className="text-sm font-black text-white leading-tight">
+                        {t.name}
+                      </h4>
+                    </div>
+                  </div>
+
+                  {isCurrent ? (
+                    <span className="text-[10px] font-bold bg-pc-green text-pc-black px-2 py-0.5 rounded-full shadow-sm">
+                      Current
+                    </span>
+                  ) : isUnlocked ? (
+                    <span className="text-[10px] font-bold text-pc-green bg-pc-green/10 border border-pc-green/30 px-1.5 py-0.5 rounded-md">
+                      ✓ Unlocked
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-medium text-pc-muted bg-pc-smoke px-1.5 py-0.5 rounded-md">
+                      Locked
+                    </span>
+                  )}
+                </div>
+
+                <div className="pt-2 border-t border-pc-border/40 text-xs">
+                  <div className="text-[11px] text-pc-muted mb-1">
+                    {t.tier === 1 ? (
+                      <span>Welcome Tier</span>
+                    ) : (
+                      <span>
+                        <strong className="text-white">{t.points.toLocaleString()} pts</strong> or <strong className="text-white">{t.minOrders} orders</strong>
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-pc-green font-semibold text-[11px] leading-snug">
+                    {t.rewardLabel}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Referral Hub */}
@@ -150,54 +243,79 @@ export default function RewardsTab({ customer, settings }) {
               <input
                 type="text"
                 readOnly
-                value={referralCode || 'GENERATING'}
-                className="w-full bg-pc-black border border-pc-border rounded-xl px-3 py-2 text-white font-mono font-bold tracking-wider text-center"
+                value={referralCode || 'Generating...'}
+                className="bg-pc-black border border-pc-border/80 rounded-xl px-3 py-2 text-white font-mono text-sm flex-1 outline-none font-bold"
               />
               <button
+                type="button"
                 onClick={handleCopyCode}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                  copiedCode ? 'bg-pc-green text-pc-black font-black' : 'bg-pc-smoke hover:bg-pc-smoke/80 text-white'
-                }`}
+                className="px-4 py-2 bg-pc-smoke hover:bg-pc-border border border-pc-border text-white text-xs font-bold rounded-xl transition-colors shrink-0 flex items-center gap-1.5"
               >
-                {copiedCode ? 'Copied!' : 'Copy Code'}
+                {copiedCode ? (
+                  <>
+                    <svg className="w-3.5 h-3.5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                    </svg>
+                    <span>Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                    </svg>
+                    <span>Copy</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
 
-          {/* Link Box */}
+          {/* Direct Link Box */}
           <div className="bg-pc-dark/60 p-4 rounded-2xl border border-pc-border">
             <label className="block text-[11px] font-bold text-pc-muted uppercase tracking-wider mb-1.5">
-              Instant Referral Link
+              Your Shareable Link
             </label>
             <div className="flex gap-2">
               <input
                 type="text"
                 readOnly
                 value={referralUrl}
-                className="w-full bg-pc-black border border-pc-border rounded-xl px-3 py-2 text-white text-xs font-mono truncate"
+                className="bg-pc-black border border-pc-border/80 rounded-xl px-3 py-2 text-pc-muted text-xs flex-1 outline-none truncate font-mono"
               />
               <button
+                type="button"
                 onClick={handleCopyLink}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                  copiedLink ? 'bg-pc-green text-pc-black font-black' : 'bg-pc-green text-pc-black font-bold hover:bg-pc-green/90'
-                }`}
+                className="px-4 py-2 bg-pc-green hover:bg-pc-green-dark text-pc-black font-bold text-xs rounded-xl transition-colors shrink-0 flex items-center gap-1.5 shadow-sm"
               >
-                {copiedLink ? 'Copied!' : 'Copy Link'}
+                {copiedLink ? (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                    </svg>
+                    <span>Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+                    </svg>
+                    <span>Copy Link</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Quick Social / Instant Share Buttons */}
-        <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-pc-border/60">
-          <span className="text-xs font-bold text-pc-muted mr-1">Share via:</span>
-          
+        {/* Quick Social Share Buttons */}
+        <div className="flex flex-wrap gap-2.5 mt-4 pt-2">
           <button
+            type="button"
             onClick={handleNativeShare}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-pc-dark hover:bg-pc-card text-white border border-pc-border transition-colors flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-pc-smoke hover:bg-pc-border text-white border border-pc-border transition-colors flex items-center gap-1.5"
           >
-            <svg className="w-4 h-4 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+            <svg className="w-4 h-4 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
             </svg>
             Share Menu Link
           </button>
@@ -251,7 +369,7 @@ export default function RewardsTab({ customer, settings }) {
         <div className="mb-4">
           <h3 className="text-xl font-black text-white">Unlockable Rewards Catalog</h3>
           <p className="text-xs text-pc-muted mt-0.5">
-            Eligible rewards are automatically available to select and deduct from your total at Checkout.
+            Eligible rewards are automatically available to select and deduct from your total at Checkout using your spendable points.
           </p>
         </div>
 
@@ -269,15 +387,22 @@ export default function RewardsTab({ customer, settings }) {
                 }`}
               >
                 <div className="flex justify-between items-start mb-3">
-                  <span
-                    className={`text-xs font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
-                      isUnlocked
-                        ? 'bg-pc-green text-pc-black shadow-sm'
-                        : 'bg-pc-smoke text-pc-muted'
-                    }`}
-                  >
-                    {reward.points.toLocaleString()} Pts
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
+                        isUnlocked
+                          ? 'bg-pc-green text-pc-black shadow-sm'
+                          : 'bg-pc-smoke text-pc-muted'
+                      }`}
+                    >
+                      {reward.points.toLocaleString()} Pts
+                    </span>
+                    {reward.tierName && (
+                      <span className="text-[10px] font-bold text-pc-muted bg-pc-dark px-2 py-0.5 rounded-md border border-pc-border/50">
+                        Tier {reward.tierNumber}
+                      </span>
+                    )}
+                  </div>
 
                   {isUnlocked ? (
                     <span className="text-xs font-bold text-pc-green flex items-center gap-1 bg-pc-green/10 border border-pc-green/30 px-2 py-0.5 rounded-md">

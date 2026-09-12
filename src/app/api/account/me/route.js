@@ -46,6 +46,13 @@ export async function GET() {
       where: { id: 'global' },
     });
 
+    let tierPoints = user.customer?.points || 0;
+    let totalPointsUsed = 0;
+    if (user.customer?.orders) {
+      totalPointsUsed = user.customer.orders.reduce((sum, o) => sum + (o.pointsUsed || 0), 0);
+      tierPoints = (user.customer.points || 0) + totalPointsUsed;
+    }
+
     return NextResponse.json({
       user: {
         id: user.id,
@@ -61,6 +68,8 @@ export async function GET() {
         address: user.customer.address,
         birthdate: user.customer.birthdate,
         points: user.customer.points,
+        tierPoints,
+        totalPointsUsed,
         storeCredit: user.customer.storeCredit,
         totalOrders: user.customer.totalOrders,
         referralCode: user.customer.referralCode,
