@@ -3,23 +3,26 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-const STATUS_CONFIG = {
-  PENDING: { label: 'Pending', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
-  PROCESSING: { label: 'Processing', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/40' },
-  READY: { label: 'Ready', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/40' },
-  DELIVERED: { label: 'Delivered', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
-  COMPLETED: { label: 'Delivered', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
-  CANCELLED: { label: 'Cancelled', badgeClass: 'bg-red-500/20 text-red-300 border-red-500/40' },
-};
+function getOrderStatusConfig(order) {
+  const s = (order.status || '').toUpperCase();
+  const isDelivery = order.deliveryMethod === 'DELIVERY';
 
-function getDisplayStatusKey(status) {
-  const s = (status || '').toUpperCase();
-  if (s === 'CANCELLED') return 'CANCELLED';
-  if (s === 'PENDING') return 'PENDING';
-  if (s === 'PROCESSING') return 'PROCESSING';
-  if (s === 'READY') return 'READY';
-  if (s === 'DELIVERED' || s === 'COMPLETED') return 'DELIVERED';
-  return 'PENDING';
+  if (s === 'CANCELLED') {
+    return { label: 'Cancelled', badgeClass: 'bg-red-500/20 text-red-300 border-red-500/40' };
+  }
+  if (s === 'DELIVERED' || s === 'COMPLETED') {
+    return { 
+      label: isDelivery ? 'Delivered' : 'Completed', 
+      badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
+    };
+  }
+  if (s === 'PROCESSING' || s === 'READY') {
+    return { 
+      label: isDelivery ? 'Out for Delivery' : 'Ready for Pickup', 
+      badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/40' 
+    };
+  }
+  return { label: 'Pending', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40' };
 }
 
 export default function OrdersTab({ orders = [], onReorder }) {
@@ -134,8 +137,7 @@ export default function OrdersTab({ orders = [], onReorder }) {
         <div className="space-y-4">
           {filteredOrders.map((order) => {
             const isExpanded = expandedOrderId === order.id;
-            const statusKey = getDisplayStatusKey(order.status);
-            const statusConfig = STATUS_CONFIG[statusKey] || STATUS_CONFIG.PENDING;
+            const statusConfig = getOrderStatusConfig(order);
             const itemsSubtotal = (order.items || []).reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const rawDeliveryFee = order.total + (order.discountAmount || 0) - itemsSubtotal;
             const deliveryFee = rawDeliveryFee > 0 ? Math.round(rawDeliveryFee * 100) / 100 : 0;

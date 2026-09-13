@@ -1,10 +1,21 @@
 'use client';
 
-const STAGES = [
-  { key: 'PENDING', label: 'Pending', desc: 'Order received' },
-  { key: 'PROCESSING', label: 'Processing', desc: 'Preparing your order' },
-  { key: 'DELIVERED', label: 'Delivered', desc: 'Order delivered' },
-];
+function getStages(order) {
+  const isDelivery = order.deliveryMethod === 'DELIVERY';
+  return [
+    { key: 'PENDING', label: 'Pending', desc: 'Order received' },
+    { 
+      key: 'PROCESSING', 
+      label: isDelivery ? 'Out for Delivery' : 'Ready for Pickup', 
+      desc: isDelivery ? 'Driver on the way' : 'Ready at store' 
+    },
+    { 
+      key: 'DELIVERED', 
+      label: isDelivery ? 'Delivered' : 'Completed', 
+      desc: isDelivery ? 'Order delivered' : 'Order completed' 
+    },
+  ];
+}
 
 function getStageIndex(status) {
   const s = (status || '').toUpperCase();
@@ -25,6 +36,7 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
   return (
     <div className="space-y-4 mb-8">
       {activeOrders.map(order => {
+        const stages = getStages(order);
         const currentIdx = getStageIndex(order.status);
         const isDelivery = order.deliveryMethod === 'DELIVERY';
 
@@ -45,7 +57,9 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
                     Live Order #{order.orderNumber}
                   </h3>
                   <p className="text-xs text-pc-muted">
-                    {isDelivery ? 'Delivery in Progress' : 'Pickup in Progress'} • Placed {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {isDelivery 
+                      ? (currentIdx === 1 ? 'Out for Delivery' : 'Delivery in Progress') 
+                      : (currentIdx === 1 ? 'Ready for Pickup' : 'Pickup in Progress')} • Placed {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
               </div>
@@ -68,7 +82,7 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
             {/* Stepper */}
             <div className="py-2">
               <div className="grid grid-cols-3 gap-2 sm:gap-4 relative">
-                {STAGES.map((stage, idx) => {
+                {stages.map((stage, idx) => {
                   const isCompleted = idx < currentIdx;
                   const isCurrent = idx === currentIdx;
 
@@ -108,7 +122,7 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
               <div className="hidden md:block relative -mt-14 mb-10 mx-16 h-1 bg-pc-dark -z-0">
                 <div 
                   className="h-full bg-pc-green transition-all duration-500 rounded-full"
-                  style={{ width: `${(currentIdx / (STAGES.length - 1)) * 100}%` }}
+                  style={{ width: `${(currentIdx / (stages.length - 1)) * 100}%` }}
                 />
               </div>
             </div>
