@@ -28,7 +28,7 @@ function getStageIndex(status) {
   return 0;
 }
 
-export default function ActiveOrderTracker({ orders = [], onSelectOrder, onClose }) {
+export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
   const [receiptModalOrder, setReceiptModalOrder] = useState(null);
 
   const activeOrders = orders.filter(o => 
@@ -86,17 +86,6 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder, onClose
                   </svg>
                   View Receipt
                 </button>
-                {onClose && (
-                  <button 
-                    onClick={onClose}
-                    className="p-1.5 text-pc-muted hover:text-white bg-pc-dark/70 hover:bg-pc-dark rounded-xl border border-pc-border transition-colors"
-                    title="Hide Tracker"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
               </div>
             </div>
 

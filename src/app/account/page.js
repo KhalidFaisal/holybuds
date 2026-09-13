@@ -332,7 +332,6 @@ function AccountContent() {
             <ActiveOrderTracker 
               orders={recentOrders} 
               onSelectOrder={() => handleTabChange('orders')}
-              onClose={() => setShowTracking(false)}
             />
           )}
 
