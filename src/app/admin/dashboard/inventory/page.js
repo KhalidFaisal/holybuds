@@ -286,18 +286,18 @@ export default function AdminInventory() {
                   )}
                 </div>
               </div>
-              <div className="flex flex-col items-end flex-shrink-0">
-                <div className="flex items-center gap-1.5">
+              <div className="flex flex-col items-end flex-shrink-0 w-48">
+                <div className="flex items-center gap-1.5 w-full">
                   <button 
                     onClick={() => setLogsModalBox(box)}
-                    className="text-[11px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 px-2.5 py-1 rounded transition-colors"
+                    className="h-7 flex-1 flex items-center justify-center text-[11px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 rounded-lg transition-colors"
                     title="View History & Discrepancies"
                   >
                     Logs
                   </button>
                   <button 
                     onClick={() => openRestock(box.id)}
-                    className="text-[11px] font-bold text-pc-green bg-pc-green/10 border border-pc-green/20 hover:bg-pc-green/20 px-2.5 py-1 rounded transition-colors"
+                    className="h-7 flex-1 flex items-center justify-center text-[11px] font-bold text-pc-green bg-pc-green/10 border border-pc-green/20 hover:bg-pc-green/20 rounded-lg transition-colors"
                   >
                     Restock
                   </button>
@@ -307,7 +307,7 @@ export default function AdminInventory() {
                         e.stopPropagation();
                         setActionMenuBoxId(actionMenuBoxId === box.id ? null : box.id);
                       }}
-                      className="text-[11px] font-bold text-pc-muted hover:text-white bg-pc-black border border-pc-border hover:bg-white/5 px-2 py-1 rounded transition-colors"
+                      className="w-7 h-7 flex items-center justify-center text-[11px] font-bold text-pc-muted hover:text-white bg-pc-black border border-pc-border hover:bg-white/5 rounded-lg transition-colors"
                       title="More options"
                     >
                       •••
@@ -355,17 +355,17 @@ export default function AdminInventory() {
                   </div>
                 </div>
 
-                {/* Alert & Split positioned directly under Logs and Restock on the right */}
+                {/* Alert & Split positioned directly under Logs and Restock with exact same total width */}
                 {(() => {
                   const alerts = getBoxAlerts(box, products);
                   const splits = getBoxSplitSuggestions(box, boxes, products);
                   if (alerts.length === 0 && splits.length === 0) return null;
                   return (
-                    <div className="flex flex-wrap justify-end items-center gap-1.5 mt-1.5">
+                    <div className="flex items-center gap-1.5 w-full mt-1.5">
                       {alerts.length > 0 && (
                         <button 
                           onClick={() => setAlertsModalBox(box)}
-                          className="text-[11px] font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 px-2 py-0.5 rounded transition-colors animate-pulse"
+                          className="h-7 flex-1 flex items-center justify-center text-[11px] font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 rounded-lg transition-colors animate-pulse truncate px-1"
                           title="Low Stock Alerts"
                         >
                           Alerts ({alerts.length})
@@ -374,7 +374,7 @@ export default function AdminInventory() {
                       {splits.length > 0 && (
                         <button 
                           onClick={() => setSplitModalBox(box)}
-                          className="text-[11px] font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 px-2 py-0.5 rounded transition-colors animate-pulse"
+                          className="h-7 flex-1 flex items-center justify-center text-[11px] font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 rounded-lg transition-colors animate-pulse truncate px-1"
                           title="Items at 0 in this box with 2+ in another box"
                         >
                           Split ({splits.length})
