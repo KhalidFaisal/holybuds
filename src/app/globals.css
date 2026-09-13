@@ -177,6 +177,11 @@
     color: #22c72c !important;
   }
 
+  /* Explicit true white for text placed on dark or green colored backgrounds */
+  .text-pure-white {
+    color: #ffffff !important;
+  }
+
   .glow-emerald {
     box-shadow: 0 0 30px rgba(16, 185, 129, 0.15);
   }

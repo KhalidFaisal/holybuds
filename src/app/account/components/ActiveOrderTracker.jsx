@@ -121,22 +121,28 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder, onClose
                       <div 
                         className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm mb-2 transition-all shadow-md relative z-20 ${
                           isCurrent 
-                            ? 'bg-pc-green text-white border-2 border-pc-green ring-4 ring-pc-green/30 scale-110 font-black' 
+                            ? 'bg-pc-green text-pure-white border-2 border-pc-green ring-4 ring-pc-green/30 scale-110 font-black' 
                             : isCompleted 
                               ? 'bg-white text-pc-green border-2 border-pc-green shadow-md shadow-pc-green/15' 
                               : 'bg-pc-card text-pc-muted border-2 border-pc-border/80'
                         }`}
+                        style={isCurrent ? { color: '#ffffff' } : undefined}
                       >
                         {isCompleted ? (
                           <svg className="w-5 h-5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                           </svg>
                         ) : (
-                          idx + 1
+                          <span 
+                            className={isCurrent ? 'text-pure-white font-black' : 'text-gray-500 font-bold'}
+                            style={isCurrent ? { color: '#ffffff' } : undefined}
+                          >
+                            {idx + 1}
+                          </span>
                         )}
                       </div>
 
-                      <p className={`text-xs md:text-sm font-bold ${isCurrent ? 'text-pc-green' : isCompleted ? 'text-white' : 'text-pc-muted'}`}>
+                      <p className={`text-xs md:text-sm font-bold ${isCurrent ? 'text-pc-green' : isCompleted ? 'text-gray-900 font-bold' : 'text-pc-muted'}`}>
                         {stage.label}
                       </p>
                       <p className="text-[11px] text-pc-muted/70 hidden sm:block mt-0.5">
