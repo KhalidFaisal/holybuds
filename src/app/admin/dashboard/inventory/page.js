@@ -274,7 +274,7 @@ export default function AdminInventory() {
             <div className="flex justify-between items-start mb-5 gap-2">
               <div className="min-w-0 flex-1 pr-2">
                 <h2 className="text-xl font-bold text-white mb-1.5 truncate">{box.name}</h2>
-                <div className="flex flex-wrap items-center gap-1.5">
+                <div>
                   {box.driver ? (
                     <span className="inline-block whitespace-nowrap text-pc-green text-xs font-bold bg-pc-green/10 px-2 py-0.5 rounded">
                       Assigned: {box.driver.name}
@@ -284,100 +284,105 @@ export default function AdminInventory() {
                       Unassigned
                     </span>
                   )}
-                  {(() => {
-                    const alerts = getBoxAlerts(box, products);
-                    if (alerts.length === 0) return null;
-                    return (
-                      <button 
-                        onClick={() => setAlertsModalBox(box)}
-                        className="text-[11px] font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 px-2 py-0.5 rounded transition-colors animate-pulse"
-                        title="Low Stock Alerts"
-                      >
-                        Alerts ({alerts.length})
-                      </button>
-                    );
-                  })()}
-                  {(() => {
-                    const splits = getBoxSplitSuggestions(box, boxes, products);
-                    if (splits.length === 0) return null;
-                    return (
-                      <button 
-                        onClick={() => setSplitModalBox(box)}
-                        className="text-[11px] font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 px-2 py-0.5 rounded transition-colors animate-pulse"
-                        title="Items at 0 in this box with 2+ in another box"
-                      >
-                        Split ({splits.length})
-                      </button>
-                    );
-                  })()}
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <button 
-                  onClick={() => setLogsModalBox(box)}
-                  className="text-[11px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 px-2.5 py-1 rounded transition-colors"
-                  title="View History & Discrepancies"
-                >
-                  Logs
-                </button>
-                <button 
-                  onClick={() => openRestock(box.id)}
-                  className="text-[11px] font-bold text-pc-green bg-pc-green/10 border border-pc-green/20 hover:bg-pc-green/20 px-2.5 py-1 rounded transition-colors"
-                >
-                  Restock
-                </button>
-                <div className="relative">
+              <div className="flex flex-col items-end flex-shrink-0">
+                <div className="flex items-center gap-1.5">
                   <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActionMenuBoxId(actionMenuBoxId === box.id ? null : box.id);
-                    }}
-                    className="text-[11px] font-bold text-pc-muted hover:text-white bg-pc-black border border-pc-border hover:bg-white/5 px-2 py-1 rounded transition-colors"
-                    title="More options"
+                    onClick={() => setLogsModalBox(box)}
+                    className="text-[11px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 px-2.5 py-1 rounded transition-colors"
+                    title="View History & Discrepancies"
                   >
-                    •••
+                    Logs
                   </button>
-                  {actionMenuBoxId === box.id && (
-                    <>
-                      <div 
-                        className="fixed inset-0 z-20" 
-                        onClick={() => setActionMenuBoxId(null)} 
-                      />
-                      <div className="absolute right-0 mt-1 w-36 bg-pc-dark border border-pc-border rounded-xl shadow-2xl py-1 z-30">
-                        <button
-                          onClick={() => {
-                            setActionMenuBoxId(null);
-                            if (confirm(`Are you sure you want to completely RESET the inventory for ${box.name} to 0?`)) {
-                              fetch('/api/admin/inventory/boxes', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action: 'RESET', boxId: box.id })
-                              }).then(res => { if (res.ok) fetchData(); });
-                            }
-                          }}
-                          className="w-full text-left px-3 py-2 text-xs font-semibold text-yellow-400 hover:bg-white/5 flex items-center gap-2"
-                        >
-                          <span>↺</span> Reset to 0
-                        </button>
-                        <button
-                          onClick={() => {
-                            setActionMenuBoxId(null);
-                            if (confirm(`Are you sure you want to DELETE ${box.name}? This will clear all its inventory and history.`)) {
-                              fetch('/api/admin/inventory/boxes', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action: 'DELETE', boxId: box.id })
-                              }).then(res => { if (res.ok) fetchData(); });
-                            }
-                          }}
-                          className="w-full text-left px-3 py-2 text-xs font-semibold text-red-400 hover:bg-white/5 flex items-center gap-2"
-                        >
-                          <span>✕</span> Delete Box
-                        </button>
-                      </div>
-                    </>
-                  )}
+                  <button 
+                    onClick={() => openRestock(box.id)}
+                    className="text-[11px] font-bold text-pc-green bg-pc-green/10 border border-pc-green/20 hover:bg-pc-green/20 px-2.5 py-1 rounded transition-colors"
+                  >
+                    Restock
+                  </button>
+                  <div className="relative">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActionMenuBoxId(actionMenuBoxId === box.id ? null : box.id);
+                      }}
+                      className="text-[11px] font-bold text-pc-muted hover:text-white bg-pc-black border border-pc-border hover:bg-white/5 px-2 py-1 rounded transition-colors"
+                      title="More options"
+                    >
+                      •••
+                    </button>
+                    {actionMenuBoxId === box.id && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-20" 
+                          onClick={() => setActionMenuBoxId(null)} 
+                        />
+                        <div className="absolute right-0 mt-1 w-36 bg-pc-dark border border-pc-border rounded-xl shadow-2xl py-1 z-30">
+                          <button
+                            onClick={() => {
+                              setActionMenuBoxId(null);
+                              if (confirm(`Are you sure you want to completely RESET the inventory for ${box.name} to 0?`)) {
+                                fetch('/api/admin/inventory/boxes', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ action: 'RESET', boxId: box.id })
+                                }).then(res => { if (res.ok) fetchData(); });
+                              }
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs font-semibold text-yellow-400 hover:bg-white/5 flex items-center gap-2"
+                          >
+                            <span>↺</span> Reset to 0
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActionMenuBoxId(null);
+                              if (confirm(`Are you sure you want to DELETE ${box.name}? This will clear all its inventory and history.`)) {
+                                fetch('/api/admin/inventory/boxes', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ action: 'DELETE', boxId: box.id })
+                                }).then(res => { if (res.ok) fetchData(); });
+                              }
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs font-semibold text-red-400 hover:bg-white/5 flex items-center gap-2"
+                          >
+                            <span>✕</span> Delete Box
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
+
+                {/* Alert & Split positioned directly under Logs and Restock on the right */}
+                {(() => {
+                  const alerts = getBoxAlerts(box, products);
+                  const splits = getBoxSplitSuggestions(box, boxes, products);
+                  if (alerts.length === 0 && splits.length === 0) return null;
+                  return (
+                    <div className="flex flex-wrap justify-end items-center gap-1.5 mt-1.5">
+                      {alerts.length > 0 && (
+                        <button 
+                          onClick={() => setAlertsModalBox(box)}
+                          className="text-[11px] font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 px-2 py-0.5 rounded transition-colors animate-pulse"
+                          title="Low Stock Alerts"
+                        >
+                          Alerts ({alerts.length})
+                        </button>
+                      )}
+                      {splits.length > 0 && (
+                        <button 
+                          onClick={() => setSplitModalBox(box)}
+                          className="text-[11px] font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 px-2 py-0.5 rounded transition-colors animate-pulse"
+                          title="Items at 0 in this box with 2+ in another box"
+                        >
+                          Split ({splits.length})
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
