@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+import ReceiptModal from './ReceiptModal';
+
 function getStages(order) {
   const isDelivery = order.deliveryMethod === 'DELIVERY';
   return [
@@ -26,6 +29,8 @@ function getStageIndex(status) {
 }
 
 export default function ActiveOrderTracker({ orders = [], onSelectOrder, onClose }) {
+  const [receiptModalOrder, setReceiptModalOrder] = useState(null);
+
   const activeOrders = orders.filter(o => 
     (o.status || '').toUpperCase() !== 'DELETED' &&
     ['PENDING', 'PROCESSING', 'READY'].includes((o.status || '').toUpperCase())
@@ -68,14 +73,19 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder, onClose
                 <span className="text-xl font-black text-white">
                   ${order.total.toFixed(2)}
                 </span>
-                {onSelectOrder && (
-                  <button 
-                    onClick={() => onSelectOrder(order)}
-                    className="btn-secondary py-1.5 px-3 text-xs font-bold"
-                  >
-                    View Receipt
-                  </button>
-                )}
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setReceiptModalOrder(order);
+                    onSelectOrder?.(order);
+                  }}
+                  className="btn-secondary py-1.5 px-3 text-xs font-bold flex items-center gap-1.5"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
+                  </svg>
+                  View Receipt
+                </button>
                 {onClose && (
                   <button 
                     onClick={onClose}
@@ -107,18 +117,18 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder, onClose
 
                   return (
                     <div key={stage.key} className="flex flex-col items-center text-center relative z-10">
-                      {/* Step Circle */}
+                      {/* Step Circle with green border */}
                       <div 
                         className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm mb-2 transition-all shadow-md relative z-20 ${
                           isCurrent 
-                            ? 'bg-pc-green text-pc-black ring-4 ring-pc-green/30 scale-110 font-black' 
+                            ? 'bg-pc-green text-white border-2 border-pc-green ring-4 ring-pc-green/30 scale-110 font-black' 
                             : isCompleted 
-                              ? 'bg-white text-emerald-600 border-2 border-white shadow-lg shadow-white/20' 
-                              : 'bg-pc-card text-pc-muted border border-pc-border'
+                              ? 'bg-white text-pc-green border-2 border-pc-green shadow-md shadow-pc-green/15' 
+                              : 'bg-pc-card text-pc-muted border-2 border-pc-border/80'
                         }`}
                       >
                         {isCompleted ? (
-                          <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                          <svg className="w-5 h-5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                           </svg>
                         ) : (
@@ -156,6 +166,13 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder, onClose
           </div>
         );
       })}
+
+      {receiptModalOrder && (
+        <ReceiptModal 
+          order={receiptModalOrder} 
+          onClose={() => setReceiptModalOrder(null)} 
+        />
+      )}
     </div>
   );
 }
