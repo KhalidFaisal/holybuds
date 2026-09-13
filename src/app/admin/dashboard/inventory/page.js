@@ -103,6 +103,45 @@ function getBoxAlerts(box, productsList = []) {
   });
 }
 
+function getBoxSplitSuggestions(currentBox, allBoxes = [], productsList = []) {
+  if (!currentBox || !Array.isArray(allBoxes) || !Array.isArray(productsList)) return [];
+
+  return productsList.filter(product => {
+    // Exclude wholesale and accessories items
+    const cat = (product.category || '').toLowerCase();
+    if (cat === 'wholesale' || cat === 'accessories' || cat === 'accessory') return false;
+
+    // Current box must have 0 of this product
+    const currentQty = currentBox.items?.find(i => i.productId === product.id)?.expectedQuantity || 0;
+    if (currentQty > 0) return false;
+
+    // Check if at least one other box has 2 or more units of this product
+    const donorBoxes = allBoxes
+      .filter(b => b.id !== currentBox.id)
+      .map(b => {
+        const qty = b.items?.find(i => i.productId === product.id)?.expectedQuantity || 0;
+        return { boxId: b.id, boxName: b.name, quantity: qty };
+      })
+      .filter(d => d.quantity >= 2);
+
+    return donorBoxes.length > 0;
+  }).map(product => {
+    const donorBoxes = allBoxes
+      .filter(b => b.id !== currentBox.id)
+      .map(b => {
+        const qty = b.items?.find(i => i.productId === product.id)?.expectedQuantity || 0;
+        return { boxId: b.id, boxName: b.name, quantity: qty };
+      })
+      .filter(d => d.quantity >= 2);
+
+    return {
+      id: product.id,
+      product,
+      donors: donorBoxes
+    };
+  });
+}
+
 export default function AdminInventory() {
   const [boxes, setBoxes] = useState([]);
   const [drivers, setDrivers] = useState([]);
@@ -115,6 +154,7 @@ export default function AdminInventory() {
   const [expandedBoxes, setExpandedBoxes] = useState({});
   const [logsModalBox, setLogsModalBox] = useState(null);
   const [alertsModalBox, setAlertsModalBox] = useState(null);
+  const [splitModalBox, setSplitModalBox] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -287,6 +327,19 @@ export default function AdminInventory() {
                     </button>
                   );
                 })()}
+                {(() => {
+                  const splits = getBoxSplitSuggestions(box, boxes, products);
+                  if (splits.length === 0) return null;
+                  return (
+                    <button 
+                      onClick={() => setSplitModalBox(box)}
+                      className="text-[11px] font-bold text-purple-700 bg-purple-100 border border-purple-200 hover:bg-purple-200 px-2 py-1 rounded transition-colors animate-pulse"
+                      title="Items at 0 in this box with 2+ in another box"
+                    >
+                      Split ({splits.length})
+                    </button>
+                  );
+                })()}
                 <button 
                   onClick={() => openRestock(box.id)}
                   className="text-[11px] font-bold text-pc-green bg-pc-green/10 border border-pc-green/20 hover:bg-pc-green/20 px-2 py-1 rounded transition-colors"
@@ -322,6 +375,25 @@ export default function AdminInventory() {
             
             {expandedBoxes[box.id] && (
               <div className="space-y-2">
+                {(() => {
+                  const splits = getBoxSplitSuggestions(box, boxes, products);
+                  if (splits.length === 0) return null;
+                  return (
+                    <div className="p-2.5 bg-purple-500/10 border border-purple-500/20 rounded-lg flex items-center justify-between text-xs mb-2">
+                      <span className="text-purple-300 font-medium flex items-center gap-1.5">
+                        <span>⚡</span>
+                        <span><strong>{splits.length}</strong> item{splits.length !== 1 ? 's' : ''} with 0 can be split from other boxes</span>
+                      </span>
+                      <button 
+                        onClick={() => setSplitModalBox(box)}
+                        className="text-[11px] font-bold text-purple-400 hover:text-white underline ml-2 whitespace-nowrap"
+                      >
+                        View Details
+                      </button>
+                    </div>
+                  );
+                })()}
+
                 {[...box.items].sort((a, b) => a.product.name.localeCompare(b.product.name)).map(item => (
                   <div key={item.id} className="flex justify-between items-center bg-pc-black rounded-lg p-3 border border-pc-border">
                     <span className="text-white text-sm">{item.product.name}</span>
@@ -601,6 +673,66 @@ export default function AdminInventory() {
               <button 
                 onClick={() => setAlertsModalBox(null)}
                 className="flex-1 py-3 bg-pc-black border border-pc-border rounded-lg text-white font-bold hover:bg-pc-border transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Split Suggestions Modal */}
+      {splitModalBox && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-pc-dark w-full max-w-lg rounded-2xl p-6 border border-pc-border shadow-2xl relative max-h-[90vh] flex flex-col">
+            <h2 className="text-xl font-bold text-white mb-1">Split Suggestions: {splitModalBox.name}</h2>
+            <p className="text-pc-muted mb-4 text-xs">
+              These items are currently at <strong className="text-red-400">0</strong> in {splitModalBox.name}, but have 2+ units in another driver&apos;s box that can be split.
+            </p>
+            
+            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
+              {getBoxSplitSuggestions(splitModalBox, boxes, products).map(item => (
+                <div key={item.id} className="bg-pc-black border border-pc-border rounded-xl p-3.5">
+                  <div className="flex justify-between items-start mb-2 gap-2">
+                    <h3 className="font-bold text-white text-sm truncate" title={item.product.name}>
+                      {item.product.name}
+                    </h3>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 shrink-0">
+                      0 in {splitModalBox.name}
+                    </span>
+                  </div>
+
+                  <div className="bg-white/5 p-2.5 rounded-lg border border-white/5 space-y-1.5 text-xs">
+                    <p className="text-pc-muted text-[11px] font-semibold uppercase tracking-wider">
+                      Available to split from:
+                    </p>
+                    {item.donors.map(donor => (
+                      <div key={donor.boxId} className="flex justify-between items-center text-xs">
+                        <span className="text-white font-medium">• {donor.boxName}</span>
+                        <span className="text-pc-green font-bold font-mono">
+                          {donor.quantity} in box (suggest splitting 1)
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button 
+                onClick={() => {
+                  const box = splitModalBox;
+                  setSplitModalBox(null);
+                  openRestock(box.id);
+                }}
+                className="flex-1 py-3 bg-pc-green text-black rounded-lg font-bold hover:bg-pc-green/90 transition-colors text-sm"
+              >
+                Restock {splitModalBox.name}
+              </button>
+              <button 
+                onClick={() => setSplitModalBox(null)}
+                className="flex-1 py-3 bg-pc-black border border-pc-border rounded-lg text-white font-bold hover:bg-pc-border transition-colors text-sm"
               >
                 Close
               </button>
