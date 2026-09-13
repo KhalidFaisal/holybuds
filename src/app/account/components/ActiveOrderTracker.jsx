@@ -80,8 +80,16 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
             </div>
 
             {/* Stepper */}
-            <div className="py-2">
-              <div className="grid grid-cols-3 gap-2 sm:gap-4 relative">
+            <div className="py-2 relative">
+              {/* Connecting progress line placed BEHIND circles */}
+              <div className="absolute top-7 -translate-y-1/2 left-[16.67%] right-[16.67%] h-1 bg-pc-dark rounded-full overflow-hidden z-0">
+                <div 
+                  className="h-full bg-pc-green transition-all duration-500 rounded-full"
+                  style={{ width: `${(currentIdx / (stages.length - 1)) * 100}%` }}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 relative z-10">
                 {stages.map((stage, idx) => {
                   const isCompleted = idx < currentIdx;
                   const isCurrent = idx === currentIdx;
@@ -90,12 +98,12 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
                     <div key={stage.key} className="flex flex-col items-center text-center relative z-10">
                       {/* Step Circle */}
                       <div 
-                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm mb-2 transition-all shadow-md ${
+                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm mb-2 transition-all shadow-md relative z-20 ${
                           isCurrent 
                             ? 'bg-pc-green text-pc-black ring-4 ring-pc-green/30 scale-110 font-black' 
                             : isCompleted 
-                              ? 'bg-pc-green/20 text-pc-green border border-pc-green/50' 
-                              : 'bg-pc-dark text-pc-muted border border-pc-border'
+                              ? 'bg-[#102216] text-pc-green border-2 border-pc-green shadow-lg shadow-pc-green/10' 
+                              : 'bg-pc-card text-pc-muted border border-pc-border'
                         }`}
                       >
                         {isCompleted ? (
@@ -116,14 +124,6 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
                     </div>
                   );
                 })}
-              </div>
-
-              {/* Progress bar line for desktop */}
-              <div className="hidden md:block relative -mt-14 mb-10 mx-16 h-1 bg-pc-dark -z-0">
-                <div 
-                  className="h-full bg-pc-green transition-all duration-500 rounded-full"
-                  style={{ width: `${(currentIdx / (stages.length - 1)) * 100}%` }}
-                />
               </div>
             </div>
 
