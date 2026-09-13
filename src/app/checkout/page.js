@@ -30,78 +30,6 @@ function CheckoutContent() {
     referredByCode: '',
   });
 
-  // Load saved info from local storage for fast checkout
-  useEffect(() => {
-    try {
-      const savedStr = localStorage.getItem('holybuds_saved_info');
-      const draftStr = localStorage.getItem('holybuds_checkout_draft');
-      const saved = savedStr ? JSON.parse(savedStr) : null;
-      const draft = draftStr ? JSON.parse(draftStr) : null;
-      const source = saved || draft;
-
-      if (source) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setForm(prev => ({ 
-          ...prev, 
-          customerName: source.customerName || prev.customerName,
-          customerPhone: source.customerPhone || prev.customerPhone,
-          deliveryMethod: source.deliveryMethod || prev.deliveryMethod || '',
-          deliveryAddress: source.deliveryAddress || prev.deliveryAddress,
-          town: source.town || prev.town,
-          zipCode: source.zipCode || prev.zipCode,
-          referredByCode: prev.referredByCode || source.referredByCode || '',
-          notes: ''
-        }));
-      }
-    } catch (e) {}
-  }, []);
-
-  // Prefill form if session is present
-  useEffect(() => {
-    if (status === 'authenticated') {
-      const fetchUserData = async () => {
-        try {
-          const res = await fetch('/api/account/me');
-          if (res.ok) {
-            const data = await res.json();
-            const customer = data.customer;
-            const user = data.user;
-
-            if (customer || user) {
-              setForm(prev => {
-                let addr = prev.deliveryAddress;
-                let twn = prev.town;
-                let zip = prev.zipCode;
-
-                if (customer?.address) {
-                  const parts = customer.address.split(',').map(s => s.trim());
-                  if (parts.length >= 3) {
-                    addr = addr || parts[0];
-                    twn = twn || parts[1];
-                    zip = zip || parts[2];
-                  } else {
-                    addr = addr || customer.address;
-                  }
-                }
-
-                return {
-                  ...prev,
-                  customerName: prev.customerName || customer?.name || user?.name || '',
-                  customerPhone: prev.customerPhone || customer?.phone || '',
-                  deliveryMethod: prev.deliveryMethod || '',
-                  deliveryAddress: addr,
-                  town: twn,
-                  zipCode: zip
-                };
-              });
-            }
-          }
-        } catch (e) {}
-      };
-      fetchUserData();
-    }
-  }, [status]);
-
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [orderConfirm, setOrderConfirm] = useState(null);
@@ -115,6 +43,85 @@ function CheckoutContent() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [referralData, setReferralData] = useState(null);
   const [useStoreCredit, setUseStoreCredit] = useState(false);
+
+  // Load saved info from local storage for fast checkout (GUESTS ONLY)
+  useEffect(() => {
+    // Completely ignore local storage if user is logged in or session is still resolving
+    if (status !== 'unauthenticated') return;
+
+    try {
+      const savedStr = localStorage.getItem('holybuds_saved_info');
+      const draftStr = localStorage.getItem('holybuds_checkout_draft');
+      const saved = savedStr ? JSON.parse(savedStr) : null;
+      const draft = draftStr ? JSON.parse(draftStr) : null;
+      const source = saved || draft;
+
+      if (source) {
+        setTimeout(() => {
+          setForm(prev => ({ 
+            ...prev, 
+            customerName: source.customerName || prev.customerName,
+            customerPhone: source.customerPhone || prev.customerPhone,
+            deliveryMethod: source.deliveryMethod || prev.deliveryMethod || '',
+            deliveryAddress: source.deliveryAddress || prev.deliveryAddress,
+            town: source.town || prev.town,
+            zipCode: source.zipCode || prev.zipCode,
+            referredByCode: prev.referredByCode || source.referredByCode || '',
+            notes: ''
+          }));
+        }, 0);
+      }
+    } catch (e) {}
+  }, [status]);
+
+  // Prefill form if session is present - always show saved account/customer info
+  useEffect(() => {
+    if (status === 'authenticated') {
+      const fetchUserData = async () => {
+        try {
+          const res = await fetch('/api/account/me');
+          if (res.ok) {
+            const data = await res.json();
+            const customer = data.customer;
+            const user = data.user;
+
+            if (customer || user) {
+              if (customer) {
+                setCustomerProfile(customer);
+              }
+              setForm(prev => {
+                let street = '';
+                let twn = '';
+                let zip = '';
+
+                if (customer?.address) {
+                  const parts = customer.address.split(',').map(s => s.trim());
+                  if (parts.length >= 3) {
+                    street = parts[0];
+                    twn = parts[1];
+                    zip = parts[2];
+                  } else {
+                    street = customer.address;
+                  }
+                }
+
+                return {
+                  ...prev,
+                  customerName: customer?.name || user?.name || prev.customerName || '',
+                  customerPhone: customer?.phone || prev.customerPhone || '',
+                  deliveryMethod: prev.deliveryMethod || '',
+                  deliveryAddress: street || prev.deliveryAddress || '',
+                  town: twn || prev.town || '',
+                  zipCode: zip || prev.zipCode || ''
+                };
+              });
+            }
+          }
+        } catch (e) {}
+      };
+      fetchUserData();
+    }
+  }, [status]);
 
   useEffect(() => {
     const code = localStorage.getItem('driver_referral_code') || localStorage.getItem('customer_referral_code');
@@ -173,17 +180,17 @@ function CheckoutContent() {
                 if (data.customer.address) {
                   const parts = data.customer.address.split(',').map(s => s.trim());
                   if (parts.length >= 3) {
-                    addr = addr || parts[0];
-                    twn = twn || parts[1];
-                    zip = zip || parts[2];
+                    addr = parts[0];
+                    twn = parts[1];
+                    zip = parts[2];
                   } else {
-                    addr = addr || data.customer.address;
+                    addr = data.customer.address;
                   }
                 }
 
                 return {
                   ...prev,
-                  customerName: prev.customerName || data.customer.name || '',
+                  customerName: data.customer.name || prev.customerName || '',
                   deliveryMethod: prev.deliveryMethod || '',
                   deliveryAddress: addr,
                   town: twn,
@@ -210,16 +217,21 @@ function CheckoutContent() {
       const timeoutId = setTimeout(fetchLoyalty, 300);
       return () => clearTimeout(timeoutId);
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCustomerProfile(null);
-      setIsNewCustomer(false);
-      setSelectedReward(null);
-      setShowFullLoyaltyPanel(false);
+      const resetId = setTimeout(() => {
+        setCustomerProfile(null);
+        setIsNewCustomer(false);
+        setSelectedReward(null);
+        setShowFullLoyaltyPanel(false);
+      }, 0);
+      return () => clearTimeout(resetId);
     }
   }, [form.customerPhone]);
 
-  // Continuously auto-save contact & delivery info to localStorage so customer never loses it
+  // Continuously auto-save contact & delivery info to localStorage so customer never loses it (GUESTS ONLY)
   useEffect(() => {
+    // If user is logged in, do not save over or mix into browser local storage
+    if (status === 'authenticated') return;
+
     if (form.customerName || form.customerPhone || form.deliveryAddress || form.town) {
       try {
         const saved = JSON.parse(localStorage.getItem('holybuds_saved_info') || '{}');
@@ -237,7 +249,7 @@ function CheckoutContent() {
       } catch (e) {}
     }
     localStorage.setItem('holybuds_checkout_draft', JSON.stringify(form));
-  }, [form]);
+  }, [form, status]);
 
   const handleCopyCode = async () => {
     if (customerProfile?.referralCode) {
@@ -336,19 +348,21 @@ function CheckoutContent() {
         console.error('Failed to save recent order', e);
       }
 
-      // Save for fast "one-click" checkout next time (non-destructive)
-      try {
-        const prevSaved = JSON.parse(localStorage.getItem('holybuds_saved_info') || '{}');
-        localStorage.setItem('holybuds_saved_info', JSON.stringify({
-          customerName: form.customerName,
-          customerPhone: form.customerPhone,
-          deliveryMethod: form.deliveryMethod,
-          deliveryAddress: form.deliveryAddress || prevSaved.deliveryAddress || '',
-          town: form.town || prevSaved.town || '',
-          zipCode: form.zipCode || prevSaved.zipCode || '',
-          referredByCode: form.referredByCode || prevSaved.referredByCode || '',
-        }));
-      } catch (e) {}
+      // Save for fast "one-click" checkout next time (non-destructive, guests only)
+      if (status !== 'authenticated') {
+        try {
+          const prevSaved = JSON.parse(localStorage.getItem('holybuds_saved_info') || '{}');
+          localStorage.setItem('holybuds_saved_info', JSON.stringify({
+            customerName: form.customerName,
+            customerPhone: form.customerPhone,
+            deliveryMethod: form.deliveryMethod,
+            deliveryAddress: form.deliveryAddress || prevSaved.deliveryAddress || '',
+            town: form.town || prevSaved.town || '',
+            zipCode: form.zipCode || prevSaved.zipCode || '',
+            referredByCode: form.referredByCode || prevSaved.referredByCode || '',
+          }));
+        } catch (e) {}
+      }
 
       setOrderConfirm(order);
       clearCart();
