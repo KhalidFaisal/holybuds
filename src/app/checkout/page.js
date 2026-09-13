@@ -419,9 +419,23 @@ function CheckoutContent() {
             </div>
           </div>
 
-          <Link href="/menu" className="btn-primary inline-block">
-            Continue Shopping
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <Link 
+              href="/account?tab=orders&track=true" 
+              className="btn-primary w-full sm:w-auto px-6 py-3 font-bold flex items-center justify-center gap-2 shadow-lg shadow-pc-green/20"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+              </svg>
+              Track Order
+            </Link>
+            <Link 
+              href="/menu" 
+              className="btn-secondary w-full sm:w-auto px-6 py-3 font-bold flex items-center justify-center gap-2"
+            >
+              Continue Shopping
+            </Link>
+          </div>
         </div>
       </div>
     );

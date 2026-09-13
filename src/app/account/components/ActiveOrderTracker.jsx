@@ -25,7 +25,7 @@ function getStageIndex(status) {
   return 0;
 }
 
-export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
+export default function ActiveOrderTracker({ orders = [], onSelectOrder, onClose }) {
   const activeOrders = orders.filter(o => 
     (o.status || '').toUpperCase() !== 'DELETED' &&
     ['PENDING', 'PROCESSING', 'READY'].includes((o.status || '').toUpperCase())
@@ -76,6 +76,17 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
                     View Receipt
                   </button>
                 )}
+                {onClose && (
+                  <button 
+                    onClick={onClose}
+                    className="p-1.5 text-pc-muted hover:text-white bg-pc-dark/70 hover:bg-pc-dark rounded-xl border border-pc-border transition-colors"
+                    title="Hide Tracker"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -102,12 +113,12 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
                           isCurrent 
                             ? 'bg-pc-green text-pc-black ring-4 ring-pc-green/30 scale-110 font-black' 
                             : isCompleted 
-                              ? 'bg-[#102216] text-pc-green border-2 border-pc-green shadow-lg shadow-pc-green/10' 
+                              ? 'bg-white text-emerald-600 border-2 border-white shadow-lg shadow-white/20' 
                               : 'bg-pc-card text-pc-muted border border-pc-border'
                         }`}
                       >
                         {isCompleted ? (
-                          <svg className="w-5 h-5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                           </svg>
                         ) : (

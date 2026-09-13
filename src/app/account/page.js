@@ -21,8 +21,10 @@ function AccountContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
+  const trackParam = searchParams.get('track');
 
   const [activeTab, setActiveTab] = useState(tabParam || 'orders');
+  const [showTracking, setShowTracking] = useState(Boolean(trackParam));
   const [, startTransition] = useTransition();
 
   const [accountUser, setAccountUser] = useState(null);
@@ -321,13 +323,18 @@ function AccountContent() {
             customer={customerProfile} 
             orders={recentOrders}
             onSelectTab={handleTabChange}
+            isTrackingOpen={showTracking}
+            onToggleTracking={() => setShowTracking(prev => !prev)}
           />
 
-          {/* Live Order Tracker Banner (If active orders exist) */}
-          <ActiveOrderTracker 
-            orders={recentOrders} 
-            onSelectOrder={() => handleTabChange('orders')}
-          />
+          {/* Live Order Tracker Banner (Only shown when expanded by clicking Active card) */}
+          {showTracking && (
+            <ActiveOrderTracker 
+              orders={recentOrders} 
+              onSelectOrder={() => handleTabChange('orders')}
+              onClose={() => setShowTracking(false)}
+            />
+          )}
 
           {/* Main Content Layout with Responsive Navigation */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">

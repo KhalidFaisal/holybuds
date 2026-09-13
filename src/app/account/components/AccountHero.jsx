@@ -60,7 +60,7 @@ export function TierIcon({ type, className = 'w-3.5 h-3.5' }) {
   );
 }
 
-export default function AccountHero({ user, customer, orders = [], onSelectTab }) {
+export default function AccountHero({ user, customer, orders = [], onSelectTab, isTrackingOpen, onToggleTracking }) {
   const points = customer?.points || 0;
   const storeCredit = customer?.storeCredit || 0;
   const totalOrders = customer?.totalOrders || orders.length || 0;
@@ -179,24 +179,42 @@ export default function AccountHero({ user, customer, orders = [], onSelectTab }
 
           {/* Active Orders */}
           <div 
-            onClick={() => onSelectTab('orders')}
+            onClick={() => {
+              if (activeOrders.length > 0 && onToggleTracking) {
+                onToggleTracking();
+              } else {
+                onSelectTab('orders');
+              }
+            }}
             className={`bg-pc-dark/70 hover:bg-pc-dark border rounded-2xl p-4 transition-all cursor-pointer group ${
               activeOrders.length > 0 
-                ? 'border-pc-green/50 bg-pc-green/5 ring-1 ring-pc-green/20' 
+                ? isTrackingOpen
+                  ? 'border-pc-green bg-pc-green/10 ring-2 ring-pc-green/40 shadow-lg shadow-pc-green/10'
+                  : 'border-pc-green/50 bg-pc-green/5 ring-1 ring-pc-green/20' 
                 : 'border-pc-border'
             }`}
           >
             <p className="text-xs font-semibold text-pc-muted uppercase tracking-wider mb-1 flex items-center justify-between">
               <span>Active</span>
               {activeOrders.length > 0 && (
-                <span className="w-2 h-2 rounded-full bg-pc-green animate-ping" />
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-pc-green font-bold group-hover:underline">
+                    {isTrackingOpen ? 'Hide' : 'Track'}
+                  </span>
+                  <span className="w-2 h-2 rounded-full bg-pc-green animate-ping" />
+                </span>
               )}
             </p>
             <p className={`text-2xl md:text-3xl font-black tracking-tight ${activeOrders.length > 0 ? 'text-pc-green' : 'text-pc-muted'}`}>
               {activeOrders.length}
             </p>
-            <p className="text-[11px] text-pc-muted/80 mt-0.5">
-              {activeOrders.length > 0 ? 'Delivery in progress' : 'No active orders'}
+            <p className="text-[11px] text-pc-muted/80 mt-0.5 flex items-center justify-between">
+              <span>{activeOrders.length > 0 ? 'Delivery in progress' : 'No active orders'}</span>
+              {activeOrders.length > 0 && (
+                <svg className={`w-3.5 h-3.5 text-pc-green transition-transform duration-200 ${isTrackingOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              )}
             </p>
           </div>
         </div>
