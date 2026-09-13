@@ -77,6 +77,32 @@ function InlineEditQuantity({ boxId, productId, initialQuantity, onUpdate }) {
   );
 }
 
+function getBoxAlerts(box, productsList = []) {
+  if (!box || !Array.isArray(productsList)) return [];
+  return productsList.filter(product => {
+    // Exclude wholesale items
+    const cat = (product.category || '').toLowerCase();
+    if (cat === 'wholesale') return false;
+
+    // Main site inventory must have at least 5 units
+    if ((product.stock || 0) < 5) return false;
+
+    // Expected quantity currently in this box (0 if row does not exist)
+    const currentQty = box.items?.find(i => i.productId === product.id)?.expectedQuantity || 0;
+
+    // Category slug 'flowers' check (preserves 'flowers' category slug)
+    const isFlower = product.category === 'flowers' || cat === 'flowers';
+    return isFlower ? currentQty <= 2 : currentQty < 2;
+  }).map(product => {
+    const currentQty = box.items?.find(i => i.productId === product.id)?.expectedQuantity || 0;
+    return {
+      id: product.id,
+      product,
+      expectedQuantity: currentQty
+    };
+  });
+}
+
 export default function AdminInventory() {
   const [boxes, setBoxes] = useState([]);
   const [drivers, setDrivers] = useState([]);
@@ -249,20 +275,15 @@ export default function AdminInventory() {
                   Logs
                 </button>
                 {(() => {
-                  const lowStockCount = box.items.filter(i => 
-                    i.product.stock >= 5 && (
-                      (i.product.category === 'flowers' && i.expectedQuantity <= 2) || 
-                      (i.product.category !== 'flowers' && i.expectedQuantity < 2)
-                    )
-                  ).length;
-                  if (lowStockCount === 0) return null;
+                  const alerts = getBoxAlerts(box, products);
+                  if (alerts.length === 0) return null;
                   return (
                     <button 
                       onClick={() => setAlertsModalBox(box)}
                       className="text-[11px] font-bold text-orange-700 bg-orange-100 border border-orange-200 hover:bg-orange-200 px-2 py-1 rounded transition-colors animate-pulse"
                       title="Low Stock Alerts"
                     >
-                      Alerts ({lowStockCount})
+                      Alerts ({alerts.length})
                     </button>
                   );
                 })()}
@@ -547,12 +568,7 @@ export default function AdminInventory() {
             <p className="text-pc-muted mb-4">Items running low in this box but available in main site inventory.</p>
             
             <div className="flex-1 overflow-y-auto space-y-1 pr-1">
-              {alertsModalBox.items.filter(i => 
-                i.product.stock >= 5 && (
-                  (i.product.category === 'flowers' && i.expectedQuantity <= 2) || 
-                  (i.product.category !== 'flowers' && i.expectedQuantity < 2)
-                )
-              ).map(item => (
+              {getBoxAlerts(alertsModalBox, products).map(item => (
                 <div key={item.id} className="bg-pc-black border border-pc-border rounded-md px-3 py-2 flex justify-between items-center">
                   <div className="truncate pr-3">
                     <h3 className="font-bold text-white text-sm truncate" title={item.product.name}>{item.product.name}</h3>
