@@ -8,7 +8,6 @@
   * {
     box-sizing: border-box;
     -webkit-text-stroke: 0px transparent !important;
-    text-stroke: 0px transparent !important;
     font-synthesis: none !important;
   }
 
@@ -21,7 +20,6 @@
     color: #22c72c;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-text-stroke: 0px transparent !important;
-    text-stroke: 0px transparent !important;
     font-synthesis: none !important;
     text-rendering: optimizeLegibility;
   }
