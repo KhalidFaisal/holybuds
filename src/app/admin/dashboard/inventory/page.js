@@ -80,9 +80,9 @@ function InlineEditQuantity({ boxId, productId, initialQuantity, onUpdate }) {
 function getBoxAlerts(box, productsList = []) {
   if (!box || !Array.isArray(productsList)) return [];
   return productsList.filter(product => {
-    // Exclude wholesale items
+    // Exclude wholesale and accessories items
     const cat = (product.category || '').toLowerCase();
-    if (cat === 'wholesale') return false;
+    if (cat === 'wholesale' || cat === 'accessories' || cat === 'accessory') return false;
 
     // Main site inventory must have at least 5 units
     if ((product.stock || 0) < 5) return false;
