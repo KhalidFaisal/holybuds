@@ -106,7 +106,14 @@ function getBoxAlerts(box, productsList = []) {
 function getBoxSplitSuggestions(currentBox, allBoxes = [], productsList = []) {
   if (!currentBox || !Array.isArray(allBoxes) || !Array.isArray(productsList)) return [];
 
+  // Exclude items that can be restocked from main site inventory (Restock Alerts)
+  const restockAlerts = getBoxAlerts(currentBox, productsList);
+  const restockableIds = new Set(restockAlerts.map(i => i.id));
+
   return productsList.filter(product => {
+    // Simply exclude the items from split that can be restocked
+    if (restockableIds.has(product.id)) return false;
+
     // Exclude wholesale and accessories items
     const cat = (product.category || '').toLowerCase();
     if (cat === 'wholesale' || cat === 'accessories' || cat === 'accessory') return false;
