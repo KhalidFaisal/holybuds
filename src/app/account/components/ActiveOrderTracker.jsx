@@ -16,7 +16,8 @@ function getStageIndex(status) {
 
 export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
   const activeOrders = orders.filter(o => 
-    ['PENDING', 'PROCESSING', 'READY'].includes(o.status)
+    (o.status || '').toUpperCase() !== 'DELETED' &&
+    ['PENDING', 'PROCESSING', 'READY'].includes((o.status || '').toUpperCase())
   );
 
   if (activeOrders.length === 0) return null;

@@ -6,15 +6,18 @@ import Link from 'next/link';
 const STATUS_CONFIG = {
   PENDING: { label: 'Pending', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
   PROCESSING: { label: 'Processing', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/40' },
-  READY: { label: 'Processing', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/40' },
+  READY: { label: 'Ready', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/40' },
   DELIVERED: { label: 'Delivered', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
   COMPLETED: { label: 'Delivered', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
+  CANCELLED: { label: 'Cancelled', badgeClass: 'bg-red-500/20 text-red-300 border-red-500/40' },
 };
 
 function getDisplayStatusKey(status) {
   const s = (status || '').toUpperCase();
+  if (s === 'CANCELLED') return 'CANCELLED';
   if (s === 'PENDING') return 'PENDING';
-  if (s === 'PROCESSING' || s === 'READY') return 'PROCESSING';
+  if (s === 'PROCESSING') return 'PROCESSING';
+  if (s === 'READY') return 'READY';
   if (s === 'DELIVERED' || s === 'COMPLETED') return 'DELIVERED';
   return 'PENDING';
 }
@@ -24,13 +27,20 @@ export default function OrdersTab({ orders = [], onReorder }) {
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [reorderingId, setReorderingId] = useState(null);
 
-  const activeCount = orders.filter(o => ['PENDING', 'PROCESSING', 'READY'].includes(o.status)).length;
-  const deliveredCount = orders.filter(o => ['DELIVERED', 'COMPLETED'].includes(o.status)).length;
+  // If an order is deleted, don't show at all
+  const visibleOrders = orders.filter(o => (o.status || '').toUpperCase() !== 'DELETED');
 
-  const filteredOrders = orders.filter(order => {
+  // Only count pending, processing, ready as active
+  const activeCount = visibleOrders.filter(o => ['PENDING', 'PROCESSING', 'READY'].includes((o.status || '').toUpperCase())).length;
+  const deliveredCount = visibleOrders.filter(o => ['DELIVERED', 'COMPLETED'].includes((o.status || '').toUpperCase())).length;
+  const cancelledCount = visibleOrders.filter(o => (o.status || '').toUpperCase() === 'CANCELLED').length;
+
+  const filteredOrders = visibleOrders.filter(order => {
+    const s = (order.status || '').toUpperCase();
     if (filter === 'ALL') return true;
-    if (filter === 'ACTIVE') return ['PENDING', 'PROCESSING', 'READY'].includes(order.status);
-    if (filter === 'DELIVERED') return ['DELIVERED', 'COMPLETED'].includes(order.status);
+    if (filter === 'ACTIVE') return ['PENDING', 'PROCESSING', 'READY'].includes(s);
+    if (filter === 'DELIVERED') return ['DELIVERED', 'COMPLETED'].includes(s);
+    if (filter === 'CANCELLED') return s === 'CANCELLED';
     return true;
   });
 
@@ -60,7 +70,7 @@ export default function OrdersTab({ orders = [], onReorder }) {
               : 'bg-pc-dark/70 text-pc-muted hover:text-white border border-pc-border'
           }`}
         >
-          All Orders ({orders.length})
+          All Orders ({visibleOrders.length})
         </button>
         <button
           onClick={() => setFilter('ACTIVE')}
@@ -83,6 +93,18 @@ export default function OrdersTab({ orders = [], onReorder }) {
         >
           Delivered ({deliveredCount})
         </button>
+        {cancelledCount > 0 && (
+          <button
+            onClick={() => setFilter('CANCELLED')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              filter === 'CANCELLED'
+                ? 'bg-red-500 text-white shadow-md shadow-red-500/20'
+                : 'bg-pc-dark/70 text-pc-muted hover:text-white border border-pc-border'
+            }`}
+          >
+            Cancelled ({cancelledCount})
+          </button>
+        )}
       </div>
 
       {/* Orders List */}
@@ -97,7 +119,9 @@ export default function OrdersTab({ orders = [], onReorder }) {
           <p className="text-sm text-pc-muted mb-6">
             {filter === 'ACTIVE' 
               ? 'You do not have any orders currently in transit.' 
-              : 'Browse our fresh menu and enjoy fast delivery.'}
+              : filter === 'CANCELLED'
+                ? 'You do not have any cancelled orders.'
+                : 'Browse our fresh menu and enjoy fast delivery.'}
           </p>
           <Link href="/menu" className="btn-primary inline-flex items-center gap-2">
             Browse Menu

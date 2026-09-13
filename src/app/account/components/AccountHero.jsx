@@ -67,7 +67,8 @@ export default function AccountHero({ user, customer, orders = [], onSelectTab }
   const tierPoints = customer?.tierPoints ?? points;
   
   const activeOrders = orders.filter(o => 
-    ['PENDING', 'PROCESSING', 'READY'].includes(o.status)
+    (o.status || '').toUpperCase() !== 'DELETED' &&
+    ['PENDING', 'PROCESSING', 'READY'].includes((o.status || '').toUpperCase())
   );
 
   const tier = getTierInfo(tierPoints, totalOrders);

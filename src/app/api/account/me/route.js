@@ -62,7 +62,10 @@ export async function GET() {
           OR: [
             { customerId: user.customer.id },
             { customerPhone: { in: phoneMatches } }
-          ]
+          ],
+          NOT: {
+            status: { in: ['DELETED', 'deleted'] }
+          }
         },
         take: 50,
         orderBy: { createdAt: 'desc' },

@@ -81,7 +81,7 @@ function AccountContent() {
           setCustomerProfile(data.customer);
         }
         if (data.orders) {
-          setRecentOrders(data.orders);
+          setRecentOrders(data.orders.filter(o => (o.status || '').toUpperCase() !== 'DELETED'));
         }
         if (data.settings) {
           setSiteSettings(data.settings);
@@ -108,7 +108,7 @@ function AccountContent() {
             setCustomerProfile(data.customer);
           }
           if (data.orders) {
-            setRecentOrders(data.orders);
+            setRecentOrders(data.orders.filter(o => (o.status || '').toUpperCase() !== 'DELETED'));
           }
           if (data.settings) {
             setSiteSettings(data.settings);
@@ -277,7 +277,8 @@ function AccountContent() {
   }
 
   const activeOrdersCount = recentOrders.filter(o => 
-    ['PENDING', 'PROCESSING', 'READY', 'DELIVERED'].includes(o.status)
+    (o.status || '').toUpperCase() !== 'DELETED' &&
+    ['PENDING', 'PROCESSING', 'READY'].includes((o.status || '').toUpperCase())
   ).length;
 
   const pointsCount = customerProfile?.points || 0;
