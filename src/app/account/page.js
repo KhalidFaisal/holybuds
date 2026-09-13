@@ -79,7 +79,9 @@ function AccountContent() {
         }
         if (data.customer) {
           setCustomerProfile(data.customer);
-          setRecentOrders(data.orders || []);
+        }
+        if (data.orders) {
+          setRecentOrders(data.orders);
         }
         if (data.settings) {
           setSiteSettings(data.settings);
@@ -104,7 +106,9 @@ function AccountContent() {
           }
           if (data.customer) {
             setCustomerProfile(data.customer);
-            setRecentOrders(data.orders || []);
+          }
+          if (data.orders) {
+            setRecentOrders(data.orders);
           }
           if (data.settings) {
             setSiteSettings(data.settings);

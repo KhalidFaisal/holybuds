@@ -30,27 +30,48 @@ export async function POST(request) {
       }
       
       // Link existing customer to this user
-      await prisma.customer.update({
+      customer = await prisma.customer.update({
         where: { id: customer.id },
         data: { userId: session.user.id }
       });
     } else {
-      // Create a new customer for this user
-      const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-      const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
-      
-      const generatedReferralCode = 'HOLY-' + Math.random().toString(36).substring(2, 7).toUpperCase();
-      
-      await prisma.customer.create({
-        data: {
-          phone: sanitizedPhone,
-          name: user?.name || 'Valued Customer',
-          userId: session.user.id,
-          points: settings?.loyaltyEnabled ? (settings.signupBonus || 50) : 0,
-          referralCode: generatedReferralCode
-        }
+      // Check if user already has a customer profile
+      const existingCust = await prisma.customer.findUnique({
+        where: { userId: session.user.id }
       });
+
+      if (existingCust) {
+        customer = await prisma.customer.update({
+          where: { id: existingCust.id },
+          data: { phone: sanitizedPhone }
+        });
+      } else {
+        // Create a new customer for this user
+        const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+        const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
+        
+        const generatedReferralCode = 'HOLY-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+        
+        customer = await prisma.customer.create({
+          data: {
+            phone: sanitizedPhone,
+            name: user?.name || 'Valued Customer',
+            userId: session.user.id,
+            points: settings?.loyaltyEnabled ? (settings.signupBonus || 50) : 0,
+            referralCode: generatedReferralCode
+          }
+        });
+      }
     }
+
+    // Link orders matching this phone number to this customer
+    const phoneMatches = [phone, sanitizedPhone].filter(Boolean);
+    await prisma.order.updateMany({
+      where: {
+        customerPhone: { in: phoneMatches }
+      },
+      data: { customerId: customer.id }
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -4,28 +4,33 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 const STATUS_CONFIG = {
-  PENDING: { label: 'Order Received', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
-  PROCESSING: { label: 'Preparing', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/40' },
-  READY: { label: 'Out for Delivery', badgeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/40' },
-  DELIVERED: { label: 'Delivered', badgeClass: 'bg-teal-500/20 text-teal-300 border-teal-500/40' },
-  COMPLETED: { label: 'Completed', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
-  CANCELLED: { label: 'Cancelled', badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/40' },
+  PENDING: { label: 'Pending', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
+  PROCESSING: { label: 'Processing', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/40' },
+  READY: { label: 'Processing', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/40' },
+  DELIVERED: { label: 'Delivered', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
+  COMPLETED: { label: 'Delivered', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
 };
+
+function getDisplayStatusKey(status) {
+  const s = (status || '').toUpperCase();
+  if (s === 'PENDING') return 'PENDING';
+  if (s === 'PROCESSING' || s === 'READY') return 'PROCESSING';
+  if (s === 'DELIVERED' || s === 'COMPLETED') return 'DELIVERED';
+  return 'PENDING';
+}
 
 export default function OrdersTab({ orders = [], onReorder }) {
   const [filter, setFilter] = useState('ALL');
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [reorderingId, setReorderingId] = useState(null);
 
-  const activeCount = orders.filter(o => ['PENDING', 'PROCESSING', 'READY', 'DELIVERED'].includes(o.status)).length;
-  const completedCount = orders.filter(o => o.status === 'COMPLETED').length;
-  const cancelledCount = orders.filter(o => o.status === 'CANCELLED').length;
+  const activeCount = orders.filter(o => ['PENDING', 'PROCESSING', 'READY'].includes(o.status)).length;
+  const deliveredCount = orders.filter(o => ['DELIVERED', 'COMPLETED'].includes(o.status)).length;
 
   const filteredOrders = orders.filter(order => {
     if (filter === 'ALL') return true;
-    if (filter === 'ACTIVE') return ['PENDING', 'PROCESSING', 'READY', 'DELIVERED'].includes(order.status);
-    if (filter === 'COMPLETED') return order.status === 'COMPLETED';
-    if (filter === 'CANCELLED') return order.status === 'CANCELLED';
+    if (filter === 'ACTIVE') return ['PENDING', 'PROCESSING', 'READY'].includes(order.status);
+    if (filter === 'DELIVERED') return ['DELIVERED', 'COMPLETED'].includes(order.status);
     return true;
   });
 
@@ -69,27 +74,15 @@ export default function OrdersTab({ orders = [], onReorder }) {
           Active ({activeCount})
         </button>
         <button
-          onClick={() => setFilter('COMPLETED')}
+          onClick={() => setFilter('DELIVERED')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            filter === 'COMPLETED'
+            filter === 'DELIVERED'
               ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
               : 'bg-pc-dark/70 text-pc-muted hover:text-white border border-pc-border'
           }`}
         >
-          Completed ({completedCount})
+          Delivered ({deliveredCount})
         </button>
-        {cancelledCount > 0 && (
-          <button
-            onClick={() => setFilter('CANCELLED')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              filter === 'CANCELLED'
-                ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
-                : 'bg-pc-dark/70 text-pc-muted hover:text-white border border-pc-border'
-            }`}
-          >
-            Cancelled ({cancelledCount})
-          </button>
-        )}
       </div>
 
       {/* Orders List */}
@@ -117,7 +110,8 @@ export default function OrdersTab({ orders = [], onReorder }) {
         <div className="space-y-4">
           {filteredOrders.map((order) => {
             const isExpanded = expandedOrderId === order.id;
-            const statusConfig = STATUS_CONFIG[order.status] || { label: order.status, badgeClass: 'bg-pc-dark text-pc-muted border-pc-border' };
+            const statusKey = getDisplayStatusKey(order.status);
+            const statusConfig = STATUS_CONFIG[statusKey] || STATUS_CONFIG.PENDING;
             const itemsSubtotal = (order.items || []).reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const rawDeliveryFee = order.total + (order.discountAmount || 0) - itemsSubtotal;
             const deliveryFee = rawDeliveryFee > 0 ? Math.round(rawDeliveryFee * 100) / 100 : 0;

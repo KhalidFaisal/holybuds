@@ -1,23 +1,22 @@
 'use client';
 
 const STAGES = [
-  { key: 'PENDING', label: 'Order Received', desc: 'Sent to dispensary' },
-  { key: 'PROCESSING', label: 'Preparing', desc: 'Packing your items' },
-  { key: 'READY', label: 'Out for Delivery', desc: 'Driver on the way' },
-  { key: 'DELIVERED', label: 'Delivered', desc: 'Enjoy your buds!' },
+  { key: 'PENDING', label: 'Pending', desc: 'Order received' },
+  { key: 'PROCESSING', label: 'Processing', desc: 'Preparing your order' },
+  { key: 'DELIVERED', label: 'Delivered', desc: 'Order delivered' },
 ];
 
 function getStageIndex(status) {
-  if (status === 'PENDING') return 0;
-  if (status === 'PROCESSING') return 1;
-  if (status === 'READY') return 2;
-  if (status === 'DELIVERED' || status === 'COMPLETED') return 3;
+  const s = (status || '').toUpperCase();
+  if (s === 'PENDING') return 0;
+  if (s === 'PROCESSING' || s === 'READY') return 1;
+  if (s === 'DELIVERED' || s === 'COMPLETED') return 2;
   return 0;
 }
 
 export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
   const activeOrders = orders.filter(o => 
-    ['PENDING', 'PROCESSING', 'READY', 'DELIVERED'].includes(o.status)
+    ['PENDING', 'PROCESSING', 'READY'].includes(o.status)
   );
 
   if (activeOrders.length === 0) return null;
@@ -67,11 +66,10 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
 
             {/* Stepper */}
             <div className="py-2">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 relative">
                 {STAGES.map((stage, idx) => {
                   const isCompleted = idx < currentIdx;
                   const isCurrent = idx === currentIdx;
-                  const isPending = idx > currentIdx;
 
                   return (
                     <div key={stage.key} className="flex flex-col items-center text-center relative z-10">
@@ -106,7 +104,7 @@ export default function ActiveOrderTracker({ orders = [], onSelectOrder }) {
               </div>
 
               {/* Progress bar line for desktop */}
-              <div className="hidden md:block relative -mt-14 mb-10 mx-12 h-1 bg-pc-dark -z-0">
+              <div className="hidden md:block relative -mt-14 mb-10 mx-16 h-1 bg-pc-dark -z-0">
                 <div 
                   className="h-full bg-pc-green transition-all duration-500 rounded-full"
                   style={{ width: `${(currentIdx / (STAGES.length - 1)) * 100}%` }}

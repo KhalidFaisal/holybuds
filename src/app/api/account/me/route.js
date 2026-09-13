@@ -49,11 +49,36 @@ export async function GET() {
       where: { id: 'global' },
     });
 
+    let orders = [];
+    if (user.customer) {
+      const phoneMatches = [user.customer.phone];
+      const cleanPhone = user.customer.phone ? user.customer.phone.replace(/\D/g, '') : '';
+      if (cleanPhone && !phoneMatches.includes(cleanPhone)) {
+        phoneMatches.push(cleanPhone);
+      }
+
+      orders = await prisma.order.findMany({
+        where: {
+          OR: [
+            { customerId: user.customer.id },
+            { customerPhone: { in: phoneMatches } }
+          ]
+        },
+        take: 50,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          items: {
+            include: { product: true }
+          }
+        }
+      });
+    }
+
     let tierPoints = user.customer?.points || 0;
     let totalPointsUsed = 0;
-    if (user.customer?.orders) {
-      totalPointsUsed = user.customer.orders.reduce((sum, o) => sum + (o.pointsUsed || 0), 0);
-      tierPoints = (user.customer.points || 0) + totalPointsUsed;
+    if (orders.length > 0) {
+      totalPointsUsed = orders.reduce((sum, o) => sum + (o.pointsUsed || 0), 0);
+      tierPoints = (user.customer?.points || 0) + totalPointsUsed;
     }
 
     return NextResponse.json({
@@ -76,12 +101,12 @@ export async function GET() {
         tierPoints,
         totalPointsUsed,
         storeCredit: user.customer.storeCredit,
-        totalOrders: user.customer.totalOrders,
+        totalOrders: Math.max(user.customer.totalOrders || 0, orders.length),
         referralCode: user.customer.referralCode,
         createdAt: user.customer.createdAt,
         referralsMade: user.customer.referralsMade || [],
       } : null,
-      orders: user.customer?.orders || [],
+      orders,
       settings: settings ? {
         pointsPerDollar: settings.pointsPerDollar,
         customerReferralDiscount: settings.customerReferralDiscount,
