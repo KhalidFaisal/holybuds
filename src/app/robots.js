@@ -4,7 +4,7 @@ export default function robots() {
   return {
     rules: {
       userAgent: '*',
-      allow: '/',
+      allow: ['/', '/api/verify-password'],
       disallow: ['/api/'],
     },
     sitemap: `${baseUrl}/sitemap.xml`,

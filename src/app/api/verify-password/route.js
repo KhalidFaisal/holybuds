@@ -5,7 +5,16 @@ import { cookies } from 'next/headers';
 
 export async function POST(request) {
   try {
-    const { password } = await request.json();
+    let password;
+    const contentType = request.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+      const body = await request.json();
+      password = body?.password;
+    } else {
+      const formData = await request.formData();
+      password = formData.get('password');
+    }
 
     if (!password) {
       return NextResponse.json({ error: 'Password is required' }, { status: 400 });
@@ -41,6 +50,10 @@ export async function POST(request) {
       maxAge: 60 * 60 * 24 * 30, // 30 days
       sameSite: 'lax',
     });
+
+    if (!contentType.includes('application/json')) {
+      return NextResponse.redirect(new URL('/', request.url), 303);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
