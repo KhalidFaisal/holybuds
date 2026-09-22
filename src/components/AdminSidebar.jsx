@@ -41,6 +41,15 @@ const navItems = [
     ),
   },
   {
+    label: 'Cash Tracker',
+    href: '/admin/dashboard/cash-tracker',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6H2.25m0 0v10.5m0-10.5h19.5m0 0v10.5m0-10.5A.75.75 0 0 1 21 6v-.75m0 11.25v.75a.75.75 0 0 1-.75.75H3.75a.75.75 0 0 1-.75-.75v-.75m18 0v-10.5M9.75 12a2.25 2.25 0 1 1 4.5 0 2.25 2.25 0 0 1-4.5 0Zm.75 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Z" />
+      </svg>
+    ),
+  },
+  {
     label: 'Categories',
     href: '/admin/dashboard/categories',
     icon: (
@@ -74,15 +83,6 @@ const navItems = [
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M13.25 15.65c.66.66 1.48 1.15 2.37 1.42 2.7.83 5.42-1 6.25-3.7.83-2.7-1-5.42-3.7-6.25-2.7-.83-5.42 1-6.25 3.7-.17.56-.25 1.15-.22 1.74l-6.1 6.1c-.2.2-.4.45-.55.7l-1.9 3.2c-.3.5.2 1 .7.7l3.2-1.9c.25-.15.5-.35.7-.55l5.5-5.46M17 9c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1Z" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Cash Tracker',
-    href: '/admin/dashboard/cash-tracker',
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6H2.25m0 0v10.5m0-10.5h19.5m0 0v10.5m0-10.5A.75.75 0 0 1 21 6v-.75m0 11.25v.75a.75.75 0 0 1-.75.75H3.75a.75.75 0 0 1-.75-.75v-.75m18 0v-10.5M9.75 12a2.25 2.25 0 1 1 4.5 0 2.25 2.25 0 0 1-4.5 0Zm.75 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Z" />
       </svg>
     ),
   },

@@ -120,6 +120,44 @@ export async function POST(request) {
 
   try {
     const data = await request.json();
+
+    // Check for batch import array
+    const items = Array.isArray(data) ? data : Array.isArray(data.items) ? data.items : null;
+
+    if (items) {
+      if (!items.length) {
+        return NextResponse.json({ error: 'No items provided for import' }, { status: 400 });
+      }
+
+      const formatted = items
+        .filter((item) => item.person && item.amount !== undefined && !isNaN(Number(item.amount)))
+        .map((item) => {
+          const parsedAmount = parseFloat(item.amount);
+          let formType = item.form || (parsedAmount < 0 ? 'cash' : 'Cash');
+          if (parsedAmount < 0 && formType.toLowerCase() === 'cash') formType = 'cash';
+          return {
+            person: String(item.person).trim(),
+            driverId: item.driverId || null,
+            date: item.date ? new Date(item.date) : new Date(),
+            confirmed: item.confirmed !== undefined ? Boolean(item.confirmed) : true,
+            form: formType,
+            amount: parsedAmount,
+            note: String(item.note || '').trim(),
+          };
+        });
+
+      if (!formatted.length) {
+        return NextResponse.json({ error: 'No valid rows found to import' }, { status: 400 });
+      }
+
+      const result = await prisma.cashTrackerEntry.createMany({
+        data: formatted,
+      });
+
+      return NextResponse.json({ success: true, count: result.count });
+    }
+
+    // Single item creation
     const { person, driverId, date, confirmed, form, amount, note } = data;
 
     if (!person || amount === undefined || amount === null || isNaN(Number(amount))) {
