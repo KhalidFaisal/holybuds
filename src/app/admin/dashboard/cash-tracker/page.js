@@ -999,17 +999,18 @@ export default function CashTrackerPage() {
         </div>
 
         {selectedIds.length > 0 ? (
-          <div className="flex items-center gap-2 bg-red-950/60 border border-red-500/40 px-3 py-1.5 rounded-lg shrink-0 animate-fade-in">
-            <span className="text-white font-semibold">
-              <span className="bg-red-500/20 text-red-400 font-bold px-1.5 py-0.5 rounded text-xs mr-1">
-                {selectedIds.length}
-              </span>
-              selected
+          <div className="flex items-center gap-2.5 h-8 shrink-0 animate-fade-in">
+            <span
+              style={{ color: '#f87171' }}
+              className="h-7 px-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-xs font-semibold inline-flex items-center gap-1"
+            >
+              <strong style={{ color: '#ef4444' }}>{selectedIds.length}</strong> selected
             </span>
             <button
               type="button"
               onClick={() => setSelectedIds([])}
-              className="text-xs text-pc-muted hover:text-white underline px-1"
+              style={{ color: '#94a3b8' }}
+              className="text-xs hover:!text-white underline transition-colors px-1"
             >
               Deselect
             </button>
@@ -1017,27 +1018,27 @@ export default function CashTrackerPage() {
               type="button"
               disabled={isBulkDeleting}
               onClick={handleDeleteSelected}
-              className="px-3 py-1 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold text-xs rounded shadow transition-all flex items-center gap-1.5 active:scale-95"
+              className="h-7 px-3 bg-red-600 hover:bg-red-500 disabled:opacity-50 !text-white font-bold text-xs rounded-lg shadow-sm transition-all inline-flex items-center gap-1.5 active:scale-95"
             >
               {isBulkDeleting ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Deleting...</span>
+                  <span style={{ color: '#ffffff' }} className="!text-white">Deleting...</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="#ffffff" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                   </svg>
-                  <span>Delete Selected ({selectedIds.length})</span>
+                  <span style={{ color: '#ffffff' }} className="!text-white">Delete Selected ({selectedIds.length})</span>
                 </>
               )}
             </button>
           </div>
         ) : (
-          <div className="text-pc-muted font-medium shrink-0">
-            Showing <span className="text-white font-bold">{filteredEntries.length === 0 ? 0 : `${startIndex + 1}-${endIndex}`}</span> of{' '}
-            <span className="text-white font-bold">{filteredEntries.length}</span> entries
+          <div className="text-pc-muted font-medium shrink-0 h-8 flex items-center">
+            Showing <span className="text-white font-bold mx-1">{filteredEntries.length === 0 ? 0 : `${startIndex + 1}-${endIndex}`}</span> of{' '}
+            <span className="text-white font-bold ml-1">{filteredEntries.length}</span> entries
           </div>
         )}
       </div>
