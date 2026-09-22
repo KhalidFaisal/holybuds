@@ -105,6 +105,9 @@ export default function CashTrackerPage() {
   const [newNote, setNewNote] = useState('');
   const [newConfirmed, setNewConfirmed] = useState(true);
 
+  // Popup Modal Add State (Mobile Friendly)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
   // Edit Modal State
   const [editingEntry, setEditingEntry] = useState(null);
   const [editPerson, setEditPerson] = useState('');
@@ -233,6 +236,7 @@ export default function CashTrackerPage() {
 
       setNewAmount('');
       setNewNote('');
+      setIsAddModalOpen(false);
       setSuccessMsg('Entry recorded successfully');
       setTimeout(() => setSuccessMsg(''), 3000);
       fetchEntries();
@@ -548,6 +552,21 @@ export default function CashTrackerPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Add Entry Popup Modal Button (Easy on Mobile & Desktop) */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsAddModalOpen(true);
+              setError('');
+            }}
+            className="px-4 py-2 rounded-xl text-xs font-black bg-pc-green hover:bg-pc-green/90 text-black shadow-md shadow-pc-green/20 hover:shadow-pc-green/30 transition-all flex items-center gap-1.5 active:scale-95"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span>+ Add Entry</span>
+          </button>
+
           {/* Record Payroll Shortcut */}
           <button
             type="button"
@@ -555,10 +574,11 @@ export default function CashTrackerPage() {
               setNewForm('cash');
               setNewNote('Payroll');
               setNewAmount('');
+              setIsAddModalOpen(true);
             }}
             className="px-3.5 py-2 rounded-xl text-xs font-bold bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30 transition-all flex items-center gap-1.5"
           >
-            <span className="text-sm font-black">-</span> Record Payroll / Payout
+            <span className="text-sm font-black">-</span> Record Payroll
           </button>
 
           {/* Import CSV Button */}
@@ -615,13 +635,23 @@ export default function CashTrackerPage() {
         </div>
       )}
 
-      {/* KPI Metric Summary Cards */}
+      {/* KPI Metric Summary Cards (Ordered with Total Net Balance First) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        {/* Net Cash On Hand */}
+        {/* 1. Total Net Balance (FIRST POSITION) */}
+        <div className="p-4 bg-pc-dark/80 backdrop-blur-md border border-pc-green/40 rounded-2xl relative overflow-hidden group hover:border-pc-green/60 transition-all shadow-[0_0_20px_rgba(34,197,94,0.08)]">
+          <div className="absolute top-0 right-0 w-28 h-28 bg-pc-green/15 rounded-full blur-2xl pointer-events-none group-hover:bg-pc-green/25 transition-all" />
+          <p className="text-xs font-bold text-pc-muted uppercase tracking-wider mb-1">Total Net Balance</p>
+          <p className="text-2xl md:text-3xl font-black text-pc-green tracking-tight">
+            ${summary.grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+          <p className="mt-2 text-[11px] text-pc-muted">Cash + Zelle combined</p>
+        </div>
+
+        {/* 2. Net Cash On Hand */}
         <div className="p-4 bg-pc-dark/80 backdrop-blur-md border border-pc-border rounded-2xl relative overflow-hidden group hover:border-pc-green/40 transition-all">
           <div className="absolute top-0 right-0 w-24 h-24 bg-pc-green/10 rounded-full blur-2xl pointer-events-none group-hover:bg-pc-green/15 transition-all" />
           <p className="text-xs font-bold text-pc-muted uppercase tracking-wider mb-1">Net Cash On Hand</p>
-          <p className="text-2xl md:text-3xl font-black text-pc-green tracking-tight">
+          <p className="text-2xl md:text-3xl font-black text-white tracking-tight">
             ${summary.netCashOnHand.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
           <div className="mt-2 flex items-center gap-2 text-[11px] text-pc-muted">
@@ -631,7 +661,7 @@ export default function CashTrackerPage() {
           </div>
         </div>
 
-        {/* Zelle Collected */}
+        {/* 3. Zelle Collected */}
         <div className="p-4 bg-pc-dark/80 backdrop-blur-md border border-pc-border rounded-2xl relative overflow-hidden group hover:border-amber-500/40 transition-all">
           <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/15 transition-all" />
           <p className="text-xs font-bold text-pc-muted uppercase tracking-wider mb-1">Zelle Received</p>
@@ -641,17 +671,7 @@ export default function CashTrackerPage() {
           <p className="mt-2 text-[11px] text-pc-muted">Digital bank transfers</p>
         </div>
 
-        {/* Grand Total Combined */}
-        <div className="p-4 bg-pc-dark/80 backdrop-blur-md border border-pc-border rounded-2xl relative overflow-hidden group hover:border-blue-500/40 transition-all">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-blue-500/15 transition-all" />
-          <p className="text-xs font-bold text-pc-muted uppercase tracking-wider mb-1">Total Net Balance</p>
-          <p className="text-2xl md:text-3xl font-black text-white tracking-tight">
-            ${summary.grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-          <p className="mt-2 text-[11px] text-pc-muted">Cash + Zelle combined</p>
-        </div>
-
-        {/* Pending Confirmation */}
+        {/* 4. Pending Confirmation */}
         <div className={`p-4 bg-pc-dark/80 backdrop-blur-md border rounded-2xl relative overflow-hidden transition-all ${
           summary.pendingCount > 0 ? 'border-amber-500/50 bg-amber-950/10' : 'border-pc-border'
         }`}>
@@ -670,8 +690,8 @@ export default function CashTrackerPage() {
         </div>
       </div>
 
-      {/* Rapid Inline Add Entry Bar (Google Sheets Style Fast Input) */}
-      <div className="bg-pc-dark/90 border border-pc-border rounded-2xl p-4 shadow-xl">
+      {/* Rapid Inline Add Entry Bar (Google Sheets Style Desktop Input) */}
+      <div className="hidden md:block bg-pc-dark/90 border border-pc-border rounded-2xl p-4 shadow-xl">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs font-black uppercase tracking-wider text-pc-green flex items-center gap-1.5">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -870,19 +890,19 @@ export default function CashTrackerPage() {
         </div>
       </div>
 
-      {/* Spreadsheet Table View (Matching Screenshot Exact Look & Feel) */}
+      {/* Spreadsheet Table View (Optimized Proportional Layout without Blank Space) */}
       <div className="bg-pc-dark/95 border border-pc-border rounded-2xl overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-auto">
             <thead>
               <tr className="bg-[#2b396b] text-white text-xs font-bold uppercase tracking-wider select-none">
-                <th className="py-3 px-4 w-40">Person</th>
-                <th className="py-3 px-3 w-28 text-right pr-6">Date</th>
-                <th className="py-3 px-3 w-24 text-center">Confirmed</th>
-                <th className="py-3 px-4 w-32">Form</th>
-                <th className="py-3 px-4 w-36 text-right">Amount</th>
-                <th className="py-3 px-4">Note</th>
-                <th className="py-3 px-3 w-20 text-center">Actions</th>
+                <th className="py-3 px-4 w-[18%] min-w-[140px]">Person</th>
+                <th className="py-3 px-3 w-[12%] min-w-[90px] text-right pr-6">Date</th>
+                <th className="py-3 px-3 w-[11%] min-w-[90px] text-center">Confirmed</th>
+                <th className="py-3 px-4 w-[13%] min-w-[100px]">Form</th>
+                <th className="py-3 px-4 w-[16%] min-w-[120px] text-right">Amount</th>
+                <th className="py-3 px-4 w-[18%] min-w-[140px]">Note</th>
+                <th className="py-3 px-3 w-[12%] min-w-[120px] text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-pc-border/40 text-sm">
@@ -898,13 +918,22 @@ export default function CashTrackerPage() {
                   <td colSpan="7" className="py-16 text-center text-pc-muted">
                     <p className="text-white font-bold mb-1">No cash tracker entries found</p>
                     <p className="text-xs text-pc-muted mb-4">Add your first drop above or import CSV data!</p>
-                    <button
-                      type="button"
-                      onClick={() => setIsImportOpen(true)}
-                      className="px-4 py-2 bg-pc-green text-black font-bold text-xs rounded-xl hover:bg-pc-green/90 transition-all"
-                    >
-                      Import CSV Data
-                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="px-4 py-2 bg-pc-green text-black font-bold text-xs rounded-xl hover:bg-pc-green/90 transition-all"
+                      >
+                        + Add Entry
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsImportOpen(true)}
+                        className="px-4 py-2 bg-pc-dark border border-pc-border text-white font-bold text-xs rounded-xl hover:border-pc-green transition-all"
+                      >
+                        Import CSV Data
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -977,36 +1006,38 @@ export default function CashTrackerPage() {
                       {/* Note */}
                       <td className="py-2.5 px-4 text-xs text-pc-muted">
                         {item.note ? (
-                          <span className={isPayroll ? 'text-red-300 font-medium' : 'text-pc-muted'}>
+                          <span className={isPayroll ? 'text-red-300 font-medium' : 'text-white/80'}>
                             {item.note}
                           </span>
                         ) : (
-                          <span className="text-pc-muted/40">—</span>
+                          <span className="text-pc-muted/30">—</span>
                         )}
                       </td>
 
-                      {/* Actions */}
+                      {/* Actions: Always visible Edit & Delete buttons */}
                       <td className="py-2.5 px-3 text-center">
-                        <div className="flex items-center justify-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-center gap-1.5">
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(item)}
-                            className="p-1 text-pc-muted hover:text-white rounded transition-colors"
-                            title="Edit"
+                            className="px-2.5 py-1 text-xs font-bold bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pc-green/50 text-pc-muted hover:text-white rounded-lg transition-all flex items-center gap-1 active:scale-95"
+                            title="Edit entry"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                            <svg className="w-3.5 h-3.5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.688-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                             </svg>
+                            <span>Edit</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteEntry(item.id)}
-                            className="p-1 text-pc-muted hover:text-red-400 rounded transition-colors"
-                            title="Delete"
+                            className="px-2.5 py-1 text-xs font-bold bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/50 text-pc-muted hover:text-red-400 rounded-lg transition-all flex items-center gap-1 active:scale-95"
+                            title="Delete entry"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <svg className="w-3.5 h-3.5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                             </svg>
+                            <span>Delete</span>
                           </button>
                         </div>
                       </td>
@@ -1018,6 +1049,172 @@ export default function CashTrackerPage() {
           </table>
         </div>
       </div>
+
+      {/* Add Entry Popup Modal (Mobile & Desktop Friendly) */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-pc-dark border border-pc-border rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-pc-border/60 pb-3">
+              <div>
+                <h3 className="text-lg font-black text-white">Add Cash / Drop Entry</h3>
+                <p className="text-xs text-pc-muted">Quickly record a cash collection, Zelle transfer, or payroll payout.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="text-pc-muted hover:text-white text-lg font-bold p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddEntry} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-pc-muted font-bold uppercase mb-1">Person / Driver</label>
+                <input
+                  type="text"
+                  list="modal-drivers-list"
+                  value={newPerson}
+                  onChange={(e) => setNewPerson(e.target.value)}
+                  placeholder="e.g. Choo, Nicole, Matt..."
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-3.5 py-2.5 text-white text-sm focus:border-pc-green focus:outline-none"
+                  required
+                />
+                <datalist id="modal-drivers-list">
+                  {drivers.map((d) => (
+                    <option key={d.id} value={d.name} />
+                  ))}
+                </datalist>
+
+                {/* Quick Driver Suggestion Pills */}
+                {drivers.length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                    <span className="text-[10px] font-bold text-pc-muted uppercase">Drivers:</span>
+                    {drivers.slice(0, 8).map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => setNewPerson(d.name)}
+                        className={`text-[11px] px-2 py-0.5 rounded-lg border transition-all ${
+                          newPerson.toLowerCase() === d.name.toLowerCase()
+                            ? 'bg-pc-green text-black border-pc-green font-bold'
+                            : 'bg-pc-black border-pc-border text-pc-muted hover:text-white'
+                        }`}
+                      >
+                        {d.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-pc-muted font-bold uppercase mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    className="w-full bg-pc-black border border-pc-border rounded-xl px-3 py-2.5 text-white text-sm focus:border-pc-green focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-pc-muted font-bold uppercase mb-1">Form</label>
+                  <select
+                    value={newForm}
+                    onChange={(e) => {
+                      setNewForm(e.target.value);
+                      if (e.target.value === 'cash' && !newNote) {
+                        setNewNote('Payroll');
+                      }
+                    }}
+                    className="w-full bg-pc-black border border-pc-border rounded-xl px-3 py-2.5 text-white text-sm focus:border-pc-green focus:outline-none"
+                  >
+                    <option value="Cash">Cash (Standard Drop)</option>
+                    <option value="Zelle">Zelle (Bank Transfer)</option>
+                    <option value="cash">cash (Payroll / Payout)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-pc-muted font-bold uppercase mb-1">Amount ($)</label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-pc-muted text-base font-bold">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newAmount}
+                    onChange={(e) => setNewAmount(e.target.value)}
+                    placeholder="850.00"
+                    className="w-full bg-pc-black border border-pc-border rounded-xl pl-8 pr-3.5 py-2.5 text-white font-mono text-base font-bold focus:border-pc-green focus:outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-pc-muted font-bold uppercase mb-1">Note (Optional)</label>
+                <input
+                  type="text"
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  placeholder="e.g. Shift 1 drop, Payroll, Gas expense..."
+                  className="w-full bg-pc-black border border-pc-border rounded-xl px-3.5 py-2.5 text-white text-sm focus:border-pc-green focus:outline-none"
+                />
+                {/* Note Quick Pills */}
+                <div className="flex items-center gap-1.5 mt-2">
+                  <span className="text-[10px] font-bold text-pc-muted uppercase">Quick:</span>
+                  {['Payroll', 'Shift Drop', 'Evening Drop', 'Gas'].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => {
+                        setNewNote(tag);
+                        if (tag === 'Payroll') setNewForm('cash');
+                      }}
+                      className="text-[10px] px-2 py-0.5 rounded bg-pc-black border border-pc-border text-pc-muted hover:text-white"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="modal-new-confirmed"
+                  checked={newConfirmed}
+                  onChange={(e) => setNewConfirmed(e.target.checked)}
+                  className="rounded border-pc-border text-pc-green focus:ring-0 w-4 h-4 cursor-pointer"
+                />
+                <label htmlFor="modal-new-confirmed" className="text-white font-medium cursor-pointer text-xs">
+                  Confirmed (Physically verified & counted)
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-pc-border/60">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-pc-muted hover:text-white font-bold text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-6 py-2.5 bg-pc-green hover:bg-pc-green/90 text-black font-black text-xs rounded-xl shadow-md active:scale-95 disabled:opacity-50"
+                >
+                  {submitting ? 'Saving...' : 'Save & Record Entry'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Edit Entry Modal */}
       {editingEntry && (
@@ -1177,7 +1374,7 @@ export default function CashTrackerPage() {
                 />
                 <div className="w-12 h-12 mx-auto rounded-full bg-pc-green/10 text-pc-green flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
                   </svg>
                 </div>
                 <p className="text-sm font-bold text-white mb-1">
