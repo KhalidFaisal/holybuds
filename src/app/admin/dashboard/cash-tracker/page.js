@@ -108,6 +108,10 @@ export default function CashTrackerPage() {
   // Popup Modal Add State (Mobile Friendly)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  // Bulk Selection State
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
   // Edit Modal State
   const [editingEntry, setEditingEntry] = useState(null);
   const [editPerson, setEditPerson] = useState('');
@@ -397,12 +401,22 @@ export default function CashTrackerPage() {
     }
   };
 
-  // 1-Click Toggle Confirmed with optimistic UI
+  // 1-Click Toggle Confirmed with in-place update (prevents row shifting/re-sorting)
   const handleToggleConfirmed = async (entry) => {
     const updatedStatus = !entry.confirmed;
+    const amt = Number(entry.amount) || 0;
+
+    // Optimistic in-place update of row
     setEntries((prev) =>
       prev.map((item) => (item.id === entry.id ? { ...item, confirmed: updatedStatus } : item))
     );
+
+    // Optimistic in-place update of pending summary counters
+    setSummary((prev) => ({
+      ...prev,
+      pendingAmount: updatedStatus ? prev.pendingAmount - amt : prev.pendingAmount + amt,
+      pendingCount: updatedStatus ? Math.max(0, prev.pendingCount - 1) : prev.pendingCount + 1,
+    }));
 
     try {
       const res = await fetch(`/api/admin/cash-tracker/${entry.id}`, {
@@ -414,13 +428,62 @@ export default function CashTrackerPage() {
         body: JSON.stringify({ confirmed: updatedStatus }),
       });
       if (!res.ok) {
-        fetchEntries();
-      } else {
-        fetchEntries();
+        fetchEntries(); // Revert on failure
       }
     } catch (err) {
       console.error('Error toggling confirmation:', err);
+      fetchEntries(); // Revert on error
+    }
+  };
+
+  // Toggle single row selection
+  const handleToggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  // Toggle select all filtered rows
+  const handleSelectAll = () => {
+    if (filteredEntries.length === 0) return;
+    const allFilteredIds = filteredEntries.map((e) => e.id);
+    const allSelected = allFilteredIds.every((id) => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !allFilteredIds.includes(id)));
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...allFilteredIds])));
+    }
+  };
+
+  // Bulk Delete Selected Entries
+  const handleDeleteSelected = async () => {
+    if (!selectedIds.length) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected ${selectedIds.length === 1 ? 'entry' : 'entries'}?`)) return;
+
+    setIsBulkDeleting(true);
+    try {
+      const res = await fetch('/api/admin/cash-tracker', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('admin_token')}`,
+        },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete selected entries');
+
+      const deletedSet = new Set(selectedIds);
+      setEntries((prev) => prev.filter((e) => !deletedSet.has(e.id)));
+      setSelectedIds([]);
+      setSuccessMsg(`Successfully deleted ${data.count ?? selectedIds.length} entries`);
+      setTimeout(() => setSuccessMsg(''), 3000);
       fetchEntries();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -473,7 +536,7 @@ export default function CashTrackerPage() {
     }
   };
 
-  // Delete Entry
+  // Delete Single Entry
   const handleDeleteEntry = async (id) => {
     if (!confirm('Are you sure you want to delete this cash tracker entry?')) return;
     try {
@@ -482,6 +545,7 @@ export default function CashTrackerPage() {
         headers: { Authorization: `Bearer ${localStorage.getItem('admin_token')}` },
       });
       if (!res.ok) throw new Error('Failed to delete entry');
+      setSelectedIds((prev) => prev.filter((item) => item !== id));
       fetchEntries();
     } catch (err) {
       alert(err.message);
@@ -516,16 +580,16 @@ export default function CashTrackerPage() {
   };
 
   // Filter entries locally by search query if typed
-  const filteredEntries = useMemo(() => {
-    if (!searchQuery.trim()) return entries;
-    const q = searchQuery.toLowerCase();
-    return entries.filter(
-      (item) =>
-        item.person.toLowerCase().includes(q) ||
-        (item.note && item.note.toLowerCase().includes(q)) ||
-        item.form.toLowerCase().includes(q)
-    );
-  }, [entries, searchQuery]);
+  const filteredEntries = !searchQuery.trim()
+    ? entries
+    : entries.filter((item) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          item.person.toLowerCase().includes(q) ||
+          (item.note && item.note.toLowerCase().includes(q)) ||
+          item.form.toLowerCase().includes(q)
+        );
+      });
 
   // Format short date (e.g. 9/3)
   const formatShortDate = (dateStr) => {
@@ -890,32 +954,82 @@ export default function CashTrackerPage() {
         </div>
       </div>
 
+      {/* Bulk Actions Banner */}
+      {selectedIds.length > 0 && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 flex items-center justify-between animate-fade-in">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-white">
+              <span className="inline-flex items-center justify-center bg-red-500/20 text-red-400 font-bold px-2 py-0.5 rounded text-xs mr-1.5">
+                {selectedIds.length}
+              </span>
+              {selectedIds.length === 1 ? 'entry' : 'entries'} selected
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="text-xs text-pc-muted hover:text-white underline transition-colors"
+            >
+              Deselect all
+            </button>
+          </div>
+          <button
+            type="button"
+            disabled={isBulkDeleting}
+            onClick={handleDeleteSelected}
+            className="px-3.5 py-1.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold text-xs rounded-lg shadow transition-all flex items-center gap-1.5 active:scale-95"
+          >
+            {isBulkDeleting ? (
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Deleting...</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                </svg>
+                <span>Delete Selected ({selectedIds.length})</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Spreadsheet Table View (Optimized Proportional Layout without Blank Space) */}
       <div className="bg-pc-dark/95 border border-pc-border rounded-2xl overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse table-auto">
             <thead>
               <tr className="bg-[#2b396b] text-white text-xs font-bold uppercase tracking-wider select-none">
-                <th className="py-3 px-4 w-[18%] min-w-[140px]">Person</th>
+                <th className="py-3 px-3 w-10 text-center">
+                  <input
+                    type="checkbox"
+                    checked={filteredEntries.length > 0 && filteredEntries.every((e) => selectedIds.includes(e.id))}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 rounded border-gray-400 bg-black/40 text-pc-green focus:ring-0 focus:ring-offset-0 cursor-pointer accent-pc-green"
+                    title="Select all"
+                  />
+                </th>
+                <th className="py-3 px-4 w-[18%] min-w-[130px]">Person</th>
                 <th className="py-3 px-3 w-[12%] min-w-[90px] text-right pr-6">Date</th>
                 <th className="py-3 px-3 w-[11%] min-w-[90px] text-center">Confirmed</th>
                 <th className="py-3 px-4 w-[13%] min-w-[100px]">Form</th>
-                <th className="py-3 px-4 w-[16%] min-w-[120px] text-right">Amount</th>
-                <th className="py-3 px-4 w-[18%] min-w-[140px]">Note</th>
+                <th className="py-3 px-4 w-[15%] min-w-[120px] text-right">Amount</th>
+                <th className="py-3 px-4 w-[17%] min-w-[140px]">Note</th>
                 <th className="py-3 px-3 w-[12%] min-w-[120px] text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-pc-border/40 text-sm">
               {loading && entries.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-16 text-center text-pc-muted">
+                  <td colSpan="8" className="py-16 text-center text-pc-muted">
                     <div className="w-6 h-6 border-2 border-pc-green border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     Loading tracker entries...
                   </td>
                 </tr>
               ) : filteredEntries.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-16 text-center text-pc-muted">
+                  <td colSpan="8" className="py-16 text-center text-pc-muted">
                     <p className="text-white font-bold mb-1">No cash tracker entries found</p>
                     <p className="text-xs text-pc-muted mb-4">Add your first drop above or import CSV data!</p>
                     <div className="flex items-center justify-center gap-2">
@@ -945,8 +1059,20 @@ export default function CashTrackerPage() {
                   return (
                     <tr
                       key={item.id}
-                      className="hover:bg-white/[0.03] transition-colors group"
+                      className={`hover:bg-white/[0.03] transition-colors group ${
+                        selectedIds.includes(item.id) ? 'bg-white/[0.04]' : ''
+                      }`}
                     >
+                      {/* Selection Checkbox */}
+                      <td className="py-2.5 px-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(item.id)}
+                          onChange={() => handleToggleSelect(item.id)}
+                          className="w-4 h-4 rounded border-gray-400 bg-black/40 text-pc-green focus:ring-0 focus:ring-offset-0 cursor-pointer accent-pc-green"
+                        />
+                      </td>
+
                       {/* Person */}
                       <td className="py-2.5 px-4 font-semibold text-white">
                         <span className="capitalize">{item.person}</span>

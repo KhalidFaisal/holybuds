@@ -52,6 +52,7 @@ export async function GET(request) {
         orderBy: [
           { date: 'desc' },
           { createdAt: 'desc' },
+          { id: 'asc' },
         ],
         include: {
           driver: {
@@ -188,5 +189,31 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error creating cash tracker entry:', error);
     return NextResponse.json({ error: 'Failed to create entry' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  if (!requireAdmin(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const data = await request.json();
+    const { ids } = data;
+
+    if (!Array.isArray(ids) || !ids.length) {
+      return NextResponse.json({ error: 'No IDs provided for deletion' }, { status: 400 });
+    }
+
+    const result = await prisma.cashTrackerEntry.deleteMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+
+    return NextResponse.json({ success: true, count: result.count });
+  } catch (error) {
+    console.error('Error deleting entries in bulk:', error);
+    return NextResponse.json({ error: 'Failed to delete entries' }, { status: 500 });
   }
 }
