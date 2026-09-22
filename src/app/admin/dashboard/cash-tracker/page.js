@@ -623,12 +623,12 @@ export default function CashTrackerPage() {
               setIsAddModalOpen(true);
               setError('');
             }}
-            className="px-4 py-2 rounded-xl text-xs font-black bg-pc-green hover:bg-pc-green/90 text-black shadow-md shadow-pc-green/20 hover:shadow-pc-green/30 transition-all flex items-center gap-1.5 active:scale-95"
+            className="h-9 px-3.5 rounded-xl text-xs font-black bg-pc-green hover:bg-pc-green/90 text-black border border-pc-green shadow-md shadow-pc-green/20 hover:shadow-pc-green/30 transition-all inline-flex items-center gap-1.5 active:scale-95"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            <span>+ Add Entry</span>
+            <span>Add Entry</span>
           </button>
 
           {/* Record Payroll Shortcut */}
@@ -640,9 +640,12 @@ export default function CashTrackerPage() {
               setNewAmount('');
               setIsAddModalOpen(true);
             }}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30 transition-all flex items-center gap-1.5"
+            className="h-9 px-3.5 rounded-xl text-xs font-bold bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30 transition-all inline-flex items-center gap-1.5 active:scale-95"
           >
-            <span className="text-sm font-black">-</span> Record Payroll
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
+            </svg>
+            <span>Record Payroll</span>
           </button>
 
           {/* Import CSV Button */}
@@ -652,31 +655,31 @@ export default function CashTrackerPage() {
               setIsImportOpen(true);
               setImportError('');
             }}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-pc-green/15 text-pc-green border border-pc-green/40 hover:bg-pc-green/25 transition-all flex items-center gap-1.5"
+            className="h-9 px-3.5 rounded-xl text-xs font-bold bg-pc-green/15 text-pc-green border border-pc-green/40 hover:bg-pc-green/25 transition-all inline-flex items-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
-            Import CSV
+            <span>Import CSV</span>
           </button>
 
           {/* Export CSV Button */}
           <button
             type="button"
             onClick={handleExportCSV}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-pc-dark border border-pc-border text-white hover:border-pc-green/50 hover:text-pc-green transition-all flex items-center gap-1.5"
+            className="h-9 px-3.5 rounded-xl text-xs font-bold bg-pc-dark border border-pc-border text-white hover:border-pc-green/50 hover:text-pc-green transition-all inline-flex items-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
             </svg>
-            Export CSV
+            <span>Export CSV</span>
           </button>
 
           {/* Refresh Button */}
           <button
             type="button"
             onClick={fetchEntries}
-            className="p-2 rounded-xl bg-pc-dark border border-pc-border text-pc-muted hover:text-white hover:border-white/20 transition-all"
+            className="h-9 w-9 rounded-xl bg-pc-dark border border-pc-border text-pc-muted hover:text-white hover:border-white/20 transition-all inline-flex items-center justify-center"
             title="Refresh"
           >
             <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
