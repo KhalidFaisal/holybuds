@@ -1,39 +1,75 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
-// Exact current dataset from the reference spreadsheet (Sept 3 – Sept 9)
-const CURRENT_SHEET_DATA = [
-  { person: 'choo', date: '2026-09-03', confirmed: true, form: 'cash', amount: 372.00, note: '' },
-  { person: 'nicole', date: '2026-09-03', confirmed: true, form: 'Cash', amount: 850.00, note: '' },
-  { person: 'nessa', date: '2026-09-03', confirmed: true, form: 'Cash', amount: 285.00, note: '' },
-  { person: 'slaeed', date: '2026-09-03', confirmed: true, form: 'Cash', amount: 545.00, note: '' },
-  { person: 'choo', date: '2026-09-03', confirmed: true, form: 'Zelle', amount: 305.00, note: '' },
-  { person: 'matt', date: '2026-09-04', confirmed: true, form: 'Cash', amount: 850.00, note: '' },
-  { person: 'G', date: '2026-09-04', confirmed: true, form: 'Cash', amount: 200.00, note: '' },
-  { person: 'nessa', date: '2026-09-04', confirmed: true, form: 'Cash', amount: 490.00, note: '' },
-  { person: 'nicole', date: '2026-09-04', confirmed: true, form: 'Cash', amount: 1150.00, note: '' },
-  { person: 'choo', date: '2026-09-04', confirmed: true, form: 'Zelle', amount: 185.00, note: '' },
-  { person: 'travis', date: '2026-09-05', confirmed: true, form: 'Cash', amount: 285.00, note: '' },
-  { person: 'nicole', date: '2026-09-05', confirmed: true, form: 'Cash', amount: 125.00, note: '' },
-  { person: 'matt', date: '2026-09-05', confirmed: true, form: 'Cash', amount: 1273.00, note: '' },
-  { person: 'slaeed', date: '2026-09-05', confirmed: true, form: 'Cash', amount: 617.00, note: '' },
-  { person: 'choo', date: '2026-09-05', confirmed: true, form: 'Zelle', amount: 150.00, note: '' },
-  { person: 'slaeed', date: '2026-09-06', confirmed: true, form: 'Cash', amount: 765.00, note: '' },
-  { person: 'travis', date: '2026-09-06', confirmed: true, form: 'Cash', amount: 890.00, note: '' },
-  { person: 'nessa', date: '2026-09-06', confirmed: true, form: 'Cash', amount: 715.00, note: '' },
-  { person: 'choo', date: '2026-09-06', confirmed: true, form: 'Zelle', amount: 100.00, note: '' },
-  { person: 'slaeed', date: '2026-09-07', confirmed: true, form: 'Cash', amount: 854.00, note: '' },
-  { person: 'travis', date: '2026-09-07', confirmed: true, form: 'Cash', amount: 415.00, note: '' },
-  { person: 'choo', date: '2026-09-07', confirmed: true, form: 'Zelle', amount: 347.98, note: '' },
-  { person: 'Nessa', date: '2026-09-08', confirmed: true, form: 'Cash', amount: 105.00, note: '' },
-  { person: 'G', date: '2026-09-08', confirmed: true, form: 'Cash', amount: 100.00, note: '' },
-  { person: 'Matt', date: '2026-09-08', confirmed: true, form: 'Cash', amount: 1005.00, note: '' },
-  { person: 'Slaeed', date: '2026-09-08', confirmed: true, form: 'Cash', amount: 951.45, note: '' },
-  { person: 'Choo', date: '2026-09-09', confirmed: true, form: 'Zelle', amount: 100.00, note: '' },
-  { person: 'Choo', date: '2026-09-09', confirmed: true, form: 'cash', amount: -500.00, note: 'Payroll' },
-  { person: 'Choo', date: '2026-09-09', confirmed: true, form: 'cash', amount: -294.00, note: 'Payroll' },
-];
+// Robust CSV Line Parser (handles quoted strings with commas like "$1,005.00")
+function parseCSVLine(line) {
+  const values = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"' || char === "'") {
+      inQuotes = !inQuotes;
+    } else if ((char === ',' || char === '\t') && !inQuotes) {
+      values.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  values.push(current.trim());
+  return values.map((v) => v.replace(/^["']|["']$/g, '').trim());
+}
+
+// Clean amount parsing (handles "$1,273.00", "-$500.00", "($500.00)")
+function parseAmount(val) {
+  if (typeof val === 'number') return val;
+  if (!val) return 0;
+  let s = String(val).trim();
+  let isNegative = false;
+  if (s.startsWith('(') && s.endsWith(')')) {
+    isNegative = true;
+    s = s.slice(1, -1);
+  } else if (s.startsWith('-') || s.includes('-$')) {
+    isNegative = true;
+  }
+  const cleaned = s.replace(/[\$,\s-]/g, '');
+  const num = parseFloat(cleaned);
+  if (isNaN(num)) return 0;
+  return isNegative ? -Math.abs(num) : num;
+}
+
+// Clean date parsing (handles "9/3", "09/03", "9/3/2026", "2026-09-03")
+function parseDate(val) {
+  if (!val) return new Date().toISOString().split('T')[0];
+  const s = String(val).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    return s.slice(0, 10);
+  }
+  const slashParts = s.split(/[\/\-]/);
+  const currentYear = new Date().getFullYear();
+  if (slashParts.length === 2) {
+    const month = String(parseInt(slashParts[0], 10)).padStart(2, '0');
+    const day = String(parseInt(slashParts[1], 10)).padStart(2, '0');
+    return `${currentYear}-${month}-${day}`;
+  } else if (slashParts.length === 3) {
+    let year = slashParts[2];
+    if (year.length === 2) year = `20${year}`;
+    const month = String(parseInt(slashParts[0], 10)).padStart(2, '0');
+    const day = String(parseInt(slashParts[1], 10)).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  return new Date().toISOString().split('T')[0];
+}
+
+// Clean confirmed parsing
+function parseConfirmed(val) {
+  if (typeof val === 'boolean') return val;
+  if (val === undefined || val === null || val === '') return true;
+  const s = String(val).trim().toLowerCase();
+  return s === 'true' || s === 'yes' || s === '1' || s === 'checked' || s === 'y';
+}
 
 export default function CashTrackerPage() {
   const [entries, setEntries] = useState([]);
@@ -78,12 +114,14 @@ export default function CashTrackerPage() {
   const [editNote, setEditNote] = useState('');
   const [editConfirmed, setEditConfirmed] = useState(true);
 
-  // Import Modal State
+  // CSV Import Modal State
   const [isImportOpen, setIsImportOpen] = useState(false);
-  const [importTab, setImportTab] = useState('CURRENT'); // 'CURRENT' or 'CSV'
   const [importing, setImporting] = useState(false);
-  const [csvText, setCsvText] = useState('');
+  const [csvFile, setCsvFile] = useState(null);
+  const [csvRawText, setCsvRawText] = useState('');
+  const [parsedRows, setParsedRows] = useState([]);
   const [importError, setImportError] = useState('');
+  const fileInputRef = useRef(null);
 
   const fetchEntries = useCallback(async () => {
     setLoading(true);
@@ -193,7 +231,6 @@ export default function CashTrackerPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to add entry');
 
-      // Reset form fields
       setNewAmount('');
       setNewNote('');
       setSuccessMsg('Entry recorded successfully');
@@ -206,98 +243,147 @@ export default function CashTrackerPage() {
     }
   };
 
-  // 1-Click Import Current Dataset (29 entries from spreadsheet screenshot)
-  const handleImportCurrentData = async () => {
-    setImporting(true);
-    setImportError('');
+  // Parse CSV content into row objects
+  const processCSVContent = (content) => {
+    if (!content || !content.trim()) {
+      setParsedRows([]);
+      return;
+    }
+
     try {
-      const res = await fetch('/api/admin/cash-tracker', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('admin_token')}`,
-        },
-        body: JSON.stringify(CURRENT_SHEET_DATA),
-      });
+      const lines = content
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to import current data');
+      if (lines.length === 0) {
+        setParsedRows([]);
+        return;
+      }
 
-      setSuccessMsg(`Successfully imported ${data.count || CURRENT_SHEET_DATA.length} records!`);
-      setIsImportOpen(false);
-      fetchEntries();
-      setTimeout(() => setSuccessMsg(''), 4000);
+      // Default column indices
+      let personIdx = 0;
+      let dateIdx = 1;
+      let confirmedIdx = 2;
+      let formIdx = 3;
+      let amountIdx = 4;
+      let noteIdx = 5;
+
+      const firstLineParts = parseCSVLine(lines[0]);
+      const lowerHeaders = firstLineParts.map((h) => h.toLowerCase());
+
+      const hasHeader = lowerHeaders.some(
+        (h) =>
+          h.includes('person') ||
+          h.includes('name') ||
+          h.includes('date') ||
+          h.includes('amount') ||
+          h.includes('form')
+      );
+
+      let startIndex = 0;
+      if (hasHeader) {
+        startIndex = 1;
+        lowerHeaders.forEach((col, idx) => {
+          if (col.includes('person') || col.includes('name') || col.includes('driver')) personIdx = idx;
+          else if (col.includes('date') || col.includes('day')) dateIdx = idx;
+          else if (col.includes('confirm') || col.includes('status')) confirmedIdx = idx;
+          else if (col.includes('form') || col.includes('method') || col.includes('type')) formIdx = idx;
+          else if (col.includes('amount') || col.includes('total') || col.includes('cash')) amountIdx = idx;
+          else if (col.includes('note') || col.includes('memo') || col.includes('desc')) noteIdx = idx;
+        });
+      }
+
+      const rows = [];
+      for (let i = startIndex; i < lines.length; i++) {
+        const parts = parseCSVLine(lines[i]);
+        if (parts.length < 2) continue;
+
+        const person = parts[personIdx] || '';
+        const rawDate = parts[dateIdx];
+        const rawConfirmed = parts[confirmedIdx];
+        const rawForm = parts[formIdx] || 'Cash';
+        const rawAmount = parts[amountIdx];
+        const note = parts[noteIdx] || '';
+
+        if (!person && !rawAmount) continue;
+
+        const amount = parseAmount(rawAmount);
+        const date = parseDate(rawDate);
+        const confirmed = parseConfirmed(rawConfirmed);
+        let form = rawForm.trim() || 'Cash';
+        if (amount < 0 && form.toLowerCase() === 'cash') form = 'cash';
+
+        rows.push({
+          person: person.trim(),
+          date,
+          confirmed,
+          form,
+          amount,
+          note: note.trim(),
+        });
+      }
+
+      setParsedRows(rows);
+      setImportError('');
     } catch (err) {
-      setImportError(err.message);
-    } finally {
-      setImporting(false);
+      console.error('CSV Parsing Error:', err);
+      setImportError('Failed to parse CSV: ' + err.message);
+      setParsedRows([]);
     }
   };
 
-  // Custom CSV Import
-  const handleImportCSVText = async () => {
-    if (!csvText.trim()) {
-      setImportError('Please enter or paste CSV text');
+  // Handle file select
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCsvFile(file);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result;
+      if (typeof text === 'string') {
+        setCsvRawText(text);
+        processCSVContent(text);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Handle paste text change
+  const handleRawTextChange = (e) => {
+    const text = e.target.value;
+    setCsvRawText(text);
+    processCSVContent(text);
+  };
+
+  // Submit batch CSV records to backend
+  const handleExecuteImport = async () => {
+    if (!parsedRows.length) {
+      setImportError('No valid rows available to import.');
       return;
     }
 
     setImporting(true);
     setImportError('');
     try {
-      const lines = csvText.trim().split('\n');
-      const parsed = [];
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-        // Skip header if matches
-        if (i === 0 && line.toLowerCase().includes('person') && line.toLowerCase().includes('amount')) {
-          continue;
-        }
-
-        // Parse CSV values (handling comma or tab)
-        const parts = line.split(/[,\t]/).map((p) => p.trim().replace(/^["']|["']$/g, ''));
-        if (parts.length >= 2) {
-          const person = parts[0];
-          const dateStr = parts[1] || new Date().toISOString().split('T')[0];
-          const confirmed = parts[2]
-            ? parts[2].toLowerCase() === 'true' || parts[2].toLowerCase() === 'yes' || parts[2] === '1'
-            : true;
-          const form = parts[3] || 'Cash';
-          const amount = parseFloat(parts[4] || parts[2] || 0);
-          const note = parts[5] || '';
-
-          if (person && !isNaN(amount)) {
-            parsed.push({
-              person,
-              date: dateStr,
-              confirmed,
-              form,
-              amount,
-              note,
-            });
-          }
-        }
-      }
-
-      if (parsed.length === 0) {
-        throw new Error('No valid rows could be parsed. Expected format: Person, Date, Confirmed, Form, Amount, Note');
-      }
-
       const res = await fetch('/api/admin/cash-tracker', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('admin_token')}`,
         },
-        body: JSON.stringify(parsed),
+        body: JSON.stringify(parsedRows),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to import CSV');
+      if (!res.ok) throw new Error(data.error || 'Failed to import CSV records');
 
-      setSuccessMsg(`Successfully imported ${data.count || parsed.length} records!`);
+      setSuccessMsg(`Successfully imported ${data.count || parsedRows.length} records!`);
       setIsImportOpen(false);
-      setCsvText('');
+      setCsvFile(null);
+      setCsvRawText('');
+      setParsedRows([]);
       fetchEntries();
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
@@ -310,7 +396,6 @@ export default function CashTrackerPage() {
   // 1-Click Toggle Confirmed with optimistic UI
   const handleToggleConfirmed = async (entry) => {
     const updatedStatus = !entry.confirmed;
-    // Optimistic local state update
     setEntries((prev) =>
       prev.map((item) => (item.id === entry.id ? { ...item, confirmed: updatedStatus } : item))
     );
@@ -476,7 +561,7 @@ export default function CashTrackerPage() {
             <span className="text-sm font-black">-</span> Record Payroll / Payout
           </button>
 
-          {/* Import Data Button */}
+          {/* Import CSV Button */}
           <button
             type="button"
             onClick={() => {
@@ -488,7 +573,7 @@ export default function CashTrackerPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
-            Import Data
+            Import CSV
           </button>
 
           {/* Export CSV Button */}
@@ -812,13 +897,13 @@ export default function CashTrackerPage() {
                 <tr>
                   <td colSpan="7" className="py-16 text-center text-pc-muted">
                     <p className="text-white font-bold mb-1">No cash tracker entries found</p>
-                    <p className="text-xs text-pc-muted mb-4">Add your first drop above or import existing data!</p>
+                    <p className="text-xs text-pc-muted mb-4">Add your first drop above or import CSV data!</p>
                     <button
                       type="button"
                       onClick={() => setIsImportOpen(true)}
                       className="px-4 py-2 bg-pc-green text-black font-bold text-xs rounded-xl hover:bg-pc-green/90 transition-all"
                     >
-                      Import Current Data Now
+                      Import CSV Data
                     </button>
                   </td>
                 </tr>
@@ -910,7 +995,7 @@ export default function CashTrackerPage() {
                             title="Edit"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                             </svg>
                           </button>
                           <button
@@ -1042,52 +1127,32 @@ export default function CashTrackerPage() {
         </div>
       )}
 
-      {/* Import Data Modal */}
+      {/* CSV Import Modal */}
       {isImportOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-          <div className="bg-pc-dark border border-pc-border rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+          <div className="bg-pc-dark border border-pc-border rounded-2xl w-full max-w-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-pc-border/60 pb-3">
               <div>
                 <h3 className="text-lg font-black text-white flex items-center gap-2">
                   <svg className="w-5 h-5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
                   </svg>
-                  Import Data
+                  Import CSV File / Spreadsheet Data
                 </h3>
-                <p className="text-xs text-pc-muted">Import existing spreadsheet rows or custom CSV records into Cash Tracker.</p>
+                <p className="text-xs text-pc-muted">Upload your CSV spreadsheet export or copy-paste rows directly.</p>
               </div>
               <button
                 type="button"
-                onClick={() => setIsImportOpen(false)}
+                onClick={() => {
+                  setIsImportOpen(false);
+                  setCsvFile(null);
+                  setCsvRawText('');
+                  setParsedRows([]);
+                }}
                 className="text-pc-muted hover:text-white text-lg font-bold p-1"
               >
                 ✕
-              </button>
-            </div>
-
-            {/* Modal Tabs */}
-            <div className="flex border-b border-pc-border/40 gap-4 text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => setImportTab('CURRENT')}
-                className={`pb-2 transition-colors relative ${
-                  importTab === 'CURRENT'
-                    ? 'text-pc-green border-b-2 border-pc-green'
-                    : 'text-pc-muted hover:text-white'
-                }`}
-              >
-                Current Sheet Data ({CURRENT_SHEET_DATA.length} Rows)
-              </button>
-              <button
-                type="button"
-                onClick={() => setImportTab('CSV')}
-                className={`pb-2 transition-colors relative ${
-                  importTab === 'CSV'
-                    ? 'text-pc-green border-b-2 border-pc-green'
-                    : 'text-pc-muted hover:text-white'
-                }`}
-              >
-                Custom CSV / Paste
               </button>
             </div>
 
@@ -1097,100 +1162,148 @@ export default function CashTrackerPage() {
               </div>
             )}
 
-            {/* Tab 1: Current Sheet Data */}
-            {importTab === 'CURRENT' && (
-              <div className="space-y-4 flex-1 overflow-y-auto pr-1">
-                <div className="p-3.5 bg-pc-black/60 border border-pc-green/30 rounded-xl">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white font-bold text-sm">29 Records from Cash On Hand Tracker</p>
-                      <p className="text-xs text-pc-muted mt-0.5">
-                        Includes Choo, Nicole, Nessa, Slaeed, Matt, G, and Travis (Sept 3 – Sept 9), covering Cash drops, Zelle transfers, and Payroll disbursements.
-                      </p>
-                    </div>
+            <div className="space-y-4 flex-1 overflow-y-auto pr-1">
+              {/* File Upload Drop Area */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-pc-border hover:border-pc-green/60 bg-pc-black/40 rounded-2xl p-6 text-center cursor-pointer transition-all group"
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.tsv,.txt"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <div className="w-12 h-12 mx-auto rounded-full bg-pc-green/10 text-pc-green flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                  </svg>
+                </div>
+                <p className="text-sm font-bold text-white mb-1">
+                  {csvFile ? csvFile.name : 'Click to upload or drag & drop CSV file'}
+                </p>
+                <p className="text-xs text-pc-muted">
+                  Supports CSV downloaded from Google Sheets or Excel (.csv, .tsv)
+                </p>
+              </div>
+
+              {/* Or Paste Area */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-pc-muted uppercase">
+                    Or Paste Spreadsheet Rows Directly:
+                  </label>
+                  {csvRawText && (
                     <button
                       type="button"
-                      disabled={importing}
-                      onClick={handleImportCurrentData}
-                      className="px-4 py-2 bg-pc-green hover:bg-pc-green/90 text-black font-black text-xs rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 shrink-0 ml-4"
+                      onClick={() => {
+                        setCsvRawText('');
+                        setParsedRows([]);
+                        setCsvFile(null);
+                      }}
+                      className="text-[11px] text-red-400 hover:underline"
                     >
-                      {importing ? 'Importing...' : 'Import 29 Records'}
+                      Clear text
                     </button>
+                  )}
+                </div>
+                <textarea
+                  rows={4}
+                  value={csvRawText}
+                  onChange={handleRawTextChange}
+                  placeholder={`Person, Date, Confirmed, Form, Amount, Note\nchoo, 9/3, TRUE, cash, $372.00,\nnicole, 9/3, TRUE, Cash, $850.00,\nChoo, 9/9, TRUE, cash, -$500.00, Payroll`}
+                  className="w-full bg-pc-black border border-pc-border rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-pc-green"
+                />
+              </div>
+
+              {/* Live Preview Table */}
+              {parsedRows.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-pc-green flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-pc-green animate-pulse" />
+                      Parsed {parsedRows.length} valid rows ready for import
+                    </span>
+                    <span className="text-xs text-pc-muted font-mono">
+                      Net: ${(parsedRows.reduce((acc, r) => acc + r.amount, 0)).toFixed(2)}
+                    </span>
+                  </div>
+
+                  <div className="border border-pc-border/60 rounded-xl overflow-hidden max-h-56 overflow-y-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-pc-dark/95 sticky top-0 border-b border-pc-border/60 text-pc-muted font-bold">
+                        <tr>
+                          <th className="py-2 px-3">#</th>
+                          <th className="py-2 px-3">Person</th>
+                          <th className="py-2 px-3">Date</th>
+                          <th className="py-2 px-3">Confirmed</th>
+                          <th className="py-2 px-3">Form</th>
+                          <th className="py-2 px-3 text-right">Amount</th>
+                          <th className="py-2 px-3">Note</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-pc-border/20 text-white/90">
+                        {parsedRows.map((row, idx) => (
+                          <tr key={idx} className="hover:bg-white/[0.02]">
+                            <td className="py-1 px-3 text-pc-muted text-[10px]">{idx + 1}</td>
+                            <td className="py-1 px-3 font-semibold capitalize">{row.person}</td>
+                            <td className="py-1 px-3 font-mono text-pc-muted text-[11px]">{formatShortDate(row.date)}</td>
+                            <td className="py-1 px-3">
+                              {row.confirmed ? (
+                                <span className="text-pc-green font-bold text-[11px]">YES</span>
+                              ) : (
+                                <span className="text-pc-muted text-[11px]">NO</span>
+                              )}
+                            </td>
+                            <td className="py-1 px-3">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                row.amount < 0 ? 'bg-red-600 text-white' : row.form.toLowerCase().includes('zelle') ? 'bg-amber-950/40 text-amber-300' : 'bg-slate-800 text-slate-300'
+                              }`}>
+                                {row.form}
+                              </span>
+                            </td>
+                            <td className={`py-1 px-3 text-right font-mono font-bold ${row.amount < 0 ? 'text-red-400' : 'text-pc-green'}`}>
+                              {row.amount < 0 ? `-$${Math.abs(row.amount).toFixed(2)}` : `$${row.amount.toFixed(2)}`}
+                            </td>
+                            <td className="py-1 px-3 text-pc-muted text-[11px]">{row.note || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
+              )}
+            </div>
 
-                {/* Preview Table */}
-                <div className="border border-pc-border/60 rounded-xl overflow-hidden max-h-64 overflow-y-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead className="bg-pc-dark/90 sticky top-0 border-b border-pc-border/60 text-pc-muted">
-                      <tr>
-                        <th className="py-2 px-3">Person</th>
-                        <th className="py-2 px-3">Date</th>
-                        <th className="py-2 px-3">Confirmed</th>
-                        <th className="py-2 px-3">Form</th>
-                        <th className="py-2 px-3 text-right">Amount</th>
-                        <th className="py-2 px-3">Note</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-pc-border/20 text-white/90">
-                      {CURRENT_SHEET_DATA.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-white/[0.02]">
-                          <td className="py-1.5 px-3 capitalize font-semibold">{row.person}</td>
-                          <td className="py-1.5 px-3 font-mono text-pc-muted text-[11px]">{formatShortDate(row.date)}</td>
-                          <td className="py-1.5 px-3 text-pc-green font-bold">YES</td>
-                          <td className="py-1.5 px-3">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              row.amount < 0 ? 'bg-red-600 text-white' : row.form === 'Zelle' ? 'bg-amber-950/40 text-amber-300' : 'bg-slate-800 text-slate-300'
-                            }`}>
-                              {row.form}
-                            </span>
-                          </td>
-                          <td className={`py-1.5 px-3 text-right font-mono font-bold ${row.amount < 0 ? 'text-red-400' : 'text-pc-green'}`}>
-                            {row.amount < 0 ? `-$${Math.abs(row.amount).toFixed(2)}` : `$${row.amount.toFixed(2)}`}
-                          </td>
-                          <td className="py-1.5 px-3 text-pc-muted text-[11px]">{row.note || '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between border-t border-pc-border/60 pt-3">
+              <span className="text-xs text-pc-muted">
+                {parsedRows.length > 0 ? `${parsedRows.length} record(s) queued` : 'Awaiting CSV file or pasted data'}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsImportOpen(false);
+                    setCsvFile(null);
+                    setCsvRawText('');
+                    setParsedRows([]);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-pc-muted hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={importing || parsedRows.length === 0}
+                  onClick={handleExecuteImport}
+                  className="px-5 py-2 bg-pc-green hover:bg-pc-green/90 text-black font-black text-xs rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50"
+                >
+                  {importing ? 'Importing Records...' : `Import ${parsedRows.length} Records`}
+                </button>
               </div>
-            )}
-
-            {/* Tab 2: Custom CSV / Paste */}
-            {importTab === 'CSV' && (
-              <div className="space-y-4 flex-1 flex flex-col">
-                <div>
-                  <label className="block text-xs font-bold text-pc-muted uppercase mb-1">
-                    Paste CSV Rows
-                  </label>
-                  <p className="text-[11px] text-pc-muted mb-2">
-                    Format: <code className="text-pc-green bg-pc-black px-1.5 py-0.5 rounded">Person, Date, Confirmed, Form, Amount, Note</code> (tab or comma separated).
-                  </p>
-                  <textarea
-                    rows={8}
-                    value={csvText}
-                    onChange={(e) => setCsvText(e.target.value)}
-                    placeholder="choo, 2026-09-03, true, cash, 372.00,&#10;nicole, 2026-09-03, true, Cash, 850.00,&#10;Choo, 2026-09-09, true, cash, -500.00, Payroll"
-                    className="w-full bg-pc-black border border-pc-border rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-pc-green"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-xs text-pc-muted">
-                    {csvText.trim() ? `${csvText.trim().split('\n').length} row(s) entered` : 'Ready to paste'}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={importing || !csvText.trim()}
-                    onClick={handleImportCSVText}
-                    className="px-5 py-2 bg-pc-green hover:bg-pc-green/90 text-black font-black text-xs rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50"
-                  >
-                    {importing ? 'Importing...' : 'Import CSV Records'}
-                  </button>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       )}
