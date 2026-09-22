@@ -192,6 +192,7 @@ model Driver {
   currentBox   InventoryBox?    @relation("DriverCurrentBox")
   handoffsFrom Handoff[]        @relation("HandoffFrom")
   handoffsTo   Handoff[]        @relation("HandoffTo")
+  cashEntries  CashTrackerEntry[]
 }
 
 model DriverReferral {
@@ -340,5 +341,22 @@ model Handoff {
   status            String       @default("PENDING") // PENDING, ACCEPTED
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
+}
+
+model CashTrackerEntry {
+  id        String   @id @default(cuid())
+  person    String
+  driverId  String?
+  driver    Driver?  @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  date      DateTime @default(now())
+  confirmed Boolean  @default(true)
+  form      String   @default("Cash") // "Cash", "Zelle", "cash" (payroll/payout)
+  amount    Float    // positive for drops/inflow, negative for payouts/payroll
+  note      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@index([person])
 }
 
