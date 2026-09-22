@@ -71,6 +71,20 @@ function parseConfirmed(val) {
   return s === 'true' || s === 'yes' || s === '1' || s === 'checked' || s === 'y';
 }
 
+// Helper for pagination page numbers
+function getPageNumbers(current, total) {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 3) {
+    return [1, 2, 3, 4, '...', total];
+  }
+  if (current >= total - 2) {
+    return [1, '...', total - 3, total - 2, total - 1, total];
+  }
+  return [1, '...', current - 1, current, current + 1, '...', total];
+}
+
 export default function CashTrackerPage() {
   const [entries, setEntries] = useState([]);
   const [drivers, setDrivers] = useState([]);
@@ -96,6 +110,10 @@ export default function CashTrackerPage() {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   // New Entry Form State
   const [newPerson, setNewPerson] = useState('');
@@ -443,15 +461,15 @@ export default function CashTrackerPage() {
     );
   };
 
-  // Toggle select all filtered rows
+  // Toggle select all rows on current page
   const handleSelectAll = () => {
-    if (filteredEntries.length === 0) return;
-    const allFilteredIds = filteredEntries.map((e) => e.id);
-    const allSelected = allFilteredIds.every((id) => selectedIds.includes(id));
-    if (allSelected) {
-      setSelectedIds((prev) => prev.filter((id) => !allFilteredIds.includes(id)));
+    if (paginatedEntries.length === 0) return;
+    const pageIds = paginatedEntries.map((e) => e.id);
+    const allPageSelected = pageIds.every((id) => selectedIds.includes(id));
+    if (allPageSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
     } else {
-      setSelectedIds((prev) => Array.from(new Set([...prev, ...allFilteredIds])));
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
     }
   };
 
@@ -590,6 +608,13 @@ export default function CashTrackerPage() {
           item.form.toLowerCase().includes(q)
         );
       });
+
+  // Pagination Calculations (derived state without cascading renders)
+  const totalPages = Math.max(1, Math.ceil(filteredEntries.length / pageSize));
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, filteredEntries.length);
+  const paginatedEntries = filteredEntries.slice(startIndex, endIndex);
 
   // Format short date (e.g. 9/3)
   const formatShortDate = (dateStr) => {
@@ -875,7 +900,10 @@ export default function CashTrackerPage() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               placeholder="Filter by name / note..."
               className="w-full bg-pc-black border border-pc-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-pc-green"
             />
@@ -887,7 +915,10 @@ export default function CashTrackerPage() {
           {/* Date range filter */}
           <select
             value={filterDateRange}
-            onChange={(e) => setFilterDateRange(e.target.value)}
+            onChange={(e) => {
+              setFilterDateRange(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-pc-black border border-pc-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-pc-green"
           >
             <option value="ALL">All Dates</option>
@@ -903,14 +934,20 @@ export default function CashTrackerPage() {
               <input
                 type="date"
                 value={customStartDate}
-                onChange={(e) => setCustomStartDate(e.target.value)}
+                onChange={(e) => {
+                  setCustomStartDate(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="bg-pc-black border border-pc-border rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-pc-green"
               />
               <span className="text-pc-muted">-</span>
               <input
                 type="date"
                 value={customEndDate}
-                onChange={(e) => setCustomEndDate(e.target.value)}
+                onChange={(e) => {
+                  setCustomEndDate(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="bg-pc-black border border-pc-border rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-pc-green"
               />
             </div>
@@ -919,7 +956,10 @@ export default function CashTrackerPage() {
           {/* Form Filter */}
           <select
             value={filterForm}
-            onChange={(e) => setFilterForm(e.target.value)}
+            onChange={(e) => {
+              setFilterForm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-pc-black border border-pc-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-pc-green"
           >
             <option value="ALL">All Forms</option>
@@ -931,7 +971,10 @@ export default function CashTrackerPage() {
           {/* Confirmed Filter */}
           <select
             value={filterConfirmed}
-            onChange={(e) => setFilterConfirmed(e.target.value)}
+            onChange={(e) => {
+              setFilterConfirmed(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-pc-black border border-pc-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-pc-green"
           >
             <option value="ALL">All Statuses</option>
@@ -942,7 +985,10 @@ export default function CashTrackerPage() {
           {/* Person Filter */}
           <select
             value={filterPerson}
-            onChange={(e) => setFilterPerson(e.target.value)}
+            onChange={(e) => {
+              setFilterPerson(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-pc-black border border-pc-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-pc-green"
           >
             <option value="ALL">All People</option>
@@ -952,51 +998,49 @@ export default function CashTrackerPage() {
           </select>
         </div>
 
-        <div className="text-pc-muted font-medium">
-          Showing <span className="text-white font-bold">{filteredEntries.length}</span> entries
-        </div>
-      </div>
-
-      {/* Bulk Actions Banner */}
-      {selectedIds.length > 0 && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 flex items-center justify-between animate-fade-in">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-white">
-              <span className="inline-flex items-center justify-center bg-red-500/20 text-red-400 font-bold px-2 py-0.5 rounded text-xs mr-1.5">
+        {selectedIds.length > 0 ? (
+          <div className="flex items-center gap-2 bg-red-950/60 border border-red-500/40 px-3 py-1.5 rounded-lg shrink-0 animate-fade-in">
+            <span className="text-white font-semibold">
+              <span className="bg-red-500/20 text-red-400 font-bold px-1.5 py-0.5 rounded text-xs mr-1">
                 {selectedIds.length}
               </span>
-              {selectedIds.length === 1 ? 'entry' : 'entries'} selected
+              selected
             </span>
             <button
               type="button"
               onClick={() => setSelectedIds([])}
-              className="text-xs text-pc-muted hover:text-white underline transition-colors"
+              className="text-xs text-pc-muted hover:text-white underline px-1"
             >
-              Deselect all
+              Deselect
+            </button>
+            <button
+              type="button"
+              disabled={isBulkDeleting}
+              onClick={handleDeleteSelected}
+              className="px-3 py-1 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold text-xs rounded shadow transition-all flex items-center gap-1.5 active:scale-95"
+            >
+              {isBulkDeleting ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Deleting...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                  </svg>
+                  <span>Delete Selected ({selectedIds.length})</span>
+                </>
+              )}
             </button>
           </div>
-          <button
-            type="button"
-            disabled={isBulkDeleting}
-            onClick={handleDeleteSelected}
-            className="px-3.5 py-1.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold text-xs rounded-lg shadow transition-all flex items-center gap-1.5 active:scale-95"
-          >
-            {isBulkDeleting ? (
-              <>
-                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Deleting...</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                </svg>
-                <span>Delete Selected ({selectedIds.length})</span>
-              </>
-            )}
-          </button>
-        </div>
-      )}
+        ) : (
+          <div className="text-pc-muted font-medium shrink-0">
+            Showing <span className="text-white font-bold">{filteredEntries.length === 0 ? 0 : `${startIndex + 1}-${endIndex}`}</span> of{' '}
+            <span className="text-white font-bold">{filteredEntries.length}</span> entries
+          </div>
+        )}
+      </div>
 
       {/* Spreadsheet Table View (Optimized Proportional Layout without Blank Space) */}
       <div className="bg-pc-dark/95 border border-pc-border rounded-2xl overflow-hidden shadow-2xl">
@@ -1007,10 +1051,10 @@ export default function CashTrackerPage() {
                 <th className="py-3 px-3 w-10 text-center">
                   <input
                     type="checkbox"
-                    checked={filteredEntries.length > 0 && filteredEntries.every((e) => selectedIds.includes(e.id))}
+                    checked={paginatedEntries.length > 0 && paginatedEntries.every((e) => selectedIds.includes(e.id))}
                     onChange={handleSelectAll}
                     className="w-4 h-4 rounded border-gray-400 bg-black/40 text-pc-green focus:ring-0 focus:ring-offset-0 cursor-pointer accent-pc-green"
-                    title="Select all"
+                    title="Select all on this page"
                   />
                 </th>
                 <th className="py-3 px-4 w-[18%] min-w-[130px]">Person</th>
@@ -1054,7 +1098,7 @@ export default function CashTrackerPage() {
                   </td>
                 </tr>
               ) : (
-                filteredEntries.map((item) => {
+                paginatedEntries.map((item) => {
                   const isNegative = Number(item.amount) < 0;
                   const isPayroll = isNegative || (item.form || '').toLowerCase() === 'cash' && isNegative;
                   const isZelle = (item.form || '').toLowerCase().includes('zelle');
@@ -1177,6 +1221,90 @@ export default function CashTrackerPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {filteredEntries.length > 0 && (
+          <div className="border-t border-pc-border/40 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-pc-black/30">
+            <div className="flex items-center gap-3 text-pc-muted">
+              <span>
+                Showing <strong className="text-white">{startIndex + 1}</strong> to <strong className="text-white">{endIndex}</strong> of <strong className="text-white">{filteredEntries.length}</strong> entries
+              </span>
+              <div className="flex items-center gap-1.5 ml-2 border-l border-pc-border/50 pl-3">
+                <span>Per page:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  className="bg-pc-black border border-pc-border rounded px-2 py-0.5 text-xs text-white focus:outline-none focus:border-pc-green cursor-pointer"
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={safePage === 1}
+                  className="px-2 py-1 rounded bg-pc-dark border border-pc-border text-white disabled:opacity-30 disabled:pointer-events-none hover:border-pc-green transition-all"
+                  title="First Page"
+                >
+                  «
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(Math.max(1, safePage - 1))}
+                  disabled={safePage === 1}
+                  className="px-2.5 py-1 rounded bg-pc-dark border border-pc-border text-white disabled:opacity-30 disabled:pointer-events-none hover:border-pc-green transition-all flex items-center gap-1"
+                >
+                  <span>‹</span> Prev
+                </button>
+
+                <div className="flex items-center gap-1 px-1">
+                  {getPageNumbers(safePage, totalPages).map((p, idx) =>
+                    p === '...' ? (
+                      <span key={`ellipsis-${idx}`} className="px-1 text-pc-muted select-none">...</span>
+                    ) : (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setCurrentPage(p)}
+                        className={`min-w-[28px] h-7 px-2 rounded text-xs font-bold transition-all ${
+                          safePage === p
+                            ? 'bg-pc-green text-black shadow-sm shadow-pc-green/20'
+                            : 'bg-pc-dark border border-pc-border text-pc-muted hover:text-white hover:border-pc-green/50'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(Math.min(totalPages, safePage + 1))}
+                  disabled={safePage === totalPages}
+                  className="px-2.5 py-1 rounded bg-pc-dark border border-pc-border text-white disabled:opacity-30 disabled:pointer-events-none hover:border-pc-green transition-all flex items-center gap-1"
+                >
+                  Next <span>›</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={safePage === totalPages}
+                  className="px-2 py-1 rounded bg-pc-dark border border-pc-border text-white disabled:opacity-30 disabled:pointer-events-none hover:border-pc-green transition-all"
+                  title="Last Page"
+                >
+                  »
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add Entry Popup Modal (Mobile & Desktop Friendly) */}
