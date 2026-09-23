@@ -1,10 +1,8 @@
 import prisma from '@/lib/prisma';
 
 export const GROQ_MODELS = [
-  'groq/compound',
   'openai/gpt-oss-120b',
-  'groq/compound-mini',
-  'qwen/qwen3.6-27b',
+  'qwen/qwen3.8-27b',
   'openai/gpt-oss-20b'
 ];
 
@@ -69,7 +67,10 @@ export async function callAI(messages, options = {}) {
   let enabledGroqModels = GROQ_MODELS;
   if (settings?.enabledGroqModels) {
     try {
-      enabledGroqModels = JSON.parse(settings.enabledGroqModels);
+      const parsed = JSON.parse(settings.enabledGroqModels);
+      const mapped = parsed.map(m => m === 'qwen/qwen3.6-27b' ? 'qwen/qwen3.8-27b' : m);
+      const filtered = mapped.filter(m => GROQ_MODELS.includes(m));
+      if (filtered.length > 0) enabledGroqModels = filtered;
     } catch (e) {}
   }
 

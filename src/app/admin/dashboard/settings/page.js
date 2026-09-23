@@ -32,10 +32,8 @@ export default function SettingsPage() {
   const [groqEnabled, setGroqEnabled] = useState(true);
   const [openRouterEnabled, setOpenRouterEnabled] = useState(true);
   const [enabledGroqModels, setEnabledGroqModels] = useState([
-    'groq/compound',
     'openai/gpt-oss-120b',
-    'groq/compound-mini',
-    'qwen/qwen3.6-27b',
+    'qwen/qwen3.8-27b',
     'openai/gpt-oss-20b'
   ]);
 
@@ -133,13 +131,13 @@ export default function SettingsPage() {
             try {
               const parsed = JSON.parse(data.enabledGroqModels);
               const validModels = [
-                'groq/compound',
                 'openai/gpt-oss-120b',
-                'groq/compound-mini',
-                'qwen/qwen3.6-27b',
+                'qwen/qwen3.8-27b',
                 'openai/gpt-oss-20b'
               ];
-              setEnabledGroqModels(parsed.filter(m => validModels.includes(m)));
+              const mapped = parsed.map(m => m === 'qwen/qwen3.6-27b' ? 'qwen/qwen3.8-27b' : m);
+              const filtered = mapped.filter(m => validModels.includes(m));
+              setEnabledGroqModels(filtered.length ? filtered : validModels);
             } catch (e) {}
           }
           
@@ -1290,10 +1288,8 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium text-pc-muted mb-2">Enabled Groq Models</label>
                 <div className="space-y-2">
                   {[
-                    'groq/compound',
                     'openai/gpt-oss-120b',
-                    'groq/compound-mini',
-                    'qwen/qwen3.6-27b',
+                    'qwen/qwen3.8-27b',
                     'openai/gpt-oss-20b'
                   ].map(model => (
                     <label key={model} className="flex items-center gap-3">

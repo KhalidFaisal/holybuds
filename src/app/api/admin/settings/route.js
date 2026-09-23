@@ -38,7 +38,7 @@ export async function GET(request) {
       groqApiKey: settings.groqApiKey ? '••••••••••••••••' : '', // Masked in response
       groqEnabled: settings.groqEnabled ?? true,
       openRouterEnabled: settings.openRouterEnabled ?? true,
-      enabledGroqModels: settings.enabledGroqModels || "[\"groq/compound\", \"openai/gpt-oss-120b\", \"groq/compound-mini\", \"qwen/qwen3.6-27b\", \"openai/gpt-oss-20b\"]",
+      enabledGroqModels: settings.enabledGroqModels || "[\"openai/gpt-oss-120b\", \"qwen/qwen3.8-27b\", \"openai/gpt-oss-20b\"]",
       loyaltyEnabled: settings.loyaltyEnabled ?? true,
       pointsPerDollar: settings.pointsPerDollar ?? 1,
       signupBonus: settings.signupBonus ?? 50,
