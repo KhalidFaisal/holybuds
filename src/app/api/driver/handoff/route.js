@@ -216,12 +216,18 @@ export async function POST(request) {
           data: { status: 'ACCEPTED' }
         });
 
+        // Unassign driver from any previous box to satisfy @unique constraint on currentDriverId
+        await tx.inventoryBox.updateMany({
+          where: { currentDriverId: driver.id },
+          data: { currentDriverId: null }
+        });
+
         await tx.inventoryBox.update({
           where: { id: handoff.boxId },
           data: { currentDriverId: driver.id }
         });
 
-        const actual = JSON.parse(handoff.actualInventory);
+        const actual = handoff.actualInventory ? JSON.parse(handoff.actualInventory) : {};
         for (const [productId, quantity] of Object.entries(actual)) {
           await tx.boxItem.upsert({
             where: {
@@ -236,6 +242,11 @@ export async function POST(request) {
           });
         }
 
+        let discrepanciesObj = {};
+        try {
+          if (handoff.discrepancies) discrepanciesObj = JSON.parse(handoff.discrepancies);
+        } catch (e) {}
+
         await tx.boxLog.create({
           data: {
             boxId: handoff.boxId,
@@ -243,7 +254,7 @@ export async function POST(request) {
             details: JSON.stringify({
               from: handoff.fromDriverId,
               to: handoff.toDriverId,
-              discrepancies: JSON.parse(handoff.discrepancies)
+              discrepancies: discrepanciesObj
             })
           }
         });

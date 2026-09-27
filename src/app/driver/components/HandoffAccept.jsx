@@ -23,15 +23,18 @@ export default function HandoffAccept({ handoff, driverId, onAccepted }) {
           handoffId: handoff.id
         })
       });
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (e) {}
       if (res.ok) {
         alert('Box accepted successfully!');
         onAccepted();
       } else {
-        alert(data.error);
+        alert(data.error || 'Failed to accept handoff');
       }
     } catch (err) {
-      alert('Error accepting handoff');
+      alert(err.message || 'Error accepting handoff');
     } finally {
       setLoading(false);
     }
