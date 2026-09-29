@@ -34,22 +34,29 @@ export default async function HomePage() {
   }
 
   const allActiveProducts = await prisma.product.findMany({
-    where: { isVisible: true, stock: { gt: 0 } },
+    where: { 
+      isVisible: true, 
+      stock: { gt: 0 },
+      NOT: [
+        { category: { equals: 'wholesale', mode: 'insensitive' } }
+      ]
+    },
     orderBy: { createdAt: 'desc' }
   });
 
   const enrichedProducts = await withProductDiscounts(allActiveProducts);
+  const retailProducts = enrichedProducts.filter(p => p.category?.toLowerCase() !== 'wholesale');
 
   // 1. Deals
-  const allDeals = enrichedProducts.filter(p => p.eligibleDiscountNames && p.eligibleDiscountNames.length > 0);
+  const allDeals = retailProducts.filter(p => p.eligibleDiscountNames && p.eligibleDiscountNames.length > 0);
   const deals = shuffleHourly([...allDeals]).slice(0, 12);
 
   // 2. Staff Picks (featured)
-  const allStaffPicks = enrichedProducts.filter(p => p.featured);
+  const allStaffPicks = retailProducts.filter(p => p.featured);
   const staffPicks = shuffleHourly([...allStaffPicks]).slice(0, 12);
 
-  // 3. New Arrivals
-  const newArrivals = enrichedProducts.slice(0, 10);
+  // 3. New Arrivals (New Since Your Last Visit)
+  const newArrivals = retailProducts.slice(0, 10);
 
   // 4. Best Sellers
   const topOrderItems = await prisma.orderItem.groupBy({
@@ -61,14 +68,14 @@ export default async function HomePage() {
   
   const bestSellerIds = topOrderItems.map(i => i.productId);
   let bestSellers = bestSellerIds
-    .map(id => enrichedProducts.find(p => p.id === id))
+    .map(id => retailProducts.find(p => p.id === id))
     .filter(Boolean)
     .slice(0, 10);
 
   // Backfill best sellers if we don't have enough data
   if (bestSellers.length < 10) {
     const missing = 10 - bestSellers.length;
-    const backfill = enrichedProducts.filter(p => !bestSellerIds.includes(p.id)).slice(0, missing);
+    const backfill = retailProducts.filter(p => !bestSellerIds.includes(p.id)).slice(0, missing);
     bestSellers.push(...backfill);
   }
 
