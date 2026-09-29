@@ -80,6 +80,63 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
     }
   };
 
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragLeave = (e, index) => {
+    if (dragOverIndex === index) {
+      setDragOverIndex(null);
+    }
+  };
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    setImages(prev => {
+      const updated = [...prev];
+      const [movedItem] = updated.splice(draggedIndex, 1);
+      updated.splice(targetIndex, 0, movedItem);
+      return updated;
+    });
+
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleMakePrimary = (index) => {
+    if (index === 0) return;
+    setImages(prev => {
+      const updated = [...prev];
+      const [item] = updated.splice(index, 1);
+      updated.unshift(item);
+      return updated;
+    });
+  };
+
   const handleRemoveImage = (index) => {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
@@ -330,7 +387,19 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
 
           {/* Image Gallery */}
           <div>
-            <label className="block text-sm font-medium text-pc-muted mb-2">Product Images (First image is primary)</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-pc-muted">
+                Product Images <span className="text-xs text-pc-green font-normal">(Drag to reorder • 1st image is primary)</span>
+              </label>
+              {images.length > 1 && (
+                <span className="text-[11px] text-pc-muted hidden sm:flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
+                  Drag left to make primary
+                </span>
+              )}
+            </div>
             
             <div className="flex gap-2 mb-4">
               <input 
@@ -351,24 +420,74 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
             </label>
 
             {images.length > 0 && (
-              <div className="grid grid-cols-4 gap-3">
-                {images.map((img, i) => (
-                  <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-pc-smoke group">
-                    <img src={img} alt={`Gallery ${i+1}`} className="w-full h-full object-cover" />
-                    <button 
-                      type="button" 
-                      onClick={() => handleRemoveImage(i)}
-                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80"
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {images.map((img, i) => {
+                  const isPrimary = i === 0;
+                  const isDragging = draggedIndex === i;
+                  const isDragOver = dragOverIndex === i;
+
+                  return (
+                    <div 
+                      key={`${img}-${i}`} 
+                      draggable={true}
+                      onDragStart={(e) => handleDragStart(e, i)}
+                      onDragOver={(e) => handleDragOver(e, i)}
+                      onDragLeave={(e) => handleDragLeave(e, i)}
+                      onDrop={(e) => handleDrop(e, i)}
+                      onDragEnd={handleDragEnd}
+                      className={`relative aspect-square rounded-xl overflow-hidden bg-pc-smoke group cursor-grab active:cursor-grabbing select-none transition-all duration-200 border-2 ${
+                        isPrimary ? 'border-emerald-500 shadow-md shadow-emerald-500/10' : 'border-transparent hover:border-pc-border'
+                      } ${
+                        isDragging ? 'opacity-40 scale-95 border-dashed border-pc-green' : ''
+                      } ${
+                        isDragOver && !isDragging ? 'ring-2 ring-pc-green ring-offset-2 ring-offset-pc-black scale-105 z-10' : ''
+                      }`}
+                      title={isPrimary ? "Primary Image" : "Drag left to make primary"}
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                    {i === 0 && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-emerald-500/80 text-white text-[10px] font-bold text-center py-0.5">
-                        PRIMARY
+                      <img src={img} alt={`Gallery ${i+1}`} className="w-full h-full object-cover pointer-events-none" />
+
+                      {/* Drag Handle Indicator */}
+                      <div className="absolute top-1.5 left-1.5 bg-black/60 text-white rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center">
+                        <svg className="w-3.5 h-3.5 text-white/90" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-12a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
+                        </svg>
                       </div>
-                    )}
-                  </div>
-                ))}
+
+                      {/* Delete Button */}
+                      <button 
+                        type="button" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveImage(i);
+                        }}
+                        className="absolute top-1.5 right-1.5 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80 z-20"
+                        title="Remove image"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+
+                      {/* Primary Badge or Make Primary Action */}
+                      {isPrimary ? (
+                        <div className="absolute bottom-0 left-0 right-0 bg-emerald-500/90 text-pure-white text-[10px] font-black text-center py-1 tracking-wider uppercase shadow-sm">
+                          PRIMARY
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMakePrimary(i);
+                          }}
+                          className="absolute bottom-0 left-0 right-0 bg-black/75 hover:bg-pc-green hover:text-black text-pure-white text-[10px] font-bold text-center py-1 opacity-0 group-hover:opacity-100 transition-all z-20 flex items-center justify-center gap-1"
+                          title="Click to make this the primary image"
+                        >
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                          Make Primary
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
