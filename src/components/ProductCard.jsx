@@ -86,9 +86,8 @@ export default function ProductCard({ product, compact = false }) {
 
           {/* Real Inventory Urgency Warning */}
           {product.stock <= 3 && product.stock > 0 ? (
-            <div className="bg-gradient-to-r from-amber-500 to-red-600 text-pure-white text-[9px] sm:text-xs font-black px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full shrink-0 text-center pointer-events-none shadow-md shadow-red-500/30 flex items-center gap-0.5 sm:gap-1 tracking-tight">
-              <span>⚡</span>
-              <span>Only {product.stock} Left</span>
+            <div className="bg-gradient-to-r from-amber-500 to-red-600 text-pure-white text-[9px] sm:text-xs font-black px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full shrink-0 text-center pointer-events-none shadow-md shadow-red-500/30 tracking-tight">
+              Only {product.stock} Left
             </div>
           ) : product.stock <= 5 && product.stock > 0 ? (
             <div className="bg-amber-500/90 text-pure-white text-[9px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shrink-0 text-center pointer-events-none">
