@@ -84,26 +84,31 @@ export default function ProductCard({ product, compact = false }) {
             </div>
           ) : <div />}
 
-          {/* Stock warning */}
-          {product.stock <= 5 && product.stock > 0 && (
-            <div className="bg-red-500/90 text-white text-[9px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full shrink-0 text-center pointer-events-none">
-              Only {product.stock} left
+          {/* Real Inventory Urgency Warning */}
+          {product.stock <= 3 && product.stock > 0 ? (
+            <div className="bg-gradient-to-r from-amber-500 to-red-600 text-pure-white text-[9px] sm:text-xs font-black px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full shrink-0 text-center pointer-events-none shadow-md shadow-red-500/30 flex items-center gap-0.5 sm:gap-1 tracking-tight">
+              <span>⚡</span>
+              <span>Only {product.stock} Left</span>
             </div>
-          )}
+          ) : product.stock <= 5 && product.stock > 0 ? (
+            <div className="bg-amber-500/90 text-pure-white text-[9px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shrink-0 text-center pointer-events-none">
+              {product.stock} Left
+            </div>
+          ) : null}
         </div>
 
         {product.stock === 0 && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none">
-            <span className="text-white font-bold text-lg">Out of Stock</span>
+            <span className="text-pure-white font-bold text-sm sm:text-lg">Out of Stock</span>
           </div>
         )}
       </Link>
 
       {/* Content */}
-      <div className="p-4 flex flex-col flex-1">
-        <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="p-2.5 sm:p-4 flex flex-col flex-1">
+        <div className="flex items-start justify-between gap-2 mb-1 sm:mb-2">
           <Link href={`/product/${product.id}`} className="hover:underline">
-            <h3 className={`font-bold text-white leading-tight group-hover:text-pc-green-light transition-colors ${compact ? 'text-sm sm:text-lg' : 'text-lg'}`}>
+            <h3 className={`font-bold text-white leading-tight group-hover:text-pc-green-light transition-colors line-clamp-2 ${compact ? 'text-xs sm:text-lg min-h-[2rem] sm:min-h-0' : 'text-sm sm:text-lg'}`}>
               {product.name}
             </h3>
           </Link>
@@ -111,14 +116,12 @@ export default function ProductCard({ product, compact = false }) {
 
         {/* Weight */}
         {product.weight && (
-          <div className="flex items-center gap-3 mb-3 text-sm">
+          <div className="flex items-center gap-2 mb-2 text-xs sm:text-sm">
             <span className="text-pc-muted">
               {product.weight}
             </span>
           </div>
         )}
-
-
 
         {/* Effects Badges */}
         {(() => {
@@ -129,9 +132,9 @@ export default function ProductCard({ product, compact = false }) {
 
           if (parsedEffects.length > 0) {
             return (
-              <div className="mb-3 flex flex-wrap gap-1">
+              <div className="mb-2 sm:mb-3 flex flex-wrap gap-1">
                 {parsedEffects.map(effect => (
-                  <span key={effect} className={`${getEffectColorClass(effect)} ${compact ? 'text-[8px] sm:text-[10px] px-1.5 sm:px-2' : 'text-[10px] px-2'} font-bold uppercase tracking-wider py-0.5 rounded-full`}>
+                  <span key={effect} className={`${getEffectColorClass(effect)} ${compact ? 'text-[7.5px] sm:text-[10px] px-1.5 sm:px-2' : 'text-[10px] px-2'} font-bold uppercase tracking-wider py-0.5 rounded-full`}>
                     {effect}
                   </span>
                 ))}
@@ -143,9 +146,9 @@ export default function ProductCard({ product, compact = false }) {
 
         {/* Discount Badge */}
         {product.eligibleDiscountNames && product.eligibleDiscountNames.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-1">
+          <div className="mb-2 sm:mb-3 flex flex-wrap gap-1">
             {product.eligibleDiscountNames.map(name => (
-              <span key={name} className="bg-pc-gold/20 border border-pc-gold/40 text-pc-gold text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full truncate max-w-full">
+              <span key={name} className="bg-pc-gold/20 border border-pc-gold/40 text-pc-gold text-[8px] sm:text-[10px] font-black uppercase tracking-wider px-1.5 sm:px-2 py-0.5 rounded-full truncate max-w-full">
                 {name}
               </span>
             ))}
@@ -153,19 +156,19 @@ export default function ProductCard({ product, compact = false }) {
         )}
 
         {/* Price + Add to cart */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 mt-auto pt-2 border-t border-pc-border/50">
-          <div className="flex flex-row sm:flex-col items-center sm:items-start justify-between sm:justify-start gap-2 sm:gap-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5 sm:gap-2 mt-auto pt-2 border-t border-pc-border/50">
+          <div className="flex flex-row sm:flex-col items-center sm:items-start justify-between sm:justify-start gap-1 sm:gap-0">
             {product.calculatedDiscountPrice && product.calculatedDiscountPrice < product.price ? (
-              <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-0">
-                <span className="text-xs sm:text-sm text-pc-muted line-through decoration-red-500/80">
+              <div className="flex items-center gap-1.5 sm:flex-col sm:items-start sm:gap-0">
+                <span className="text-[10px] sm:text-sm text-pc-muted line-through decoration-red-500/80">
                   ${product.price.toFixed(2)}
                 </span>
-                <span className="text-lg sm:text-2xl font-black text-emerald-400">
+                <span className="text-sm sm:text-2xl font-black text-emerald-400">
                   ${product.calculatedDiscountPrice.toFixed(2)}
                 </span>
               </div>
             ) : (
-              <span className="text-lg sm:text-2xl font-black text-white">
+              <span className="text-sm sm:text-2xl font-black text-white">
                 ${product.price.toFixed(2)}
               </span>
             )}
@@ -173,7 +176,7 @@ export default function ProductCard({ product, compact = false }) {
           <button
             onClick={() => addItem(product)}
             disabled={product.stock === 0}
-            className="btn-primary w-full sm:w-auto text-sm px-3 py-1.5 sm:px-4 sm:py-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-pc-green disabled:hover:shadow-none whitespace-nowrap shrink-0"
+            className="btn-primary w-full sm:w-auto text-xs sm:text-sm px-2.5 py-1.5 sm:px-4 sm:py-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-pc-green disabled:hover:shadow-none whitespace-nowrap shrink-0 text-center font-bold"
             id={`add-to-cart-${product.id}`}
           >
             {product.stock === 0 ? 'Sold Out' : '+ Add'}

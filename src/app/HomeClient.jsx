@@ -66,15 +66,18 @@ function BannerCarousel({ banners }) {
 function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden" id="hero">
-      {/* Background */}
+      {/* Background with subtle autumn depth */}
       <div className="absolute inset-0 bg-hero-gradient" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.08)_0%,transparent_70%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(245,158,11,0.06)_0%,transparent_60%)]" />
 
-      {/* Floating particles */}
+      {/* Floating subtle autumn embers & emerald particles */}
       <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-pc-green/30 rounded-full animate-float" style={{ animationDelay: '0s' }} />
-      <div className="absolute top-1/3 right-1/3 w-3 h-3 bg-pc-gold/20 rounded-full animate-float" style={{ animationDelay: '2s' }} />
+      <div className="absolute top-1/3 right-1/3 w-3 h-3 bg-amber-500/25 rounded-full animate-float" style={{ animationDelay: '2s' }} />
       <div className="absolute bottom-1/3 left-1/3 w-1.5 h-1.5 bg-pc-green/20 rounded-full animate-float" style={{ animationDelay: '4s' }} />
-      <div className="absolute top-2/3 right-1/4 w-2.5 h-2.5 bg-pc-gold/15 rounded-full animate-float" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-2/3 right-1/4 w-2.5 h-2.5 bg-orange-400/20 rounded-full animate-float" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/2 left-1/6 w-2 h-2 bg-amber-400/30 rounded-full animate-float" style={{ animationDelay: '3s' }} />
+      <div className="absolute bottom-1/4 right-1/6 w-2 h-2 bg-emerald-400/25 rounded-full animate-float" style={{ animationDelay: '5s' }} />
 
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto animate-fade-in-up">
         {/* Logo Image */}
@@ -159,10 +162,10 @@ function ProductSection({ title, subtitle, products, viewAllHref, icon }) {
         <div 
           ref={scrollRef}
           onScroll={checkScroll}
-          className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-6 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar"
+          className="flex overflow-x-auto snap-x snap-mandatory gap-3 sm:gap-6 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar"
         >
           {products.map((product) => (
-            <div key={product.id} className="w-[140px] sm:w-[220px] lg:w-[260px] shrink-0 snap-start">
+            <div key={product.id} className="w-[132px] sm:w-[220px] lg:w-[260px] shrink-0 snap-start">
               <ProductCard product={product} compact={true} />
             </div>
           ))}

@@ -23,6 +23,12 @@ module.exports = {
           muted: '#4b5563',     // darker gray for contrast
           border: '#faa500',    // mapped to gold for gold outlines
           'border-light': '#f8ca31',
+          // Fall / October Refresh tokens
+          forest: '#0e3822',
+          'forest-light': '#14532d',
+          amber: '#f59e0b',
+          'amber-dark': '#d97706',
+          cream: '#fef3c7',
         },
       },
       fontFamily: {
@@ -71,7 +77,7 @@ module.exports = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'hero-gradient': 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%)',
+        'hero-gradient': 'linear-gradient(135deg, #0a0a0a 0%, #0d2818 45%, #0a0a0a 100%)',
       },
       backdropBlur: {
         xs: '2px',
