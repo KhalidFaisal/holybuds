@@ -1257,37 +1257,39 @@ export default function SettingsPage() {
 
       {/* Timezone Section */}
       <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
-        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-blue-400"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          Timezone
+        <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2 min-h-[3rem]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-pc-green shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>Timezone</span>
         </h2>
-        <p className="text-pc-muted mb-6 text-sm min-h-[3rem]">
+        <p className="text-pc-muted mb-6 text-sm min-h-[4.25rem]">
           Set global timezone. Current timezone: <span className="text-pc-green font-bold font-mono px-1">{currentTimezone}</span>.
         </p>
 
         <form onSubmit={handleTimezoneSubmit} className="space-y-4 flex flex-col flex-grow">
           <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">Store Timezone (IANA Format)</label>
-            <div className="flex flex-col gap-2">
-              <select
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green appearance-none text-sm"
-                required
-              >
-                <option value="" disabled>Select a timezone...</option>
-                {timezones.map(tz => (
-                  <option key={tz.name} value={tz.name}>{tz.label}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={handleAutoDetectTimezone}
-                className="w-full py-2 bg-pc-green/10 text-pc-green hover:bg-pc-green hover:text-black rounded-xl text-sm font-bold transition-all whitespace-nowrap text-center"
-              >
-                Auto-Detect
-              </button>
-            </div>
+            <label className="block text-sm font-medium text-pc-muted mb-1 truncate">Store Timezone (IANA Format)</label>
+            <select
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
+              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-pc-green appearance-none text-sm h-[42px]"
+              required
+            >
+              <option value="" disabled>Select a timezone...</option>
+              {timezones.map(tz => (
+                <option key={tz.name} value={tz.name}>{tz.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-pc-muted mb-1 truncate">Browser Auto-Detection</label>
+            <button
+              type="button"
+              onClick={handleAutoDetectTimezone}
+              className="w-full h-[42px] bg-pc-green/10 text-pc-green hover:bg-pc-green hover:text-black rounded-xl text-sm font-bold transition-all whitespace-nowrap text-center flex items-center justify-center border border-pc-green/20 hover:border-pc-green"
+            >
+              Auto-Detect
+            </button>
           </div>
 
           {messageTimezone && (
@@ -1310,31 +1312,34 @@ export default function SettingsPage() {
 
       {/* ROW 2: Password & Security Settings (Site Access, Admin Dashboard, Wholesale) */}
       <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
-        <h2 className="text-xl font-semibold text-white mb-4">Site Access Password</h2>
-        <p className="text-pc-muted mb-6 text-sm min-h-[3rem]">
+        <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2 min-h-[3rem]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-pc-green shrink-0"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Site Access Password</span>
+        </h2>
+        <p className="text-pc-muted mb-6 text-sm min-h-[4.25rem]">
           Change the password required for users to enter the site. The current password is <span className="text-pc-green font-bold font-mono px-1">{currentPassword}</span>.
         </p>
 
         <form onSubmit={handleSiteSubmit} className="space-y-4 flex flex-col flex-grow">
           <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">New Password</label>
+            <label className="block text-sm font-medium text-pc-muted mb-1 truncate">New Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-pc-green text-sm h-[42px]"
               required
               minLength={4}
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">Confirm Password</label>
+            <label className="block text-sm font-medium text-pc-muted mb-1 truncate">Confirm Password</label>
             <input
               type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-pc-green text-sm h-[42px]"
               required
               minLength={4}
             />
@@ -1359,31 +1364,34 @@ export default function SettingsPage() {
       </div>
 
       <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
-        <h2 className="text-xl font-semibold text-white mb-4">Admin Dashboard Password</h2>
-        <p className="text-pc-muted mb-6 text-sm min-h-[3rem]">
+        <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2 min-h-[3rem]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-pc-green shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+          <span>Admin Dashboard Password</span>
+        </h2>
+        <p className="text-pc-muted mb-6 text-sm min-h-[4.25rem]">
           Change the password you use to log into this admin dashboard.
         </p>
 
         <form onSubmit={handleAdminSubmit} className="space-y-4 flex flex-col flex-grow">
           <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">New Admin Password</label>
+            <label className="block text-sm font-medium text-pc-muted mb-1 truncate">New Admin Password</label>
             <input
               type="password"
               value={adminPassword}
               onChange={(e) => setAdminPassword(e.target.value)}
-              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-pc-green text-sm h-[42px]"
               required
               minLength={4}
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">Confirm Admin Password</label>
+            <label className="block text-sm font-medium text-pc-muted mb-1 truncate">Confirm Admin Password</label>
             <input
               type="password"
               value={adminConfirm}
               onChange={(e) => setAdminConfirm(e.target.value)}
-              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-pc-green text-sm h-[42px]"
               required
               minLength={4}
             />
@@ -1399,7 +1407,7 @@ export default function SettingsPage() {
             <button
               type="submit"
               disabled={loadingAdmin}
-              className="btn-secondary w-full py-3"
+              className="btn-primary w-full py-3"
             >
               {loadingAdmin ? 'Saving...' : 'Update Admin Password'}
             </button>
@@ -1408,31 +1416,34 @@ export default function SettingsPage() {
       </div>
 
       <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
-        <h2 className="text-xl font-semibold text-white mb-4">Wholesale Access Password</h2>
-        <p className="text-pc-muted mb-6 text-sm min-h-[3rem]">
+        <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2 min-h-[3rem]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-pc-green shrink-0"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+          <span>Wholesale Access Password</span>
+        </h2>
+        <p className="text-pc-muted mb-6 text-sm min-h-[4.25rem]">
           Change the passcode required for users to enter the wholesale section. The current passcode is <span className="text-pc-green font-bold font-mono px-1">{currentWholesalePassword}</span>.
         </p>
 
         <form onSubmit={handleWholesaleSubmit} className="space-y-4 flex flex-col flex-grow">
           <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">New Wholesale Passcode</label>
+            <label className="block text-sm font-medium text-pc-muted mb-1 truncate">New Wholesale Passcode</label>
             <input
               type="password"
               value={wholesalePassword}
               onChange={(e) => setWholesalePassword(e.target.value)}
-              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-pc-green text-sm h-[42px]"
               required
               minLength={4}
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">Confirm Wholesale Passcode</label>
+            <label className="block text-sm font-medium text-pc-muted mb-1 truncate">Confirm Wholesale Passcode</label>
             <input
               type="password"
               value={wholesaleConfirm}
               onChange={(e) => setWholesaleConfirm(e.target.value)}
-              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green"
+              className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-pc-green text-sm h-[42px]"
               required
               minLength={4}
             />
@@ -1448,7 +1459,7 @@ export default function SettingsPage() {
             <button
               type="submit"
               disabled={loadingWholesale}
-              className="btn-secondary w-full py-3"
+              className="btn-primary w-full py-3"
             >
               {loadingWholesale ? 'Saving...' : 'Update Wholesale Passcode'}
             </button>
