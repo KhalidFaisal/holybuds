@@ -1253,7 +1253,7 @@ export default function SettingsPage() {
 
       {/* TAB 3: STORE & SECURITY */}
       {activeTab === 'security' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
       {/* Timezone Section */}
       <div className="bg-pc-dark border border-pc-border rounded-2xl p-6 flex flex-col">
@@ -1268,11 +1268,11 @@ export default function SettingsPage() {
         <form onSubmit={handleTimezoneSubmit} className="space-y-4 flex flex-col flex-grow">
           <div>
             <label className="block text-sm font-medium text-pc-muted mb-1">Store Timezone (IANA Format)</label>
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col gap-2">
               <select
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
-                className="flex-1 bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green appearance-none"
+                className="w-full bg-pc-black border border-pc-border rounded-xl px-4 py-2 text-white focus:outline-none focus:border-pc-green appearance-none text-sm"
                 required
               >
                 <option value="" disabled>Select a timezone...</option>
@@ -1283,7 +1283,7 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={handleAutoDetectTimezone}
-                className="px-4 py-2 bg-pc-green/10 text-pc-green hover:bg-pc-green hover:text-black rounded-xl text-sm font-bold transition-all whitespace-nowrap"
+                className="w-full py-2 bg-pc-green/10 text-pc-green hover:bg-pc-green hover:text-black rounded-xl text-sm font-bold transition-all whitespace-nowrap text-center"
               >
                 Auto-Detect
               </button>
