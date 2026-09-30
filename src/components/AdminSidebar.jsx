@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 
 const navGroups = [
   {
-    title: 'MAIN',
+    title: null,
     items: [
       {
         label: 'Dashboard',
@@ -61,7 +61,7 @@ const navGroups = [
     ],
   },
   {
-    title: 'INVENTORY',
+    title: 'CATALOG',
     items: [
       {
         label: 'Products',
@@ -180,11 +180,13 @@ export default function AdminSidebar({ onNavClick }) {
 
       {/* Nav groups */}
       <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
-        {navGroups.map((group) => (
-          <div key={group.title} className="space-y-1">
-            <div className="px-3 text-[11px] font-bold tracking-wider text-pc-muted/70 uppercase">
-              {group.title}
-            </div>
+        {navGroups.map((group, idx) => (
+          <div key={group.title || idx} className="space-y-1">
+            {group.title && (
+              <div className="px-3 text-[11px] font-bold tracking-wider text-pc-muted/70 uppercase">
+                {group.title}
+              </div>
+            )}
             <div className="space-y-0.5">
               {group.items.map((item) => {
                 const isActive = pathname === item.href;
