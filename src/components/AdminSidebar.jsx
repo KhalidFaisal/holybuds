@@ -125,7 +125,7 @@ const navGroups = [
     ],
   },
   {
-    title: 'CONTENT',
+    title: 'SYSTEM',
     items: [
       {
         label: 'Banners',
@@ -136,11 +136,6 @@ const navGroups = [
           </svg>
         ),
       },
-    ],
-  },
-  {
-    title: 'SYSTEM',
-    items: [
       {
         label: 'Settings',
         href: '/admin/dashboard/settings',
