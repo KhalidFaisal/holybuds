@@ -33,6 +33,7 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
 
   // Export State
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [exportingCustomerId, setExportingCustomerId] = useState(null);
   const customersWithEmail = useMemo(() => {
     return customers.filter(c => c.email && c.email.trim().length > 0);
   }, [customers]);
@@ -175,6 +176,165 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  // Export Specific Customer History to CSV
+  const exportCustomerHistory = (customer, timeline, stats) => {
+    if (!customer) return;
+
+    const safeName = (customer.name || 'customer').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safePhone = (customer.phone || '').replace(/[^0-9]/g, '');
+    const dateStr = new Date().toISOString().split('T')[0];
+
+    const headers = [
+      'Date',
+      'Event Type',
+      'Order / Event ID',
+      'Status',
+      'Total Amount ($)',
+      'Discount ($)',
+      'Discount Code/Name',
+      'Points Earned',
+      'Points Used',
+      'Store Credit Used ($)',
+      'Items Purchased',
+      'Delivery Method',
+      'Delivery Address',
+      'Details / Referral Info'
+    ];
+
+    const escapeCsv = (val) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val);
+      return `"${str.replace(/"/g, '""')}"`;
+    };
+
+    const rows = (timeline || []).map(event => {
+      const formattedDate = formatDate(event.date);
+
+      if (event.type === 'ORDER') {
+        const itemsSummary = (event.items || [])
+          .map(item => `${item.quantity}x ${item.name}${item.category ? ` (${item.category})` : ''} - $${(item.price * item.quantity).toFixed(2)}`)
+          .join('; ');
+
+        return [
+          escapeCsv(formattedDate),
+          escapeCsv('Order'),
+          escapeCsv(event.orderNumber ? `#${event.orderNumber}` : event.id),
+          escapeCsv(event.status || 'PENDING'),
+          escapeCsv(event.total !== undefined ? event.total.toFixed(2) : '0.00'),
+          escapeCsv(event.discountAmount ? event.discountAmount.toFixed(2) : '0.00'),
+          escapeCsv(event.discountName || ''),
+          escapeCsv(event.pointsEarned || 0),
+          escapeCsv(event.pointsUsed || 0),
+          escapeCsv(event.creditUsed ? event.creditUsed.toFixed(2) : '0.00'),
+          escapeCsv(itemsSummary),
+          escapeCsv(event.deliveryMethod || ''),
+          escapeCsv(event.deliveryAddress || customer.address || ''),
+          escapeCsv('')
+        ];
+      }
+
+      if (event.type === 'REFERRAL_REWARD') {
+        const details = `Reward for referring ${event.refereeName || 'friend'} (${event.refereePhone || 'N/A'})${event.orderNumber ? ` - Order #${event.orderNumber}` : ''}`;
+        return [
+          escapeCsv(formattedDate),
+          escapeCsv('Referral Reward'),
+          escapeCsv(event.id || ''),
+          escapeCsv('COMPLETED'),
+          escapeCsv('0.00'),
+          escapeCsv('0.00'),
+          escapeCsv(''),
+          escapeCsv(event.rewardPoints || 0),
+          escapeCsv(0),
+          escapeCsv(event.rewardCredit ? event.rewardCredit.toFixed(2) : '0.00'),
+          escapeCsv(''),
+          escapeCsv(''),
+          escapeCsv(''),
+          escapeCsv(details)
+        ];
+      }
+
+      if (event.type === 'SIGNUP') {
+        return [
+          escapeCsv(formattedDate),
+          escapeCsv('Account Signup'),
+          escapeCsv(event.id || ''),
+          escapeCsv('COMPLETED'),
+          escapeCsv('0.00'),
+          escapeCsv('0.00'),
+          escapeCsv(''),
+          escapeCsv(0),
+          escapeCsv(0),
+          escapeCsv('0.00'),
+          escapeCsv(''),
+          escapeCsv(''),
+          escapeCsv(''),
+          escapeCsv(event.details || 'Customer account created')
+        ];
+      }
+
+      return [
+        escapeCsv(formattedDate),
+        escapeCsv(event.type || 'Activity'),
+        escapeCsv(event.id || ''),
+        escapeCsv(event.status || ''),
+        escapeCsv('0.00'),
+        escapeCsv('0.00'),
+        escapeCsv(''),
+        escapeCsv(0),
+        escapeCsv(0),
+        escapeCsv('0.00'),
+        escapeCsv(''),
+        escapeCsv(''),
+        escapeCsv(''),
+        escapeCsv(event.details || '')
+      ];
+    });
+
+    const metadata = [
+      `# Customer History Report: ${customer.name || 'Customer'}`,
+      `# Phone: ${customer.phone || 'N/A'} | Email: ${customer.email || 'N/A'}`,
+      `# Lifetime Spend: $${(stats?.lifetimeSpend || 0).toFixed(2)} | Completed Orders: ${stats?.completedOrdersCount || customer.totalOrders || 0}`,
+      `# Loyalty Points: ${customer.points || 0} | Store Credit: $${(customer.storeCredit || 0).toFixed(2)}`,
+      `# Referral Code: ${customer.referralCode || 'N/A'} | Referred By: ${customer.referredByCode || 'N/A'}`,
+      `# Exported On: ${new Date().toLocaleString()}`,
+      ''
+    ];
+
+    const csvContent = [...metadata, headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `customer_history_${safeName}_${safePhone || 'user'}_${dateStr}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportSpecificCustomer = async (customer) => {
+    if (historyCustomer && historyCustomer.id === customer.id && historyTimeline.length > 0) {
+      exportCustomerHistory(historyCustomer, historyTimeline, historyStats);
+      return;
+    }
+
+    setExportingCustomerId(customer.id);
+    try {
+      const res = await fetch(`/api/admin/customers/${customer.id}/history`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        }
+      });
+      if (!res.ok) throw new Error('Failed to load customer history for export');
+      const data = await res.json();
+      exportCustomerHistory(data.customer || customer, data.timeline || [], data.stats || null);
+    } catch (err) {
+      alert(err.message || 'Error exporting customer history');
+    } finally {
+      setExportingCustomerId(null);
+    }
   };
 
   // Open Edit Modal
@@ -552,6 +712,21 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
                             History
                           </button>
                           <button
+                            onClick={() => handleExportSpecificCustomer(customer)}
+                            disabled={exportingCustomerId === customer.id}
+                            className="px-2.5 py-1 rounded-lg bg-pc-dark border border-pc-border text-pc-muted hover:text-pc-green hover:border-pc-green/50 transition-all text-xs font-medium flex items-center gap-1"
+                            title={`Export ${customer.name}'s history to CSV`}
+                          >
+                            {exportingCustomerId === customer.id ? (
+                              <div className="w-3.5 h-3.5 border-2 border-pc-green border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                            )}
+                            <span className="hidden sm:inline">Export</span>
+                          </button>
+                          <button
                             onClick={() => openEditModal(customer)}
                             className="px-2.5 py-1 rounded-lg bg-pc-dark border border-pc-border text-pc-muted hover:text-white hover:border-pc-muted transition-all text-xs font-medium"
                           >
@@ -808,14 +983,27 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
                 </div>
               </div>
 
-              <button
-                onClick={() => setIsHistoryOpen(false)}
-                className="p-1.5 rounded-lg text-pc-muted hover:text-white hover:bg-white/10 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => exportCustomerHistory(historyCustomer, historyTimeline, historyStats)}
+                  disabled={historyLoading}
+                  className="px-3 py-1.5 rounded-lg bg-pc-dark border border-pc-border text-pc-green hover:bg-pc-green hover:text-black hover:border-pc-green transition-all text-xs font-bold flex items-center gap-1.5 disabled:opacity-50"
+                  title="Export this customer's full history to CSV"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>Export History</span>
+                </button>
+                <button
+                  onClick={() => setIsHistoryOpen(false)}
+                  className="p-1.5 rounded-lg text-pc-muted hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Quick KPI Stat Cards */}
@@ -1007,12 +1195,25 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
 
             {/* Modal Footer */}
             <div className="p-4 border-t border-pc-border bg-pc-black/40 flex justify-between items-center">
-              <button
-                onClick={() => openEditModal(historyCustomer)}
-                className="btn-secondary px-4 py-2 text-xs font-bold"
-              >
-                Adjust Points &amp; Credit
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => exportCustomerHistory(historyCustomer, historyTimeline, historyStats)}
+                  disabled={historyLoading}
+                  className="btn-secondary px-4 py-2 text-xs font-bold flex items-center gap-1.5 hover:text-pc-green"
+                  title="Export this customer's full history to CSV"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export History (CSV)
+                </button>
+                <button
+                  onClick={() => openEditModal(historyCustomer)}
+                  className="btn-secondary px-4 py-2 text-xs font-bold"
+                >
+                  Adjust Points &amp; Credit
+                </button>
+              </div>
               <button
                 onClick={() => setIsHistoryOpen(false)}
                 className="btn-primary px-5 py-2 text-xs font-bold"
