@@ -65,19 +65,19 @@ export default function RewardsTab({ customer, settings, isAdmin, isMaintenance 
   return (
     <div className="space-y-8">
       {isAdmin && isMaintenance && (
-        <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg shadow-amber-500/5 animate-fade-in">
+        <div className="bg-amber-50 border border-amber-400 text-amber-950 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md animate-fade-in">
           <div className="flex items-center gap-3">
             <span className="text-xl">⚡</span>
             <div>
-              <p className="font-bold text-amber-200 text-sm">Admin Preview Mode</p>
-              <p className="text-amber-300/80 text-xs mt-0.5">
+              <p className="font-black text-amber-950 text-sm">Admin Preview Mode</p>
+              <p className="text-amber-900 text-xs mt-0.5">
                 The Rewards tab is currently under maintenance for regular customers. Only administrators have access to view and test this section.
               </p>
             </div>
           </div>
           <a 
             href="/admin/dashboard/settings" 
-            className="self-start sm:self-auto shrink-0 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 text-xs font-bold px-3 py-1.5 rounded-xl transition-all"
+            className="self-start sm:self-auto shrink-0 bg-amber-500 hover:bg-amber-600 text-black border border-amber-600 text-xs font-black px-3.5 py-1.5 rounded-xl shadow-xs transition-all"
           >
             Settings →
           </a>
