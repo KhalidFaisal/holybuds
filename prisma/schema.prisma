@@ -9,7 +9,8 @@ datasource db {
 model Product {
   id          String      @id @default(cuid())
   name        String
-  category    String      // FLOWER or EDIBLE
+  category    String      // Primary Category
+  categories  String      @default("[]") // JSON array of all assigned categories
   price       Float
   weight      String?     // e.g. "3.5g", "1g", "7g", "1pc", "10pc"
   description String      @default("")

@@ -20,6 +20,19 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
   });
 
   const [categories, setCategories] = useState([]);
+
+  // Multi-Category state
+  const [selectedCategories, setSelectedCategories] = useState(() => {
+    try {
+      if (product?.categories) {
+        const parsed = JSON.parse(product.categories);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return product?.category ? [product.category] : [];
+  });
+
+  const [primaryCategory, setPrimaryCategory] = useState(product?.category || '');
   
   useEffect(() => {
     const fetchCats = async () => {
@@ -27,15 +40,55 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
         const res = await fetch('/api/categories');
         const data = await res.json();
         setCategories(data);
-        if (!product?.category && data.length > 0) {
-          setForm(prev => ({ ...prev, category: data[0].slug }));
+        if (data.length > 0) {
+          setSelectedCategories(prev => {
+            if (prev.length === 0) {
+              const defaultCat = data[0].slug;
+              setPrimaryCategory(p => p || defaultCat);
+              setForm(f => ({ ...f, category: defaultCat }));
+              return [defaultCat];
+            }
+            setPrimaryCategory(p => p || prev[0]);
+            return prev;
+          });
         }
       } catch (err) {
         console.error('Failed to fetch categories', err);
       }
     };
     fetchCats();
-  }, [product?.category]);
+  }, []);
+
+  const handleToggleCategory = (slug) => {
+    setSelectedCategories(prev => {
+      let next;
+      if (prev.includes(slug)) {
+        if (prev.length <= 1) return prev; // At least one category required
+        next = prev.filter(s => s !== slug);
+        if (primaryCategory === slug) {
+          const newPrimary = next[0] || '';
+          setPrimaryCategory(newPrimary);
+          setForm(f => ({ ...f, category: newPrimary }));
+        }
+      } else {
+        next = [...prev, slug];
+        if (!primaryCategory) {
+          setPrimaryCategory(slug);
+          setForm(f => ({ ...f, category: slug }));
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleSetPrimary = (e, slug) => {
+    e.stopPropagation();
+    setPrimaryCategory(slug);
+    setForm(f => ({ ...f, category: slug }));
+    if (!selectedCategories.includes(slug)) {
+      setSelectedCategories(prev => [...prev, slug]);
+    }
+  };
 
   const [images, setImages] = useState(() => {
     try {
@@ -262,7 +315,13 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ ...form, images, effects: JSON.stringify(effects) }),
+        body: JSON.stringify({ 
+          ...form, 
+          category: primaryCategory || form.category,
+          categories: selectedCategories,
+          images, 
+          effects: JSON.stringify(effects) 
+        }),
       });
 
       if (!res.ok) {
@@ -299,21 +358,57 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
             <input name="name" value={form.name} onChange={handleChange} required className="input-field" placeholder="e.g. OG Kush" />
           </div>
 
-          {/* Category */}
+          {/* Categories (Multi-select with Primary Star) */}
           <div>
-            <label className="block text-sm font-medium text-pc-muted mb-1">Category *</label>
-            <select name="category" value={form.category} onChange={handleChange} className="select-field">
-              {categories.length > 0 ? (
-                categories.map(cat => (
-                  <option key={cat.id} value={cat.slug}>{cat.name}</option>
-                ))
-              ) : (
-                <>
-                  <option value="FLOWERS">Flowers</option>
-                  <option value="EDIBLES">Edibles</option>
-                </>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-pc-muted">
+                Categories * <span className="text-xs text-pc-green font-normal">(Select all that apply • Click star to set Primary)</span>
+              </label>
+              {primaryCategory && (
+                <span className="text-xs text-pc-muted">
+                  Primary: <span className="font-bold text-pc-green">{categories.find(c => c.slug === primaryCategory)?.name || primaryCategory}</span>
+                </span>
               )}
-            </select>
+            </div>
+            
+            <div className="flex flex-wrap gap-2 p-3 bg-pc-dark/60 border border-pc-border rounded-xl min-h-[48px] items-center">
+              {categories.length > 0 ? (
+                categories.map(cat => {
+                  const isSelected = selectedCategories.includes(cat.slug);
+                  const isPrimary = primaryCategory === cat.slug;
+
+                  return (
+                    <div
+                      key={cat.id}
+                      onClick={() => handleToggleCategory(cat.slug)}
+                      className={`group/cat inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all border select-none ${
+                        isSelected
+                          ? isPrimary
+                            ? 'bg-pc-green/20 border-pc-green text-pc-green shadow-sm shadow-pc-green/20'
+                            : 'bg-white/10 border-white/30 text-white hover:border-white/50'
+                          : 'bg-pc-smoke/30 border-pc-border text-pc-muted hover:border-pc-border/80 hover:text-white'
+                      }`}
+                    >
+                      <span>{cat.name}</span>
+                      {isSelected && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleSetPrimary(e, cat.slug)}
+                          title={isPrimary ? "Primary Category" : "Click to set as Primary Category"}
+                          className={`text-sm px-0.5 rounded transition-transform hover:scale-125 focus:outline-none ${
+                            isPrimary ? 'text-pc-gold' : 'text-pc-muted hover:text-pc-gold'
+                          }`}
+                        >
+                          {isPrimary ? '★' : '☆'}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <span className="text-xs text-pc-muted">Loading categories...</span>
+              )}
+            </div>
           </div>
 
           {/* Price / Weight / Stock */}

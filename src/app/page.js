@@ -38,14 +38,22 @@ export default async function HomePage() {
       isVisible: true, 
       stock: { gt: 0 },
       NOT: [
-        { category: { equals: 'wholesale', mode: 'insensitive' } }
+        { category: { equals: 'wholesale', mode: 'insensitive' } },
+        { categories: { contains: '"wholesale"' } }
       ]
     },
     orderBy: { createdAt: 'desc' }
   });
 
   const enrichedProducts = await withProductDiscounts(allActiveProducts);
-  const retailProducts = enrichedProducts.filter(p => p.category?.toLowerCase() !== 'wholesale');
+  const retailProducts = enrichedProducts.filter(p => {
+    if (p.category?.toLowerCase() === 'wholesale') return false;
+    try {
+      const cats = JSON.parse(p.categories || '[]');
+      if (cats.some(c => c.toLowerCase() === 'wholesale')) return false;
+    } catch(e) {}
+    return true;
+  });
 
   // 1. Deals
   const allDeals = retailProducts.filter(p => p.eligibleDiscountNames && p.eligibleDiscountNames.length > 0);

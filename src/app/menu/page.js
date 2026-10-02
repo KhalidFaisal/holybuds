@@ -21,12 +21,18 @@ export default async function MenuPage({ searchParams }) {
       // Don't fetch any products if wholesale is locked
       where.id = 'none'; // Impossible condition to return 0 products
     } else {
-      where.category = category;
+      where.OR = [
+        { category: category },
+        { categories: { contains: `"${category}"` } }
+      ];
     }
   } else {
     // Exclude wholesale from ALL categories if they don't have access
     if (!hasWholesaleAccess) {
-      where.category = { not: 'wholesale' };
+      where.AND = [
+        { category: { not: 'wholesale' } },
+        { NOT: { categories: { contains: '"wholesale"' } } }
+      ];
     }
   }
 

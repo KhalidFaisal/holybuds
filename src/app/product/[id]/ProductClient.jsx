@@ -103,9 +103,29 @@ function ProductDetails({ product }) {
             {/* Content Section */}
             <div className="lg:col-span-3 p-8 md:p-12 flex flex-col">
               <div className="mb-4 flex flex-wrap items-center gap-2">
-                <span className={product.category === 'FLOWER' ? 'badge-hybrid' : 'badge-edible'}>
-                  {product.category === 'FLOWER' ? 'Flowers' : (product.category?.charAt(0)?.toUpperCase() + product.category?.slice(1)?.toLowerCase()) || 'Product'}
-                </span>
+                {(() => {
+                  let allCats = [];
+                  try {
+                    allCats = JSON.parse(product.categories || '[]');
+                  } catch(e) {}
+                  if (product.category && !allCats.includes(product.category)) {
+                    allCats.unshift(product.category);
+                  }
+                  if (allCats.length === 0 && product.category) {
+                    allCats = [product.category];
+                  }
+
+                  return allCats.map(cat => {
+                    const isFlower = cat.toLowerCase() === 'flower' || cat.toLowerCase() === 'flowers';
+                    const isEdible = cat.toLowerCase() === 'edible' || cat.toLowerCase() === 'edibles';
+                    const label = isFlower ? 'Flowers' : (cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase());
+                    return (
+                      <span key={cat} className={isFlower ? 'badge-hybrid' : isEdible ? 'badge-edible' : 'badge-indica'}>
+                        {label}
+                      </span>
+                    );
+                  });
+                })()}
                 
                 {(() => {
                   try {

@@ -429,7 +429,16 @@ export default function AdminProductsPage() {
   };
 
   const filtered = products.filter((p) => {
-    if (filterCategory !== 'ALL' && p.category !== filterCategory) return false;
+    if (filterCategory !== 'ALL') {
+      const target = filterCategory.toLowerCase();
+      const matchesPrimary = p.category?.toLowerCase() === target;
+      let matchesSecondary = false;
+      try {
+        const cats = JSON.parse(p.categories || '[]');
+        matchesSecondary = cats.some(c => c.toLowerCase() === target);
+      } catch (e) {}
+      if (!matchesPrimary && !matchesSecondary) return false;
+    }
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
     
     if (filterInventory === 'IN_STOCK' && p.stock <= 0) return false;
@@ -646,13 +655,44 @@ export default function AdminProductsPage() {
                     </div>
                   </td>
                   <td className="p-4">
-                    <span className={
-                      product.category === 'FLOWER' || product.category === 'flower' ? 'badge-hybrid' :
-                      product.category === 'EDIBLE' || product.category === 'edible' ? 'badge-edible' :
-                      'badge-indica'
-                    }>
-                      {categories.find(c => c.slug === product.category)?.name || product.category}
-                    </span>
+                    {(() => {
+                      let allCats = [];
+                      try {
+                        allCats = JSON.parse(product.categories || '[]');
+                      } catch (e) {}
+                      if (product.category && !allCats.includes(product.category)) {
+                        allCats.unshift(product.category);
+                      }
+                      if (allCats.length === 0 && product.category) {
+                        allCats = [product.category];
+                      }
+
+                      return (
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                          {allCats.map(catSlug => {
+                            const isPrimary = catSlug === product.category;
+                            const catName = categories.find(c => c.slug === catSlug)?.name || catSlug;
+                            const isFlower = catSlug.toLowerCase() === 'flower' || catSlug.toLowerCase() === 'flowers';
+                            const isEdible = catSlug.toLowerCase() === 'edible' || catSlug.toLowerCase() === 'edibles';
+
+                            return (
+                              <span 
+                                key={catSlug}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                                  isPrimary
+                                    ? isFlower ? 'badge-hybrid' : isEdible ? 'badge-edible' : 'badge-indica'
+                                    : 'bg-white/10 text-white/90 border border-white/20'
+                                }`}
+                                title={isPrimary ? `${catName} (Primary)` : catName}
+                              >
+                                {catName}
+                                {isPrimary && allCats.length > 1 && <span className="text-pc-gold text-[9px]">★</span>}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="p-4 text-white font-semibold text-sm">${product.price.toFixed(2)}</td>
                   <td className="p-4">

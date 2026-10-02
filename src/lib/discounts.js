@@ -24,8 +24,16 @@ export async function withProductDiscounts(products) {
       let applies = false;
       if (d.targetType === 'ENTIRE_ORDER') {
         applies = true;
-      } else if (d.targetType === 'CATEGORY' && product.category === d.targetCategory) {
-        applies = true;
+      } else if (d.targetType === 'CATEGORY') {
+        const target = d.targetCategory?.toLowerCase();
+        if (product.category?.toLowerCase() === target) {
+          applies = true;
+        } else if (product.categories) {
+          try {
+            const cats = JSON.parse(product.categories);
+            if (cats.some(c => c.toLowerCase() === target)) applies = true;
+          } catch (e) {}
+        }
       } else if (d.targetType === 'SPECIFIC_PRODUCTS' && d.targetProductIds) {
         try {
           const targetIds = JSON.parse(d.targetProductIds);

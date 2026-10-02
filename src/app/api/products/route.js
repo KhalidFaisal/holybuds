@@ -23,11 +23,17 @@ export async function GET(request) {
       if (category.toLowerCase() === 'wholesale' && !hasWholesaleAccess) {
         where.id = 'none';
       } else {
-        where.category = category;
+        where.OR = [
+          { category: category },
+          { categories: { contains: `"${category}"` } }
+        ];
       }
     } else {
       if (!hasWholesaleAccess) {
-        where.category = { not: 'wholesale' };
+        where.AND = [
+          { category: { not: 'wholesale' } },
+          { NOT: { categories: { contains: '"wholesale"' } } }
+        ];
       }
     }
 
@@ -65,10 +71,24 @@ export async function POST(request) {
     }
     const primaryImage = imagesArr.length > 0 ? imagesArr[0] : '';
 
+    // Handle multiple categories
+    let categoriesArr = [];
+    if (Array.isArray(data.categories)) {
+      categoriesArr = data.categories;
+    } else if (typeof data.categories === 'string' && data.categories.startsWith('[')) {
+      try { categoriesArr = JSON.parse(data.categories); } catch(e) {}
+    } else if (data.category) {
+      categoriesArr = [data.category];
+    }
+    const primaryCategory = data.category || categoriesArr[0] || 'FLOWER';
+    if (!categoriesArr.includes(primaryCategory)) {
+      categoriesArr.unshift(primaryCategory);
+    }
+
     let finalDescription = data.description || '';
-    if (!finalDescription && data.name && data.category) {
+    if (!finalDescription && data.name && primaryCategory) {
       try {
-        finalDescription = await generateProductDescription(data.name, data.category, data.weight);
+        finalDescription = await generateProductDescription(data.name, primaryCategory, data.weight);
       } catch (err) {
         console.error('Failed to auto-generate description:', err);
       }
@@ -78,8 +98,8 @@ export async function POST(request) {
     try {
       const parsed = JSON.parse(finalEffectsStr);
       // Auto tag if it's a FLOWER and no effects were provided
-      if (data.category?.toLowerCase() === 'flowers' && parsed.length === 0 && (data.name || finalDescription)) {
-        const generatedEffects = await autoTagProduct(data.name, data.category, finalDescription);
+      if (primaryCategory?.toLowerCase() === 'flowers' && parsed.length === 0 && (data.name || finalDescription)) {
+        const generatedEffects = await autoTagProduct(data.name, primaryCategory, finalDescription);
         finalEffectsStr = JSON.stringify(generatedEffects);
       }
     } catch (err) {
@@ -89,7 +109,8 @@ export async function POST(request) {
     const product = await prisma.product.create({
       data: {
         name: data.name,
-        category: data.category,
+        category: primaryCategory,
+        categories: JSON.stringify(categoriesArr),
         price: parseFloat(data.price),
         weight: data.weight || null,
         description: finalDescription,

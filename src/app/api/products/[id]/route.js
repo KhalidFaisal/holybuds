@@ -28,7 +28,32 @@ export async function PUT(request, { params }) {
     const data = await request.json();
     const updateData = {};
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.category !== undefined) updateData.category = data.category;
+    if (data.categories !== undefined) {
+      let categoriesArr = [];
+      if (Array.isArray(data.categories)) {
+        categoriesArr = data.categories;
+      } else if (typeof data.categories === 'string' && data.categories.startsWith('[')) {
+        try { categoriesArr = JSON.parse(data.categories); } catch(e) {}
+      } else if (data.categories) {
+        categoriesArr = [data.categories];
+      }
+      updateData.categories = JSON.stringify(categoriesArr);
+      if (categoriesArr.length > 0 && !data.category) {
+        updateData.category = categoriesArr[0];
+      }
+    }
+    if (data.category !== undefined) {
+      updateData.category = data.category;
+      if (updateData.categories) {
+        try {
+          const arr = JSON.parse(updateData.categories);
+          if (!arr.includes(data.category)) {
+            arr.unshift(data.category);
+            updateData.categories = JSON.stringify(arr);
+          }
+        } catch(e) {}
+      }
+    }
     if (data.price !== undefined) updateData.price = parseFloat(data.price);
     if (data.weight !== undefined) updateData.weight = data.weight;
     if (data.description !== undefined) updateData.description = data.description;

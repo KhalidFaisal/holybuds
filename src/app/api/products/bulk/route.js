@@ -30,9 +30,23 @@ export async function POST(request) {
         }
         const primaryImage = imagesArr.length > 0 ? imagesArr[0] : '';
 
+        let categoriesArr = [];
+        if (Array.isArray(p.categories)) {
+          categoriesArr = p.categories;
+        } else if (p.categories) {
+          categoriesArr = p.categories.split(',').map(c => c.trim()).filter(Boolean);
+        } else if (p.category) {
+          categoriesArr = [p.category.trim()];
+        }
+        const primaryCat = p.category ? p.category.trim().toUpperCase() : (categoriesArr[0] ? categoriesArr[0].toUpperCase() : 'EDIBLE');
+        if (!categoriesArr.map(c => c.toUpperCase()).includes(primaryCat)) {
+          categoriesArr.unshift(primaryCat);
+        }
+
         const data = {
           name: p.name,
-          category: p.category ? p.category.trim().toUpperCase() : 'EDIBLE',
+          category: primaryCat,
+          categories: JSON.stringify(categoriesArr),
           price: parseFloat(p.price) || 0,
           weight: p.weight || null,
           description: p.description || '',

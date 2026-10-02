@@ -65,7 +65,16 @@ export default function MenuClient({ products, categories, initialCategory, init
 
     // Category filter
     if (category !== 'ALL') {
-      result = result.filter((p) => p.category === category);
+      const targetCat = category.toLowerCase();
+      result = result.filter((p) => {
+        if (p.category?.toLowerCase() === targetCat) return true;
+        try {
+          const cats = JSON.parse(p.categories || '[]');
+          return cats.some(c => c.toLowerCase() === targetCat);
+        } catch {
+          return false;
+        }
+      });
     }
 
     // Search
