@@ -135,8 +135,16 @@ export async function POST(request) {
     }
 
     let notes = data.notes || '';
-    const pointsUsed = data.pointsUsed || 0;
-    const rewardUsed = data.rewardUsed || null;
+
+    // Fetch site settings for loyalty and maintenance config
+    const isAdmin = requireAdmin(request);
+    const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
+    const rewardsMaintenanceMode = settings?.rewardsMaintenanceMode ?? true;
+
+    // During rewards maintenance, reward redemptions are paused for non-admin customers
+    const isRewardsUnderMaintenance = rewardsMaintenanceMode && !isAdmin;
+    const pointsUsed = isRewardsUnderMaintenance ? 0 : (data.pointsUsed || 0);
+    const rewardUsed = isRewardsUnderMaintenance ? null : (data.rewardUsed || null);
 
     // Calculate Reward Discount Server Side
     let rewardDiscountAmount = 0;
@@ -184,8 +192,6 @@ export async function POST(request) {
       }
     }
 
-    // Fetch site settings for loyalty config
-    const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
     const loyaltyEnabled = settings?.loyaltyEnabled ?? true;
     const pointsPerDollar = settings?.pointsPerDollar ?? 1;
     const signupBonus = settings?.signupBonus ?? 50;

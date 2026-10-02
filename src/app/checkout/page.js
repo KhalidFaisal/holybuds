@@ -35,6 +35,8 @@ function CheckoutContent() {
   const [orderConfirm, setOrderConfirm] = useState(null);
 
   // Loyalty states
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [rewardsMaintenanceMode, setRewardsMaintenanceMode] = useState(true);
   const [customerProfile, setCustomerProfile] = useState(null);
   const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [loyaltyLoading, setLoyaltyLoading] = useState(false);
@@ -43,6 +45,29 @@ function CheckoutContent() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [referralData, setReferralData] = useState(null);
   const [useStoreCredit, setUseStoreCredit] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('admin_token')) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsAdmin(true);
+    }
+  }, []);
+
+  // Fetch initial loyalty & maintenance settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/loyalty/lookup');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.settings?.rewardsMaintenanceMode !== undefined) {
+            setRewardsMaintenanceMode(data.settings.rewardsMaintenanceMode);
+          }
+        }
+      } catch (e) {}
+    };
+    fetchSettings();
+  }, []);
 
   // Load saved info from local storage for fast checkout (GUESTS ONLY)
   useEffect(() => {
@@ -84,6 +109,10 @@ function CheckoutContent() {
             const data = await res.json();
             const customer = data.customer;
             const user = data.user;
+
+            if (data.settings?.rewardsMaintenanceMode !== undefined) {
+              setRewardsMaintenanceMode(data.settings.rewardsMaintenanceMode);
+            }
 
             if (customer || user) {
               if (customer) {
@@ -168,6 +197,9 @@ function CheckoutContent() {
           const res = await fetch(`/api/loyalty/lookup?phone=${sanitized}`);
           if (res.ok) {
             const data = await res.json();
+            if (data.settings?.rewardsMaintenanceMode !== undefined) {
+              setRewardsMaintenanceMode(data.settings.rewardsMaintenanceMode);
+            }
             setCustomerProfile(data.customer);
             setIsNewCustomer(data.isNewCustomer || false);
 
@@ -263,6 +295,16 @@ function CheckoutContent() {
     }
   };
 
+  const isRewardsMaintenance = rewardsMaintenanceMode && !isAdmin;
+
+  // Clear selected reward if maintenance mode is active for non-admin
+  useEffect(() => {
+    if (isRewardsMaintenance && selectedReward) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedReward(null);
+    }
+  }, [isRewardsMaintenance, selectedReward]);
+
   // If a reward is selected, calculate its discount
   const rewardDiscount = calcRewardDiscount(selectedReward, items);
   const minSpendRequired = referralData?.minSpend || 0;
@@ -305,9 +347,15 @@ function CheckoutContent() {
     setError('');
 
     try {
+      const adminToken = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
+      const headers = { 'Content-Type': 'application/json' };
+      if (adminToken) {
+        headers['Authorization'] = `Bearer ${adminToken}`;
+      }
+
       const res = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           ...form,
           deliveryAddress: isDelivery ? `${form.deliveryAddress}, ${form.town}, ${form.zipCode}` : form.town,
@@ -630,16 +678,57 @@ function CheckoutContent() {
                 )}
                 {customerProfile && !loyaltyLoading && !isNewCustomer && (
                   <div className="bg-pc-green/10 border border-pc-green/30 rounded-xl p-4 mt-4 animate-fade-in-up">
-                    {!showFullLoyaltyPanel ? (
+                    {/* Admin Preview Notice */}
+                    {isAdmin && rewardsMaintenanceMode && (
+                      <div className="mb-3.5 px-3 py-2 rounded-lg bg-amber-500 text-black text-xs font-black flex items-center justify-between border border-amber-600 shadow-xs">
+                        <div className="flex items-center gap-1.5">
+                          <span>🛡️</span>
+                          <span>Admin Preview: Rewards Maintenance is ON (Bypassed for you)</span>
+                        </div>
+                        <span className="text-[10px] bg-black text-white px-2 py-0.5 rounded font-black tracking-wider uppercase">
+                          Admin Active
+                        </span>
+                      </div>
+                    )}
+
+                    {isRewardsMaintenance ? (
+                      <div>
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="font-bold text-pc-green text-lg">Welcome back, {customerProfile.name}!</h3>
+                            <p className="text-sm text-slate-700">You have <strong className="text-slate-900 font-extrabold">{customerProfile.points} Points</strong></p>
+                          </div>
+                          <div className="bg-white/80 px-3 py-1 rounded-full text-xs font-bold text-slate-700 border border-slate-300 shadow-xs">
+                            {customerProfile.totalOrders} {customerProfile.totalOrders === 1 ? 'Order' : 'Orders'}
+                          </div>
+                        </div>
+
+                        {/* High-contrast maintenance notice */}
+                        <div className="mt-3 p-4 rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-amber-50/50 to-amber-500/15 text-left">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-black border border-amber-600 inline-flex items-center gap-1.5 shadow-xs">
+                              <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping" />
+                              Scheduled Maintenance
+                            </span>
+                          </div>
+                          <p className="text-sm font-black text-slate-900 mb-1">
+                            Loyalty Reward Redemptions Temporarily Paused
+                          </p>
+                          <p className="text-xs text-slate-700 leading-relaxed">
+                            Our loyalty rewards program is undergoing scheduled updates. Your <strong>{customerProfile.points} points</strong> are safely preserved, and this order will still earn qualifying loyalty points!
+                          </p>
+                        </div>
+                      </div>
+                    ) : !showFullLoyaltyPanel ? (
                       <div className="flex justify-between items-center">
                         <div>
                           <h3 className="font-bold text-pc-green text-lg">Welcome back, {customerProfile.name}!</h3>
-                          <p className="text-sm text-pc-muted">You have <strong className="text-white">{customerProfile.points} Points</strong></p>
+                          <p className="text-sm text-slate-700">You have <strong className="text-slate-900 font-extrabold">{customerProfile.points} Points</strong></p>
                         </div>
                         <button 
                           type="button" 
                           onClick={() => setShowFullLoyaltyPanel(true)} 
-                          className="bg-pc-green text-black font-bold py-2 px-4 rounded-lg text-sm hover:bg-pc-green/90 transition-colors"
+                          className="bg-pc-green text-black font-bold py-2 px-4 rounded-lg text-sm hover:bg-pc-green/90 transition-colors shadow-xs"
                         >
                           Redeem Points
                         </button>
@@ -649,16 +738,16 @@ function CheckoutContent() {
                         <div className="flex justify-between items-start mb-4">
                           <div>
                             <h3 className="font-bold text-pc-green text-lg">Welcome back, {customerProfile.name}!</h3>
-                            <p className="text-sm text-pc-muted">You have <strong className="text-white">{customerProfile.points} Points</strong></p>
+                            <p className="text-sm text-slate-700">You have <strong className="text-slate-900 font-extrabold">{customerProfile.points} Points</strong></p>
                           </div>
                           <div className="flex items-center gap-3">
-                            <div className="bg-pc-dark/50 px-3 py-1 rounded-full text-xs font-medium text-pc-muted border border-pc-border/50">
+                            <div className="bg-white/80 px-3 py-1 rounded-full text-xs font-bold text-slate-700 border border-slate-300 shadow-xs">
                               {customerProfile.totalOrders} Orders
                             </div>
                             <button 
                               type="button" 
                               onClick={() => setShowFullLoyaltyPanel(false)} 
-                              className="text-pc-muted hover:text-white text-sm underline decoration-pc-muted hover:decoration-white transition-colors"
+                              className="text-slate-600 hover:text-slate-900 text-sm font-bold underline decoration-slate-400 hover:decoration-slate-900 transition-colors"
                             >
                               Hide
                             </button>
@@ -666,14 +755,14 @@ function CheckoutContent() {
                         </div>
 
                         {customerProfile.referralCode && (
-                          <div className="mb-4 bg-pc-gold/10 border border-pc-gold/20 rounded p-3 text-sm">
-                            <p className="text-pc-gold font-bold mb-1">Refer a Friend!</p>
-                            <div className="text-pc-muted">
+                          <div className="mb-4 bg-amber-500/10 border border-amber-500/30 rounded p-3 text-sm">
+                            <p className="text-amber-900 font-bold mb-1">Refer a Friend!</p>
+                            <div className="text-slate-700">
                               Give them code 
                               <button 
                                 type="button" 
                                 onClick={handleCopyCode} 
-                                className="mx-1 text-white bg-pc-dark px-2 py-1 rounded hover:bg-pc-dark/70 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                                className="mx-1 text-slate-900 font-extrabold bg-white border border-slate-300 px-2 py-1 rounded hover:bg-slate-50 transition-colors inline-flex items-center gap-1 cursor-pointer shadow-xs"
                                 title="Click to copy"
                               >
                                 <strong>{customerProfile.referralCode}</strong>
@@ -682,7 +771,7 @@ function CheckoutContent() {
                                     <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                   </svg>
                                 ) : (
-                                  <svg className="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <svg className="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
                                   </svg>
                                 )}
@@ -693,7 +782,7 @@ function CheckoutContent() {
                         )}
                         
                         <div className="space-y-2 mt-4">
-                          <p className="text-xs font-semibold text-pc-muted uppercase tracking-wider mb-2">Available Rewards</p>
+                          <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Available Rewards</p>
                           {LOYALTY_REWARDS.map(reward => {
                             const canAfford = customerProfile.points >= reward.points;
                             const isSelected = selectedReward?.id === reward.id;
@@ -702,9 +791,9 @@ function CheckoutContent() {
                               <div 
                                 key={reward.id}
                                 className={`p-3 rounded-lg border text-sm flex items-center justify-between transition-colors ${
-                                  isSelected ? 'bg-pc-green/20 border-pc-green text-white' : 
-                                  canAfford ? 'bg-pc-dark border-pc-border hover:border-pc-green/50 text-white cursor-pointer' : 
-                                  'bg-pc-dark/50 border-pc-border/30 text-pc-muted/50 cursor-not-allowed'
+                                  isSelected ? 'bg-pc-green/20 border-pc-green text-slate-900 font-bold' : 
+                                  canAfford ? 'bg-white border-slate-300 hover:border-pc-green/70 text-slate-900 cursor-pointer shadow-xs' : 
+                                  'bg-slate-100/70 border-slate-200 text-slate-400 cursor-not-allowed'
                                 }`}
                                 onClick={() => {
                                   if (!canAfford) return;
@@ -714,17 +803,17 @@ function CheckoutContent() {
                                 <div className="flex items-center gap-3">
                                   <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
                                     isSelected ? 'border-pc-green bg-pc-green' : 
-                                    canAfford ? 'border-pc-muted' : 'border-pc-border/30'
+                                    canAfford ? 'border-slate-400' : 'border-slate-300'
                                   }`}>
-                                    {isSelected && <div className="w-2 h-2 bg-pc-dark rounded-full" />}
+                                    {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className={isSelected ? 'font-bold' : ''}>{reward.label}</span>
-                                    <span className="text-xs opacity-70">{reward.points} Pts</span>
+                                    <span className={isSelected ? 'font-bold text-slate-900' : canAfford ? 'text-slate-800' : 'text-slate-400'}>{reward.label}</span>
+                                    <span className={`text-xs ${canAfford ? 'text-slate-500 font-medium' : 'text-slate-400'}`}>{reward.points} Pts</span>
                                   </div>
                                 </div>
                                 {isSelected && (
-                                  <span className="text-pc-green font-bold text-xs bg-pc-dark px-2 py-1 rounded">Selected</span>
+                                  <span className="text-black font-bold text-xs bg-pc-green px-2.5 py-1 rounded">Selected</span>
                                 )}
                               </div>
                             );

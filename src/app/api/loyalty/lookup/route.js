@@ -6,8 +6,18 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const phone = searchParams.get('phone');
 
+    const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
+    const pointsPerDollar = settings?.pointsPerDollar ?? 1;
+    const rewardsMaintenanceMode = settings?.rewardsMaintenanceMode ?? true;
+
     if (!phone) {
-      return NextResponse.json({ error: 'Phone number is required' }, { status: 400 });
+      return NextResponse.json({
+        success: true,
+        settings: {
+          pointsPerDollar,
+          rewardsMaintenanceMode
+        }
+      });
     }
 
     const customer = await prisma.customer.findUnique({
@@ -18,12 +28,13 @@ export async function GET(request) {
       return NextResponse.json({
         success: true,
         isNewCustomer: true,
-        customer: null
+        customer: null,
+        settings: {
+          pointsPerDollar,
+          rewardsMaintenanceMode
+        }
       });
     }
-
-    const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
-    const pointsPerDollar = settings?.pointsPerDollar ?? 1;
 
     let referralCode = customer.referralCode;
     if (!referralCode) {
@@ -46,7 +57,8 @@ export async function GET(request) {
         address: customer.address
       },
       settings: {
-        pointsPerDollar
+        pointsPerDollar,
+        rewardsMaintenanceMode
       }
     });
   } catch (error) {
