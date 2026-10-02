@@ -31,6 +31,7 @@ function AccountContent() {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && localStorage.getItem('admin_token')) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAdmin(true);
     }
   }, []);
