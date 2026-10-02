@@ -116,6 +116,7 @@ export async function GET() {
         promoCustomerReferralCredit: settings.promoCustomerReferralCredit,
         promoCustomerReferralDiscount: settings.promoCustomerReferralDiscount,
         referralPromoEndDate: settings.referralPromoEndDate,
+        rewardsMaintenanceMode: settings.rewardsMaintenanceMode ?? true,
       } : null,
     });
   } catch (error) {

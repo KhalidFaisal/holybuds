@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { LOYALTY_REWARDS, LOYALTY_TIERS, getTierInfo } from '@/lib/loyalty';
 import { TierIcon } from './AccountHero';
 
-export default function RewardsTab({ customer, settings }) {
+export default function RewardsTab({ customer, settings, isAdmin, isMaintenance }) {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
@@ -64,6 +64,25 @@ export default function RewardsTab({ customer, settings }) {
 
   return (
     <div className="space-y-8">
+      {isAdmin && isMaintenance && (
+        <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg shadow-amber-500/5 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">⚡</span>
+            <div>
+              <p className="font-bold text-amber-200 text-sm">Admin Preview Mode</p>
+              <p className="text-amber-300/80 text-xs mt-0.5">
+                The Rewards tab is currently under maintenance for regular customers. Only administrators have access to view and test this section.
+              </p>
+            </div>
+          </div>
+          <a 
+            href="/admin/dashboard/settings" 
+            className="self-start sm:self-auto shrink-0 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 text-xs font-bold px-3 py-1.5 rounded-xl transition-all"
+          >
+            Settings →
+          </a>
+        </div>
+      )}
       {/* Top Banner: Spendable Points & VIP Tier Status */}
       <div className="glass-card p-6 md:p-8 bg-gradient-to-br from-pc-card via-pc-card to-pc-green/10 border-pc-green/30 relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">

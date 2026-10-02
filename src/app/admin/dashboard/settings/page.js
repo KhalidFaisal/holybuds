@@ -61,6 +61,7 @@ export default function SettingsPage() {
   ]);
 
   const [loyaltyEnabled, setLoyaltyEnabled] = useState(true);
+  const [rewardsMaintenanceMode, setRewardsMaintenanceMode] = useState(true);
   const [pointsPerDollar, setPointsPerDollar] = useState(1);
   const [signupBonus, setSignupBonus] = useState(50);
   const [loadingLoyalty, setLoadingLoyalty] = useState(false);
@@ -165,6 +166,7 @@ export default function SettingsPage() {
           }
           
           if (data.loyaltyEnabled !== undefined) setLoyaltyEnabled(data.loyaltyEnabled);
+          if (data.rewardsMaintenanceMode !== undefined) setRewardsMaintenanceMode(data.rewardsMaintenanceMode);
           if (data.pointsPerDollar !== undefined) setPointsPerDollar(data.pointsPerDollar);
           if (data.signupBonus !== undefined) setSignupBonus(data.signupBonus);
           if (data.aiStaffPicksEnabled !== undefined) setAiStaffPicksEnabled(data.aiStaffPicksEnabled);
@@ -459,6 +461,7 @@ export default function SettingsPage() {
         },
         body: JSON.stringify({ 
           loyaltyEnabled, 
+          rewardsMaintenanceMode,
           pointsPerDollar,
           signupBonus
         }),
@@ -1167,6 +1170,24 @@ export default function SettingsPage() {
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pc-green"></div>
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between mb-4 bg-pc-black border border-pc-border p-4 rounded-xl">
+            <div className="pr-4">
+              <span className="text-white font-medium block">Rewards Under Maintenance</span>
+              <span className="text-xs text-pc-muted block mt-0.5">
+                When active, customers on <code>/account?tab=rewards</code> see an Under Maintenance page. Only logged-in administrators can preview and test the rewards tab.
+              </span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              <input 
+                type="checkbox" 
+                checked={rewardsMaintenanceMode}
+                onChange={(e) => setRewardsMaintenanceMode(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
             </label>
           </div>
 

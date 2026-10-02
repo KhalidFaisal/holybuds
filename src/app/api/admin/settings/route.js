@@ -53,7 +53,8 @@ export async function GET(request) {
       customerReferralMinSpend: settings.customerReferralMinSpend ?? 100.0,
       driverBonusThreshold: settings.driverBonusThreshold ?? 10,
       driverBonusAmount: settings.driverBonusAmount ?? 100.0,
-      wholesalePassword: settings.wholesalePassword || 'Onlyholy'
+      wholesalePassword: settings.wholesalePassword || 'Onlyholy',
+      rewardsMaintenanceMode: settings.rewardsMaintenanceMode ?? true
     });
   } catch (error) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -182,6 +183,10 @@ export async function POST(request) {
 
     if (data.driverBonusAmount !== undefined) {
       updateData.driverBonusAmount = parseFloat(data.driverBonusAmount);
+    }
+
+    if (data.rewardsMaintenanceMode !== undefined) {
+      updateData.rewardsMaintenanceMode = Boolean(data.rewardsMaintenanceMode);
     }
 
     if (Object.keys(updateData).length === 0) {
