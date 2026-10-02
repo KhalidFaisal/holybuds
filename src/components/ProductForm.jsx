@@ -5,16 +5,17 @@ import { useState, useEffect } from 'react';
 const AVAILABLE_EFFECTS = ['Sleep', 'Focus', 'Energy', 'Relax', 'Creative', 'Euphoric'];
 
 export default function ProductForm({ product, token, onSave, onCancel }) {
-  const isEdit = !!product;
+  const [isDuplicateMode, setIsDuplicateMode] = useState(!product?.id && !!product);
+  const isEdit = Boolean(product && product.id && !isDuplicateMode);
 
   const [form, setForm] = useState({
     name: product?.name || '',
     category: product?.category || 'FLOWER',
-    price: product?.price || '',
+    price: product?.price ?? '',
     weight: product?.weight || '',
     description: product?.description || '',
     image: product?.image || '',
-    stock: product?.stock || '',
+    stock: product?.stock ?? '',
     featured: product?.featured || false,
     isVisible: product?.isVisible ?? true,
   });
@@ -23,6 +24,7 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
 
   // Multi-Category state
   const [selectedCategories, setSelectedCategories] = useState(() => {
+    if (Array.isArray(product?.categories)) return product.categories;
     try {
       if (product?.categories) {
         const parsed = JSON.parse(product.categories);
@@ -91,6 +93,7 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
   };
 
   const [images, setImages] = useState(() => {
+    if (Array.isArray(product?.images)) return product.images;
     try {
       return JSON.parse(product?.images || '[]');
     } catch {
@@ -99,12 +102,23 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
   });
 
   const [effects, setEffects] = useState(() => {
+    if (Array.isArray(product?.effects)) return product.effects;
     try {
       return JSON.parse(product?.effects || '[]');
     } catch {
       return [];
     }
   });
+
+  const handleDuplicateAsNew = () => {
+    setIsDuplicateMode(true);
+    setForm(prev => ({
+      ...prev,
+      name: prev.name.includes('(Copy)') ? prev.name : `${prev.name} (Copy)`,
+      featured: false,
+      isVisible: false,
+    }));
+  };
 
   const [newUrl, setNewUrl] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -341,9 +355,32 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
       <div className="glass-card w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-        <h2 className="text-2xl font-bold text-white mb-6">
-          {isEdit ? 'Edit Product' : 'Add New Product'}
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-white">
+              {isEdit ? 'Edit Product' : isDuplicateMode ? 'Duplicate Product' : 'Add New Product'}
+            </h2>
+            {isDuplicateMode && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-pc-green/10 text-pc-green border border-pc-green/30">
+                Copy
+              </span>
+            )}
+          </div>
+          <button type="button" onClick={onCancel} className="text-pc-muted hover:text-white transition-colors p-1" title="Close">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {isDuplicateMode && (
+          <div className="bg-pc-green/10 border border-pc-green/30 text-pc-green p-3 rounded-xl mb-4 text-xs flex items-center gap-2">
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <span>Duplicating product as a new entry. Review details and click <strong>Create Duplicate</strong> to save.</span>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-xl mb-4 text-sm">
@@ -600,10 +637,23 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t border-pc-border">
+          <div className="flex flex-wrap gap-3 pt-4 border-t border-pc-border">
             <button type="submit" disabled={saving} className="btn-primary flex-1 disabled:opacity-50">
-              {saving ? 'Saving...' : isEdit ? 'Update Product' : 'Add Product'}
+              {saving ? 'Saving...' : isEdit ? 'Update Product' : isDuplicateMode ? 'Create Duplicate' : 'Add Product'}
             </button>
+            {isEdit && (
+              <button
+                type="button"
+                onClick={handleDuplicateAsNew}
+                className="btn-secondary text-pc-green border-pc-green/30 hover:bg-pc-green/10 flex items-center gap-1.5"
+                title="Create a duplicate copy of this product"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Duplicate as New
+              </button>
+            )}
             <button type="button" onClick={onCancel} className="btn-secondary">
               Cancel
             </button>
