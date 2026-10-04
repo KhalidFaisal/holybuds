@@ -3,6 +3,45 @@ import MenuClient from './MenuClient';
 import { withProductDiscounts } from '@/lib/discounts';
 import { cookies } from 'next/headers';
 
+export async function generateMetadata({ searchParams }) {
+  const sp = await searchParams;
+  const category = sp?.category || null;
+
+  if (category && category !== 'ALL') {
+    const formattedCat = category.charAt(0).toUpperCase() + category.slice(1);
+    const title = `${formattedCat} Menu - Long Island Cannabis Delivery | HolyBuds`;
+    const description = `Browse our curated selection of ${formattedCat.toLowerCase()} available for fast same-day weed delivery across Long Island (Nassau & Suffolk Counties) or pickup at HolyBuds Dispensary.`;
+
+    return {
+      title,
+      description,
+      alternates: {
+        canonical: `/menu?category=${encodeURIComponent(category)}`,
+      },
+      openGraph: {
+        title,
+        description,
+        url: `/menu?category=${encodeURIComponent(category)}`,
+        siteName: 'HolyBuds Dispensary',
+      },
+    };
+  }
+
+  return {
+    title: 'Dispensary Menu & Online Ordering | Long Island Delivery | HolyBuds',
+    description: 'Explore top-shelf cannabis flower, edibles, vapes, prerolls, and concentrates with same-day delivery across Long Island (Nassau & Suffolk) or pickup at HolyBuds.',
+    alternates: {
+      canonical: '/menu',
+    },
+    openGraph: {
+      title: 'Dispensary Menu & Online Ordering | Long Island Delivery | HolyBuds',
+      description: 'Explore top-shelf cannabis flower, edibles, vapes, prerolls, and concentrates with same-day delivery across Long Island (Nassau & Suffolk) or pickup at HolyBuds.',
+      url: '/menu',
+      siteName: 'HolyBuds Dispensary',
+    },
+  };
+}
+
 export default async function MenuPage({ searchParams }) {
   const sp = await searchParams;
   const category = sp?.category || null;

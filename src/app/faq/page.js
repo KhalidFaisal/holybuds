@@ -1,45 +1,74 @@
-'use client';
-
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 import { CartProvider } from '@/components/CartProvider';
 import Link from 'next/link';
 import Image from 'next/image';
 
-export default function FAQPage() {
-  const faqs = [
-    {
-      question: "What are your delivery hours?",
-      answer: "We are open Sunday through Thursday from 10 AM to 10 PM, and Friday through Saturday from 10 AM to 12 AM."
-    },
-    {
-      question: "Is there an order minimum?",
-      answer: "Delivery is free for orders over $100. Orders below $100 will incur a $10 delivery fee. There is no minimum for pickup."
-    },
-    {
-      question: "What payment methods do you accept?",
-      answer: "We accept Cash and Zelle payments."
-    },
-    {
-      question: "Do drivers carry exact change?",
-      answer: "No, our drivers do not carry extra change. If you require change for a cash payment, please let us know when placing your order."
-    },
-    {
-      question: "How long will the driver wait?",
-      answer: "Our drivers will wait no longer than 10 minutes before departing, so please be prepared at your scheduled delivery time."
-    },
-    {
-      question: "How does the loyalty program work?",
-      answer: "You earn points on every order you place (calculated after discounts and before delivery fees). You can redeem these points at checkout for free items or discounts!"
-    },
-    {
-      question: "How do referrals work?",
-      answer: "Returning customers are given a unique referral code. Give this code to a friend, and they can enter it at checkout on their first order. Once their order is successfully delivered, you'll automatically receive 100 bonus points!"
-    }
-  ];
+export const metadata = {
+  title: 'Frequently Asked Questions | Long Island Delivery & Hours | HolyBuds',
+  description: 'Everything you need to know about HolyBuds cannabis delivery across Long Island (Nassau & Suffolk), operating hours, order minimums, and payment options.',
+  alternates: {
+    canonical: '/faq',
+  },
+  openGraph: {
+    title: 'Frequently Asked Questions | HolyBuds Cannabis Dispensary Long Island',
+    description: 'Find answers about weed delivery hours, Long Island service areas, cash and Zelle payment options, and rewards at HolyBuds.',
+    url: '/faq',
+    siteName: 'HolyBuds Dispensary',
+  },
+};
 
+const faqs = [
+  {
+    question: "What are your delivery hours?",
+    answer: "We are open Sunday through Thursday from 10 AM to 10 PM, and Friday through Saturday from 10 AM to 12 AM for same-day delivery across Long Island."
+  },
+  {
+    question: "Is there an order minimum?",
+    answer: "Delivery is free for orders over $100. Orders below $100 will incur a $10 delivery fee across Long Island. There is no minimum for store pickup."
+  },
+  {
+    question: "What payment methods do you accept?",
+    answer: "We accept Cash and Zelle payments upon delivery or pickup."
+  },
+  {
+    question: "Do drivers carry exact change?",
+    answer: "No, our drivers do not carry extra change for safety reasons. If you require change for a cash payment, please let us know when placing your order."
+  },
+  {
+    question: "How long will the driver wait?",
+    answer: "Our drivers will wait no longer than 10 minutes before departing, so please be prepared at your scheduled delivery address."
+  },
+  {
+    question: "How does the loyalty program work?",
+    answer: "You earn points on every order you place (calculated after discounts and before delivery fees). You can redeem these points at checkout for free items or discounts!"
+  },
+  {
+    question: "How do referrals work?",
+    answer: "Returning customers receive a unique referral code. Share this code with a friend, and they can enter it at checkout on their first order. Once delivered, you automatically receive 100 bonus points!"
+  }
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((faq) => ({
+    '@type': 'Question',
+    name: faq.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.answer,
+    },
+  })),
+};
+
+export default function FAQPage() {
   return (
     <CartProvider>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       <div className="pt-24 pb-16 min-h-screen">
         <Navbar />
         <CartDrawer />

@@ -4,8 +4,23 @@ export default function robots() {
   return {
     rules: {
       userAgent: '*',
-      allow: ['/', '/api/verify-password'],
-      disallow: ['/api/'],
+      allow: [
+        '/',
+        '/menu',
+        '/product/',
+        '/faq',
+        '/privacy',
+        '/terms',
+        '/api/verify-password',
+      ],
+      disallow: [
+        '/api/',
+        '/admin/',
+        '/driver/',
+        '/checkout/',
+        '/account/',
+        '/wholesale-auth/',
+      ],
     },
     sitemap: `${baseUrl}/sitemap.xml`,
   };

@@ -7,6 +7,14 @@ import { auth } from '@/auth';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'HolyBuds | Premium Long Island Cannabis Delivery & Dispensary',
+  description: 'Fast, discreet same-day weed delivery across Long Island (Nassau & Suffolk County). Browse our curated menu of top-shelf flower, edibles, vape carts, and concentrates.',
+  alternates: {
+    canonical: '/',
+  },
+};
+
 function seededRandom(seed) {
   var x = Math.sin(seed++) * 10000;
   return x - Math.floor(x);

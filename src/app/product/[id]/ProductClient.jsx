@@ -57,7 +57,7 @@ function ProductDetails({ product }) {
                 {mainImage ? (
                   <Image
                     src={mainImage}
-                    alt={product.name}
+                    alt={`${product.name}${product.weight ? ` (${product.weight})` : ''} - ${product.category} | HolyBuds Dispensary Long Island`}
                     fill
                     sizes="(max-width: 1024px) 100vw, 40vw"
                     className="object-cover"
@@ -93,7 +93,7 @@ function ProductDetails({ product }) {
                         mainImage === img ? 'border-pc-green opacity-100' : 'border-transparent opacity-60 hover:opacity-100 hover:border-pc-border'
                       }`}
                     >
-                      <Image src={img} alt={`${product.name} ${i+1}`} fill sizes="20vw" className="object-cover" />
+                      <Image src={img} alt={`${product.name} photo ${i+1} - HolyBuds Dispensary`} fill sizes="20vw" className="object-cover" />
                     </button>
                   ))}
                 </div>

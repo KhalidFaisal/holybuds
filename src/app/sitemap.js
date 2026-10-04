@@ -4,13 +4,22 @@ export default async function sitemap() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://holybuds.net';
 
   const products = await prisma.product.findMany({
-    where: { isVisible: true },
-    select: { id: true, updatedAt: true }
+    where: {
+      isVisible: true,
+      NOT: [
+        { category: { equals: 'wholesale', mode: 'insensitive' } },
+        { categories: { contains: '"wholesale"' } },
+      ],
+    },
+    select: { id: true, updatedAt: true },
   });
 
   const categories = await prisma.category.findMany({
-    where: { isActive: true },
-    select: { slug: true, updatedAt: true }
+    where: {
+      isActive: true,
+      NOT: { slug: { equals: 'wholesale', mode: 'insensitive' } },
+    },
+    select: { slug: true, updatedAt: true },
   });
 
   const productUrls = products.map((product) => ({
@@ -21,9 +30,9 @@ export default async function sitemap() {
   }));
 
   const categoryUrls = categories.map((category) => ({
-    url: `${baseUrl}/menu?category=${category.slug}`,
+    url: `${baseUrl}/menu?category=${encodeURIComponent(category.slug)}`,
     lastModified: category.updatedAt,
-    changeFrequency: 'weekly',
+    changeFrequency: 'daily',
     priority: 0.9,
   }));
 
@@ -32,7 +41,7 @@ export default async function sitemap() {
       url: baseUrl,
       lastModified: new Date(),
       changeFrequency: 'daily',
-      priority: 1,
+      priority: 1.0,
     },
     {
       url: `${baseUrl}/menu`,
@@ -43,8 +52,8 @@ export default async function sitemap() {
     {
       url: `${baseUrl}/faq`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.5,
+      changeFrequency: 'weekly',
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/privacy`,
@@ -56,7 +65,7 @@ export default async function sitemap() {
       url: `${baseUrl}/terms`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
-      priority: 0.5,
+      priority: 0.3,
     },
     ...categoryUrls,
     ...productUrls,
