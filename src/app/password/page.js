@@ -18,7 +18,12 @@ export default function PasswordPage() {
       });
 
       if (res.ok) {
-        window.location.href = '/';
+        const params = new URLSearchParams(window.location.search);
+        const destination = params.get('redirect');
+        const safeDestination = destination && destination.startsWith('/') && !destination.startsWith('//')
+          ? destination
+          : '/';
+        window.location.href = safeDestination;
       } else {
         const data = await res.json();
         setError(data.error || 'Incorrect password');

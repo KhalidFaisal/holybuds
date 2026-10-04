@@ -25,9 +25,11 @@ export function proxy(request) {
     return NextResponse.next();
   }
 
-  // If no access cookie, redirect to /password
+  // If no access cookie, redirect to /password preserving target destination
   if (!hasAccess) {
-    return NextResponse.redirect(new URL('/password', request.url));
+    const destination = pathname + request.nextUrl.search;
+    const redirectParam = destination && destination !== '/' ? `?redirect=${encodeURIComponent(destination)}` : '';
+    return NextResponse.redirect(new URL(`/password${redirectParam}`, request.url));
   }
 
   return NextResponse.next();
