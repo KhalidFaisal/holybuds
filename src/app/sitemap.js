@@ -36,6 +36,15 @@ export default async function sitemap() {
     priority: 0.9,
   }));
 
+  const availableEffects = ['Sleep', 'Focus', 'Energy', 'Relax', 'Creative', 'Euphoric'];
+
+  const effectUrls = availableEffects.map((effect) => ({
+    url: `${baseUrl}/menu?effect=${encodeURIComponent(effect)}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.85,
+  }));
+
   return [
     {
       url: baseUrl,
@@ -49,6 +58,7 @@ export default async function sitemap() {
       changeFrequency: 'daily',
       priority: 0.9,
     },
+    ...effectUrls,
     {
       url: `${baseUrl}/faq`,
       lastModified: new Date(),
