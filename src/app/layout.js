@@ -83,7 +83,7 @@ export const metadata = {
 
 const localBusinessSchema = {
   '@context': 'https://schema.org',
-  '@type': ['Store', 'DeliveryService'],
+  '@type': ['Store', 'LocalBusiness'],
   name: 'HolyBuds Dispensary',
   description: 'Premium cannabis dispensary offering in-store pickup and fast same-day weed delivery across Long Island (Nassau and Suffolk Counties), NY.',
   url: siteUrl,
