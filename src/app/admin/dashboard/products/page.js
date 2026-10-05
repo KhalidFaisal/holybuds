@@ -29,6 +29,7 @@ export default function AdminProductsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+  const [isDeletingProduct, setIsDeletingProduct] = useState(false);
   const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
   const [isTaggingBulk, setIsTaggingBulk] = useState(false);
   const [tagProgress, setTagProgress] = useState(null);
@@ -80,11 +81,19 @@ export default function AdminProductsPage() {
   }, [search, filterCategory, filterInventory, filterVisibility]);
 
   const handleDelete = async (id) => {
+    setIsDeletingProduct(true);
     try {
+      const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '');
+      const headers = {};
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
       const res = await fetch(`/api/products/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers,
       });
+
       if (res.ok) {
         setProducts((prev) => prev.filter((p) => p.id !== id));
         setDeleteConfirm(null);
@@ -93,9 +102,15 @@ export default function AdminProductsPage() {
           newSet.delete(id);
           return newSet;
         });
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || `Failed to delete product (${res.status})`);
       }
     } catch (error) {
       console.error('Delete error:', error);
+      alert('Delete error: ' + error.message);
+    } finally {
+      setIsDeletingProduct(false);
     }
   };
 
@@ -103,13 +118,16 @@ export default function AdminProductsPage() {
     if (selectedExportIds.size === 0) return;
     setIsDeletingBulk(true);
     try {
+      const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '');
+      const headers = { 'Content-Type': 'application/json' };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
       const idsToDelete = Array.from(selectedExportIds);
       const res = await fetch('/api/products/bulk', {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({ ids: idsToDelete })
       });
 
@@ -118,11 +136,12 @@ export default function AdminProductsPage() {
         setSelectedExportIds(new Set());
         setDeleteConfirm(null);
       } else {
-        throw new Error('Failed to delete selected items');
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to delete selected items');
       }
     } catch (error) {
       console.error('Bulk delete error:', error);
-      alert('Error deleting items');
+      alert(error.message || 'Error deleting items');
     } finally {
       setIsDeletingBulk(false);
     }
@@ -840,12 +859,18 @@ export default function AdminProductsPage() {
             <div className="flex gap-3">
               <button 
                 onClick={deleteConfirm === 'bulk' ? handleBulkDelete : () => handleDelete(deleteConfirm)} 
-                className="btn-danger flex-1"
-                disabled={isDeletingBulk}
+                className="bg-red-600 hover:bg-red-700 !text-white font-bold px-4 py-2.5 rounded-xl transition-all active:scale-95 flex-1 disabled:opacity-50"
+                disabled={isDeletingProduct || isDeletingBulk}
               >
-                {isDeletingBulk ? 'Deleting...' : 'Delete'}
+                {isDeletingProduct || isDeletingBulk ? 'Deleting...' : 'Delete'}
               </button>
-              <button onClick={() => setDeleteConfirm(null)} className="btn-secondary flex-1" disabled={isDeletingBulk}>Cancel</button>
+              <button 
+                onClick={() => setDeleteConfirm(null)} 
+                className="btn-secondary flex-1" 
+                disabled={isDeletingProduct || isDeletingBulk}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>

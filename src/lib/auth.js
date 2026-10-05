@@ -41,7 +41,10 @@ export function verifyToken(token) {
 export function getTokenFromRequest(request) {
   const authHeader = request.headers.get('authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    return authHeader.slice(7);
+    const raw = authHeader.slice(7).trim();
+    if (raw && raw !== 'null' && raw !== 'undefined') {
+      return raw;
+    }
   }
   const cookieHeader = request.headers.get('cookie');
   if (cookieHeader) {

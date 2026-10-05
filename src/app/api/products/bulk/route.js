@@ -101,6 +101,9 @@ export async function DELETE(request) {
     }
 
     const result = await prisma.$transaction([
+      prisma.boxItem.deleteMany({
+        where: { productId: { in: ids } }
+      }),
       prisma.orderItem.deleteMany({
         where: { productId: { in: ids } }
       }),
@@ -109,8 +112,8 @@ export async function DELETE(request) {
       })
     ]);
 
-    // result[1] is the product deleteMany result
-    return NextResponse.json({ success: true, count: result[1].count });
+    // result[2] is the product deleteMany result
+    return NextResponse.json({ success: true, count: result[2].count });
   } catch (error) {
     console.error('Bulk delete error:', error);
     return NextResponse.json({ error: 'Failed to process bulk delete' }, { status: 500 });

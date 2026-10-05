@@ -94,6 +94,7 @@ export async function DELETE(request, { params }) {
     const { id } = await params;
     
     await prisma.$transaction([
+      prisma.boxItem.deleteMany({ where: { productId: id } }),
       prisma.orderItem.deleteMany({ where: { productId: id } }),
       prisma.product.delete({ where: { id } }),
     ]);
@@ -101,6 +102,6 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting product:', error);
-    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Failed to delete product' }, { status: 500 });
   }
 }
