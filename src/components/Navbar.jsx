@@ -77,6 +77,60 @@ function SearchDropdown({ query, onSelect }) {
   );
 }
 
+function getCategoryIcon(name = '', slug = '') {
+  const lower = `${name} ${slug}`.toLowerCase();
+  if (lower.includes('flower')) {
+    return (
+      <svg className="w-5 h-5 text-pc-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 0 0 9-9c0-4.97-4.03-9-9-9s-9 4.03-9 9a9 9 0 0 0 9 9Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18M3 12h18" />
+      </svg>
+    );
+  }
+  if (lower.includes('edible') || lower.includes('gummi')) {
+    return (
+      <svg className="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+      </svg>
+    );
+  }
+  if (lower.includes('vape') || lower.includes('cart')) {
+    return (
+      <svg className="w-5 h-5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v18m6-18v18M6 8h12M6 16h12" />
+      </svg>
+    );
+  }
+  if (lower.includes('pre-roll') || lower.includes('preroll') || lower.includes('roll')) {
+    return (
+      <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 19.5 15-15m-15 0 15 15" />
+      </svg>
+    );
+  }
+  if (lower.includes('wax') || lower.includes('concentrate') || lower.includes('extract') || lower.includes('dab')) {
+    return (
+      <svg className="w-5 h-5 text-yellow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+      </svg>
+    );
+  }
+  if (lower.includes('accessor')) {
+    return (
+      <svg className="w-5 h-5 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+      </svg>
+    );
+  }
+  return (
+    <svg className="w-5 h-5 text-pc-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 0 0 9-9c0-4.97-4.03-9-9-9s-9 4.03-9 9a9 9 0 0 0 9 9Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18M3 12h18" />
+    </svg>
+  );
+}
+
 export default function Navbar() {
   const { totalItems, setIsOpen } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -254,15 +308,86 @@ export default function Navbar() {
 
         {/* Mobile navigation menu */}
         {mobileOpen && (
-          <div className="md:hidden pb-4 animate-fade-in">
-            <div className="flex flex-col gap-2">
-              <Link href="/" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-pc-muted hover:text-white transition-colors py-2">Home</Link>
-              <Link href="/menu" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-pc-muted hover:text-white transition-colors py-2">Menu</Link>
-              {categories.map(cat => (
-                <Link key={cat.id} href={`/menu?category=${cat.slug}`} onClick={() => setMobileOpen(false)} className="text-sm font-medium text-pc-muted hover:text-white transition-colors py-2">
-                  {cat.name}
-                </Link>
-              ))}
+          <div className="md:hidden pb-6 pt-3 animate-fade-in border-t border-pc-border/40 mt-2 max-h-[calc(100vh-5.5rem)] overflow-y-auto">
+            {/* Quick Navigation Pills */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <Link 
+                href="/" 
+                onClick={() => setMobileOpen(false)} 
+                className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-white/5 hover:bg-pc-green/10 border border-pc-border/50 hover:border-pc-green/40 text-sm font-semibold text-white transition-all active:scale-[0.98]"
+              >
+                <svg className="w-4 h-4 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
+                Home
+              </Link>
+              <Link 
+                href="/menu" 
+                onClick={() => setMobileOpen(false)} 
+                className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-pc-green/15 hover:bg-pc-green/25 border border-pc-green/40 text-sm font-semibold text-pc-green transition-all active:scale-[0.98]"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+                All Menu
+              </Link>
+            </div>
+
+            {/* Categories Section */}
+            <div className="mb-2">
+              <div className="flex items-center justify-between mb-2.5 px-1">
+                <span className="text-[11px] font-bold tracking-wider uppercase text-pc-muted">
+                  Categories
+                </span>
+                <span className="text-[11px] text-pc-green font-medium">
+                  {categories.length} Total
+                </span>
+              </div>
+
+              {/* 2-Column Responsive Category Grid */}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {categories.map(cat => {
+                  const isWholesale = cat.slug?.toLowerCase() === 'wholesale';
+                  return (
+                    <Link 
+                      key={cat.id} 
+                      href={`/menu?category=${cat.slug}`} 
+                      onClick={() => setMobileOpen(false)} 
+                      className={`group flex items-center gap-2.5 p-2.5 rounded-xl border transition-all active:scale-[0.98] ${
+                        isWholesale
+                          ? 'col-span-2 sm:col-span-3 bg-gradient-to-r from-amber-500/10 via-pc-card to-amber-500/10 border-amber-500/30 hover:border-amber-400/60'
+                          : 'bg-pc-dark/70 hover:bg-pc-card border-pc-border/60 hover:border-pc-green/50'
+                      }`}
+                    >
+                      <div className="w-9 h-9 rounded-lg overflow-hidden bg-pc-smoke/60 border border-pc-border/40 shrink-0 flex items-center justify-center relative">
+                        {cat.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img 
+                            src={cat.image} 
+                            alt={cat.name} 
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
+                          />
+                        ) : (
+                          getCategoryIcon(cat.name, cat.slug)
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-white group-hover:text-pc-green transition-colors truncate">
+                          {cat.name}
+                        </div>
+                        {isWholesale && (
+                          <span className="text-[10px] text-amber-400 font-semibold tracking-wide">
+                            Bulk Pricing
+                          </span>
+                        )}
+                      </div>
+                      <svg className="w-3.5 h-3.5 text-pc-muted/50 group-hover:text-pc-green group-hover:translate-x-0.5 transition-all shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                      </svg>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
