@@ -366,7 +366,7 @@ export default function HomeClient({ customer, deals, staffPicks, newArrivals, b
 
         <div className="space-y-4">
           <ProductSection 
-            title="Buy 5, Save $5 Each" 
+            title="Special Deals" 
             subtitle="Don't miss out on these limited-time offers" 
             products={deals} 
             viewAllHref="/menu" 
