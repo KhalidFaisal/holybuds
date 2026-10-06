@@ -3,6 +3,42 @@
  * Runs ONNX/WASM locally without sending data to external APIs.
  */
 
+/**
+ * Strips low-opacity noise pixels (< alphaThreshold) to eliminate faint table shadows
+ */
+export async function cleanupAlphaChannel(blob, alphaThreshold = 25) {
+  if (typeof window === 'undefined' || !blob) return blob;
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        // If alpha is below threshold, zero it completely to remove dust/shadow specks
+        if (data[i + 3] < alphaThreshold) {
+          data[i + 3] = 0;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      canvas.toBlob((cleanBlob) => {
+        resolve(cleanBlob || blob);
+      }, 'image/png');
+    };
+    img.onerror = () => resolve(blob);
+    img.src = url;
+  });
+}
+
 export async function removeImageBackground(imageSource, onProgress, token = null) {
   let imageInput = imageSource;
 
@@ -14,7 +50,6 @@ export async function removeImageBackground(imageSource, onProgress, token = nul
       imageInput = await res.blob();
     } catch (err) {
       console.warn('[AI Cutout] Direct fetch failed, trying admin proxy fallback...', err);
-      // Fallback via authenticated admin image proxy
       const headers = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -37,13 +72,13 @@ export async function removeImageBackground(imageSource, onProgress, token = nul
     throw new Error('Background removal AI engine failed to initialize.');
   }
 
-  const resultBlob = await removeBackground(imageInput, {
+  const rawBlob = await removeBackground(imageInput, {
     publicPath: 'https://staticimgly.com/@imgly/background-removal-data/1.7.0/dist/',
-    model: 'isnet_quint8', // Faster ~40MB quantized model
+    model: 'isnet_fp16', // High precision model for crisp edges without quantization noise
     device: 'cpu',
     output: {
       format: 'image/png',
-      quality: 0.95,
+      quality: 0.98,
     },
     progress: (key, current, total) => {
       if (onProgress) {
@@ -62,5 +97,12 @@ export async function removeImageBackground(imageSource, onProgress, token = nul
     },
   });
 
-  return resultBlob;
+  // Automatically clean up faint background noise specks and table shadows
+  try {
+    const cleanedBlob = await cleanupAlphaChannel(rawBlob, 25);
+    return cleanedBlob;
+  } catch (cleanErr) {
+    console.warn('[AI Cutout] Alpha cleanup fallback to raw blob:', cleanErr);
+    return rawBlob;
+  }
 }

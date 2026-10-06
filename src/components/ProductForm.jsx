@@ -259,8 +259,9 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
     setBgModalData(null);
   };
 
-  const handleApplyBgCutout = async ({ replaceOriginal }) => {
-    if (!bgModalData?.processedBlob) return;
+  const handleApplyBgCutout = async ({ replaceOriginal, customBlob }) => {
+    const blobToSave = customBlob || bgModalData?.processedBlob;
+    if (!blobToSave) return;
 
     setIsSavingCutout(true);
     setError('');
@@ -268,7 +269,7 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
     try {
       const formData = new FormData();
       const filename = `product-nobg-${Date.now()}.png`;
-      formData.append('file', new File([bgModalData.processedBlob], filename, { type: 'image/png' }));
+      formData.append('file', new File([blobToSave], filename, { type: 'image/png' }));
 
       const res = await fetch('/api/upload', {
         method: 'POST',
