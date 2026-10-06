@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import BgRemoverModal from '@/components/BgRemoverModal';
-import { removeImageBackground } from '@/lib/bgRemover';
+import { removeImageBackground, prewarmBgRemover } from '@/lib/bgRemover';
 
 const AVAILABLE_EFFECTS = ['Sleep', 'Focus', 'Energy', 'Relax', 'Creative', 'Euphoric'];
 
@@ -61,6 +61,8 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
       }
     };
     fetchCats();
+    // Silently pre-warm AI background remover model into memory
+    prewarmBgRemover();
   }, []);
 
   const handleToggleCategory = (slug) => {
