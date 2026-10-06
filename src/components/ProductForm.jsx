@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import BgRemoverModal from '@/components/BgRemoverModal';
+import { removeImageBackground } from '@/lib/bgRemover';
 
 const AVAILABLE_EFFECTS = ['Sleep', 'Focus', 'Energy', 'Relax', 'Creative', 'Euphoric'];
 
@@ -127,6 +129,12 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
   const [taggingEffects, setTaggingEffects] = useState(false);
   const [error, setError] = useState('');
 
+  // AI Background Removal state
+  const [bgProcessingIndex, setBgProcessingIndex] = useState(null);
+  const [bgStatus, setBgStatus] = useState('');
+  const [bgModalData, setBgModalData] = useState(null);
+  const [isSavingCutout, setIsSavingCutout] = useState(false);
+
   const handleToggleEffect = (effect) => {
     setEffects(prev => 
       prev.includes(effect) 
@@ -206,6 +214,89 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
 
   const handleRemoveImage = (index) => {
     setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleStartBgRemoval = async (index) => {
+    const targetImg = images[index];
+    if (!targetImg) return;
+
+    setBgProcessingIndex(index);
+    setBgStatus('Initializing AI engine...');
+    setError('');
+
+    try {
+      const blob = await removeImageBackground(
+        targetImg,
+        (progressInfo) => {
+          setBgStatus(progressInfo.phase || 'Processing image...');
+        },
+        token
+      );
+
+      const previewUrl = URL.createObjectURL(blob);
+      setBgModalData({
+        index,
+        originalUrl: targetImg,
+        processedBlob: blob,
+        processedUrl: previewUrl,
+      });
+    } catch (err) {
+      console.error('BG removal failed:', err);
+      setError('Failed to remove background: ' + (err.message || 'Please try another image.'));
+    } finally {
+      setBgProcessingIndex(null);
+      setBgStatus('');
+    }
+  };
+
+  const handleCloseBgModal = () => {
+    if (isSavingCutout) return;
+    if (bgModalData?.processedUrl) {
+      URL.revokeObjectURL(bgModalData.processedUrl);
+    }
+    setBgModalData(null);
+  };
+
+  const handleApplyBgCutout = async ({ replaceOriginal }) => {
+    if (!bgModalData?.processedBlob) return;
+
+    setIsSavingCutout(true);
+    setError('');
+
+    try {
+      const formData = new FormData();
+      const filename = `product-nobg-${Date.now()}.png`;
+      formData.append('file', new File([bgModalData.processedBlob], filename, { type: 'image/png' }));
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to upload transparent image to cloud');
+      }
+
+      const { url } = await res.json();
+
+      if (replaceOriginal) {
+        setImages(prev => prev.map((img, i) => (i === bgModalData.index ? url : img)));
+      } else {
+        setImages(prev => [...prev, url]);
+      }
+
+      if (bgModalData.processedUrl) {
+        URL.revokeObjectURL(bgModalData.processedUrl);
+      }
+      setBgModalData(null);
+    } catch (err) {
+      console.error('Save cutout error:', err);
+      setError(err.message || 'Failed to save cutout');
+    } finally {
+      setIsSavingCutout(false);
+    }
   };
 
   const handleImageUpload = async (e) => {
@@ -585,6 +676,22 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
                         </svg>
                       </div>
 
+                      {/* Magic Wand BG Remover Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStartBgRemoval(i);
+                        }}
+                        disabled={bgProcessingIndex !== null}
+                        className="absolute top-1.5 left-8 bg-black/75 hover:bg-emerald-500 hover:text-black text-white rounded p-1 opacity-0 group-hover:opacity-100 transition-all z-20 flex items-center justify-center shadow-sm disabled:opacity-40"
+                        title="Remove Background (AI Cutout)"
+                      >
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                        </svg>
+                      </button>
+
                       {/* Delete Button */}
                       <button 
                         type="button" 
@@ -597,6 +704,17 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
+
+                      {/* In-place AI processing overlay */}
+                      {bgProcessingIndex === i && (
+                        <div className="absolute inset-0 bg-black/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-2 text-center select-none">
+                          <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-1.5" />
+                          <span className="text-[10px] font-bold text-emerald-400 leading-tight">
+                            {bgStatus || 'AI Processing...'}
+                          </span>
+                          <span className="text-[9px] text-pc-muted mt-0.5">Please wait</span>
+                        </div>
+                      )}
 
                       {/* Primary Badge or Make Primary Action */}
                       {isPrimary ? (
@@ -660,6 +778,16 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
           </div>
         </form>
       </div>
+
+      {/* AI Background Remover Preview Modal */}
+      <BgRemoverModal
+        isOpen={Boolean(bgModalData)}
+        onClose={handleCloseBgModal}
+        originalUrl={bgModalData?.originalUrl || ''}
+        processedUrl={bgModalData?.processedUrl || ''}
+        onApply={handleApplyBgCutout}
+        isApplying={isSavingCutout}
+      />
     </div>
   );
 }

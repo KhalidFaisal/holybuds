@@ -191,4 +191,15 @@
   .glow-gold {
     box-shadow: 0 0 30px rgba(212, 168, 83, 0.15);
   }
+
+  .bg-transparency-grid {
+    background-color: #121513;
+    background-image: 
+      linear-gradient(45deg, #1f2520 25%, transparent 25%), 
+      linear-gradient(-45deg, #1f2520 25%, transparent 25%), 
+      linear-gradient(45deg, transparent 75%, #1f2520 75%), 
+      linear-gradient(-45deg, transparent 75%, #1f2520 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  }
 }
