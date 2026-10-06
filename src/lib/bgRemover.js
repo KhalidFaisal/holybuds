@@ -172,7 +172,7 @@ export async function removeImageBackground(imageSource, onProgress, token = nul
     publicPath: 'https://staticimgly.com/@imgly/background-removal-data/1.7.0/dist/',
     model: 'isnet_fp16',
     device: 'gpu',          // Uses WebGPU graphics hardware acceleration
-    proxyToWorker: true,    // Proxies ONNX WASM/GPU execution off the main UI thread
+    proxyToWorker: false,   // Disable worker proxy to prevent "worker not ready" error
     output: {
       format: 'image/png',
       quality: 0.95,
