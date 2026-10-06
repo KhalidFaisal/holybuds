@@ -40,8 +40,14 @@ export const metadata = {
   creator: 'HolyBuds',
   publisher: 'HolyBuds',
   icons: {
-    icon: '/icon.png',
-    apple: '/icon.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-48x48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icon-192.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
   alternates: {
     canonical: '/',
@@ -55,9 +61,9 @@ export const metadata = {
     type: 'website',
     images: [
       {
-        url: '/Leaf-Logo.png',
-        width: 800,
-        height: 600,
+        url: `${siteUrl}/og-image.jpg`,
+        width: 1200,
+        height: 630,
         alt: 'HolyBuds Cannabis Dispensary Long Island',
       },
     ],
@@ -66,7 +72,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'HolyBuds | Long Island Cannabis Dispensary & Delivery',
     description: 'Fast same-day cannabis delivery across Nassau & Suffolk County, Long Island. Shop premium flower, edibles, & vapes.',
-    images: ['/Leaf-Logo.png'],
+    images: [`${siteUrl}/og-image.jpg`],
   },
   robots: {
     index: true,

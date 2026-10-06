@@ -20,7 +20,7 @@ export function proxy(request) {
     pathname.startsWith('/sitemap.xml') ||
     pathname.startsWith('/robots.txt') ||
     pathname.startsWith('/favicon.ico') ||
-    pathname.match(/\.(png|jpg|jpeg|gif|svg|webp)$/)
+    pathname.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)$/)
   ) {
     return NextResponse.next();
   }
