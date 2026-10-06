@@ -10,9 +10,10 @@ export async function removeImageBackground(imageSource, onProgress, token = nul
   if (typeof imageSource === 'string') {
     try {
       const res = await fetch(imageSource, { mode: 'cors' });
-      if (!res.ok) throw new Error('Direct fetch failed');
+      if (!res.ok) throw new Error(`Direct fetch failed with status ${res.status}`);
       imageInput = await res.blob();
     } catch (err) {
+      console.warn('[AI Cutout] Direct fetch failed, trying admin proxy fallback...', err);
       // Fallback via authenticated admin image proxy
       const headers = {};
       if (token) {
@@ -22,17 +23,24 @@ export async function removeImageBackground(imageSource, onProgress, token = nul
         headers,
       });
       if (!proxyRes.ok) {
-        throw new Error('Could not load image. Please verify URL.');
+        throw new Error('Could not download image. Please check image URL or CORS policy.');
       }
       imageInput = await proxyRes.blob();
     }
   }
 
-  // Dynamically import @imgly/background-removal so it never bloats the initial bundle
-  const { default: removeBackground } = await import('@imgly/background-removal');
+  // Dynamically import @imgly/background-removal
+  const imgly = await import('@imgly/background-removal');
+  const removeBackground = imgly.removeBackground || imgly.default;
+
+  if (typeof removeBackground !== 'function') {
+    throw new Error('Background removal AI engine failed to initialize.');
+  }
 
   const resultBlob = await removeBackground(imageInput, {
-    model: 'isnet_fp16',
+    publicPath: 'https://staticimgly.com/@imgly/background-removal-data/1.7.0/dist/',
+    model: 'isnet_quint8', // Faster ~40MB quantized model
+    device: 'cpu',
     output: {
       format: 'image/png',
       quality: 0.95,
@@ -44,10 +52,10 @@ export async function removeImageBackground(imageSource, onProgress, token = nul
           percent = Math.min(100, Math.round((current / total) * 100));
         }
         let phase = 'Processing product image...';
-        if (key.includes('fetch')) {
-          phase = percent > 0 ? `Loading AI model (${percent}%)...` : 'Initializing AI engine...';
-        } else if (key.includes('compute')) {
-          phase = 'Removing background...';
+        if (key.includes('fetch') || key.includes('model')) {
+          phase = percent > 0 ? `Downloading AI model (${percent}%)...` : 'Initializing AI model...';
+        } else if (key.includes('compute') || key.includes('inference')) {
+          phase = 'Isolating product...';
         }
         onProgress({ phase, percent, key });
       }

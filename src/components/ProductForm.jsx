@@ -132,6 +132,7 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
   // AI Background Removal state
   const [bgProcessingIndex, setBgProcessingIndex] = useState(null);
   const [bgStatus, setBgStatus] = useState('');
+  const [bgError, setBgError] = useState('');
   const [bgModalData, setBgModalData] = useState(null);
   const [isSavingCutout, setIsSavingCutout] = useState(false);
 
@@ -222,9 +223,10 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
 
     setBgProcessingIndex(index);
     setBgStatus('Initializing AI engine...');
-    setError('');
+    setBgError('');
 
     try {
+      console.log('[AI Cutout] Starting background removal for image index:', index, targetImg);
       const blob = await removeImageBackground(
         targetImg,
         (progressInfo) => {
@@ -241,8 +243,8 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
         processedUrl: previewUrl,
       });
     } catch (err) {
-      console.error('BG removal failed:', err);
-      setError('Failed to remove background: ' + (err.message || 'Please try another image.'));
+      console.error('[AI Cutout] Error:', err);
+      setBgError('Failed to remove background: ' + (err.message || 'Please try another image.'));
     } finally {
       setBgProcessingIndex(null);
       setBgStatus('');
@@ -642,6 +644,23 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
               </p>
             </label>
 
+            {bgError && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-xl mb-4 text-xs flex items-center justify-between animate-fade-in">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">⚠️</span>
+                  <span>{bgError}</span>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => setBgError('')} 
+                  className="text-red-400 hover:text-white p-1 font-bold"
+                  title="Dismiss"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
             {images.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {images.map((img, i) => {
@@ -679,12 +698,16 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
                       {/* Magic Wand BG Remover Button */}
                       <button
                         type="button"
+                        draggable={false}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           handleStartBgRemoval(i);
                         }}
                         disabled={bgProcessingIndex !== null}
-                        className="absolute top-1.5 left-8 bg-black/75 hover:bg-emerald-500 hover:text-black text-white rounded p-1 opacity-0 group-hover:opacity-100 transition-all z-20 flex items-center justify-center shadow-sm disabled:opacity-40"
+                        className="absolute top-1.5 left-8 bg-black/80 hover:bg-emerald-500 hover:text-black text-white rounded p-1 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all z-20 flex items-center justify-center shadow-md disabled:opacity-40 cursor-pointer"
                         title="Remove Background (AI Cutout)"
                       >
                         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
