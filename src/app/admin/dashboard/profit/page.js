@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import StatsCard from '@/components/StatsCard';
 
 export default function ProfitAnalyticsPage() {
   const [data, setData] = useState(null);
-  const [period, setPeriod] = useState('30d');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchProfitData = useCallback(async (selectedPeriod) => {
+  const fetchProfitData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -17,7 +17,7 @@ export default function ProfitAnalyticsPage() {
       const headers = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch(`/api/admin/analytics/profit?period=${selectedPeriod}`, { headers });
+      const res = await fetch('/api/admin/analytics/profit', { headers });
       if (!res.ok) throw new Error('Failed to load profit analytics');
 
       const json = await res.json();
@@ -32,8 +32,8 @@ export default function ProfitAnalyticsPage() {
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchProfitData(period);
-  }, [period, fetchProfitData]);
+    fetchProfitData();
+  }, [fetchProfitData]);
 
   const timeline = useMemo(() => data?.timeline || [], [data?.timeline]);
   const maxRevenue = useMemo(() => {
@@ -43,44 +43,80 @@ export default function ProfitAnalyticsPage() {
 
   return (
     <div className="animate-fade-in space-y-8">
-      {/* Top Header & Period Switcher */}
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-3xl font-black text-white">Profit & Margins</h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-              Live Accounting
+              Today Onwards
             </span>
           </div>
           <p className="text-pc-muted mt-1">
-            Track gross revenue, wholesale product costs (COGS), and realized profit margins.
+            Real-time profit tracking strictly for products with wholesale costs added, sold from today onwards.
           </p>
         </div>
 
-        {/* Time Period Filter Buttons */}
-        <div className="flex items-center gap-1 bg-[#141715] p-1 rounded-xl border border-zinc-800">
-          {[
-            { id: 'today', label: 'Today' },
-            { id: '7d', label: '7 Days' },
-            { id: '30d', label: '30 Days' },
-            { id: 'month', label: 'This Month' },
-            { id: 'all', label: 'All Time' },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setPeriod(item.id)}
-              disabled={loading}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                period === item.id
-                  ? 'bg-emerald-500 text-black font-extrabold shadow-sm'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
+        {/* Site Timezone Badge & Refresh Button */}
+        <div className="flex items-center gap-3">
+          {data?.currentSiteTimeFormatted && (
+            <div className="bg-[#141715] px-3.5 py-2 rounded-xl border border-zinc-800 text-right">
+              <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">Store Timezone</p>
+              <p className="text-xs text-white font-mono font-semibold flex items-center gap-1.5 justify-end">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>{data.siteTimezone}</span>
+              </p>
+            </div>
+          )}
+
+          <button
+            onClick={fetchProfitData}
+            disabled={loading}
+            className="p-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs transition-colors flex items-center justify-center border border-zinc-700/60"
+            title="Refresh Profit Data"
+          >
+            <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
         </div>
       </div>
+
+      {/* Scope Disclaimer Banner */}
+      <div className="p-3.5 rounded-xl bg-emerald-950/25 border border-emerald-500/25 text-xs text-zinc-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-base">📅</span>
+          <span>
+            Tracking sales baseline: <strong>Today ({data?.siteTodayDate || 'Site Time'}) onwards</strong>. Previous sales are excluded.
+          </span>
+        </div>
+        <span className="text-zinc-400 text-[11px] font-mono">
+          {data?.currentSiteTimeFormatted}
+        </span>
+      </div>
+
+      {/* Missing Cost Notice Banner */}
+      {data?.missingCostProducts?.length > 0 && (
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in">
+          <div className="flex items-start sm:items-center gap-2.5">
+            <span className="text-base">⚠️</span>
+            <div>
+              <p className="font-bold text-amber-300">
+                {data.summary.untrackedUnitsSold} unit{data.summary.untrackedUnitsSold !== 1 ? 's' : ''} sold today are missing wholesale cost prices:
+              </p>
+              <p className="text-amber-200/80 mt-0.5">
+                {data.missingCostProducts.map((p) => `${p.name} (${p.unitsSoldWithoutCost} sold)`).join(', ')}
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/dashboard/products"
+            className="px-3 py-1.5 rounded-lg bg-amber-500 text-black font-extrabold text-[11px] hover:bg-amber-400 transition-colors whitespace-nowrap"
+          >
+            Add Cost in Products →
+          </Link>
+        </div>
+      )}
 
       {loading && !data && (
         <div className="flex items-center justify-center py-24">
@@ -92,7 +128,7 @@ export default function ProfitAnalyticsPage() {
         <div className="glass-card p-8 text-center text-red-400 border border-red-500/30">
           <p>{error}</p>
           <button
-            onClick={() => fetchProfitData(period)}
+            onClick={fetchProfitData}
             className="mt-4 px-4 py-2 bg-zinc-800 text-white rounded-xl text-xs font-bold hover:bg-zinc-700"
           >
             Retry
@@ -110,7 +146,7 @@ export default function ProfitAnalyticsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               }
-              label="Sales Revenue"
+              label={`Tracked Sales (${data.summary.trackedUnitsSold} units)`}
               value={`$${data.summary.totalRevenue.toFixed(2)}`}
               accent="blue"
             />
@@ -121,7 +157,7 @@ export default function ProfitAnalyticsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
                 </svg>
               }
-              label="Product Cost (COGS)"
+              label="Wholesale Cost (COGS)"
               value={`$${data.summary.totalCOGS.toFixed(2)}`}
               accent="purple"
             />
@@ -132,7 +168,7 @@ export default function ProfitAnalyticsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
                 </svg>
               }
-              label="Total Profit"
+              label="Total Realized Profit"
               value={`$${data.summary.totalProfit.toFixed(2)}`}
               accent="gold"
             />
@@ -150,7 +186,7 @@ export default function ProfitAnalyticsPage() {
                     ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
                     : 'bg-red-500/20 text-red-400 border-red-500/40'
                 }`}>
-                  {data.summary.totalOrdersCount} Orders
+                  {data.summary.totalOrdersCount} Tracked Orders
                 </span>
               </div>
               <div className="mt-3">
@@ -170,8 +206,8 @@ export default function ProfitAnalyticsPage() {
           <div className="glass-card p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-lg font-bold text-white">Daily Sales vs. Profit Performance</h2>
-                <p className="text-xs text-pc-muted">Sales Revenue (green bar) vs. Gross Profit (gold line)</p>
+                <h2 className="text-lg font-bold text-white">Sales Revenue vs. Profit Performance</h2>
+                <p className="text-xs text-pc-muted">Sales Revenue (green bar) vs. Realized Profit (gold line)</p>
               </div>
               <div className="flex items-center gap-4 text-xs font-semibold">
                 <div className="flex items-center gap-1.5">
@@ -199,7 +235,7 @@ export default function ProfitAnalyticsPage() {
                     {/* Hover Tooltip */}
                     <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-black/95 text-white text-xs p-3 rounded-xl border border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity z-40 pointer-events-none whitespace-nowrap shadow-xl">
                       <p className="font-bold text-zinc-300 border-b border-zinc-800 pb-1 mb-1.5">{day.date}</p>
-                      <p className="text-pc-green">Sales: <strong>${day.revenue.toFixed(2)}</strong> ({day.orders} orders)</p>
+                      <p className="text-pc-green">Sales: <strong>${day.revenue.toFixed(2)}</strong> ({day.unitsSold} units)</p>
                       <p className="text-purple-400">COGS: <strong>${day.cogs.toFixed(2)}</strong></p>
                       <p className="text-emerald-400 font-bold pt-1 border-t border-zinc-800 mt-1">
                         Profit: +${day.profit.toFixed(2)} ({day.marginPercent}%)
@@ -208,12 +244,10 @@ export default function ProfitAnalyticsPage() {
 
                     {/* Stacked / Overlay Bar */}
                     <div className="w-full h-full flex items-end justify-center gap-0.5">
-                      {/* Revenue Bar */}
                       <div
                         className="w-full bg-pc-green/20 group-hover:bg-pc-green/40 border-t border-pc-green/50 rounded-t-sm transition-all"
                         style={{ height: `${revHeight}%` }}
                       >
-                        {/* Inner Profit Fill */}
                         <div
                           className="w-full bg-pc-gold/30 group-hover:bg-pc-gold/50 border-t border-pc-gold rounded-t-sm transition-all"
                           style={{ height: `${(profitHeight / revHeight) * 100}%` }}
@@ -240,7 +274,7 @@ export default function ProfitAnalyticsPage() {
 
               <div className="space-y-3">
                 {data.categoryProfit.length === 0 ? (
-                  <p className="text-sm text-pc-muted">No sales in this period.</p>
+                  <p className="text-sm text-pc-muted">No sales with cost data recorded today yet.</p>
                 ) : (
                   data.categoryProfit.map((cat) => (
                     <div
@@ -273,7 +307,7 @@ export default function ProfitAnalyticsPage() {
 
               <div className="space-y-3">
                 {data.highestMarginProducts.length === 0 ? (
-                  <p className="text-sm text-pc-muted">No product cost data available yet.</p>
+                  <p className="text-sm text-pc-muted">No products sold with cost data today yet.</p>
                 ) : (
                   data.highestMarginProducts.map((p) => (
                     <div
@@ -321,34 +355,42 @@ export default function ProfitAnalyticsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-pc-border/50">
-                  {data.topProfitableProducts.map((p, idx) => (
-                    <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-bold text-pc-muted w-4">{idx + 1}.</span>
-                          <div>
-                            <p className="font-semibold text-white">{p.name}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 text-xs text-pc-muted">{p.category}</td>
-                      <td className="py-3 text-right font-medium text-white">{p.unitsSold}</td>
-                      <td className="py-3 text-right text-zinc-300 font-mono">${p.price.toFixed(2)}</td>
-                      <td className="py-3 text-right text-zinc-400 font-mono">
-                        {p.costPrice > 0 ? `$${p.costPrice.toFixed(2)}` : '—'}
-                      </td>
-                      <td className="py-3 text-right text-zinc-200 font-mono font-medium">${p.revenue.toFixed(2)}</td>
-                      <td className="py-3 text-right text-purple-400/90 font-mono">${p.cogs.toFixed(2)}</td>
-                      <td className="py-3 text-right font-black text-emerald-400 font-mono">
-                        +${p.profit.toFixed(2)}
-                      </td>
-                      <td className="py-3 text-right">
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          {p.marginPercent}%
-                        </span>
+                  {data.topProfitableProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="py-8 text-center text-zinc-500">
+                        No product sales recorded today with cost added yet.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    data.topProfitableProducts.map((p, idx) => (
+                      <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-3">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-bold text-pc-muted w-4">{idx + 1}.</span>
+                            <div>
+                              <p className="font-semibold text-white">{p.name}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 text-xs text-pc-muted">{p.category}</td>
+                        <td className="py-3 text-right font-medium text-white">{p.unitsSold}</td>
+                        <td className="py-3 text-right text-zinc-300 font-mono">${p.price.toFixed(2)}</td>
+                        <td className="py-3 text-right text-zinc-400 font-mono">
+                          ${p.costPrice.toFixed(2)}
+                        </td>
+                        <td className="py-3 text-right text-zinc-200 font-mono font-medium">${p.revenue.toFixed(2)}</td>
+                        <td className="py-3 text-right text-purple-400/90 font-mono">${p.cogs.toFixed(2)}</td>
+                        <td className="py-3 text-right font-black text-emerald-400 font-mono">
+                          +${p.profit.toFixed(2)}
+                        </td>
+                        <td className="py-3 text-right">
+                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            {p.marginPercent}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
