@@ -38,7 +38,7 @@ export default function ProfitAnalyticsPage() {
   const timeline = useMemo(() => data?.timeline || [], [data?.timeline]);
   const maxRevenue = useMemo(() => {
     if (!timeline.length) return 1;
-    return Math.max(...timeline.map((d) => Math.max(d.revenue, d.grossProfit, 1)));
+    return Math.max(...timeline.map((d) => Math.max(d.revenue, d.profit, 1)));
   }, [timeline]);
 
   return (
@@ -47,13 +47,13 @@ export default function ProfitAnalyticsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-3xl font-black text-white">Profit & Loss (P&L)</h1>
+            <h1 className="text-3xl font-black text-white">Profit & Margins</h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
               Live Accounting
             </span>
           </div>
           <p className="text-pc-muted mt-1">
-            Real-time track of product wholesale costs, gross margins, operational expenses, and net profit.
+            Track gross revenue, wholesale product costs (COGS), and realized profit margins.
           </p>
         </div>
 
@@ -103,14 +103,14 @@ export default function ProfitAnalyticsPage() {
       {data && (
         <>
           {/* Executive Scorecards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard
               icon={
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               }
-              label="Net Sales Revenue"
+              label="Sales Revenue"
               value={`$${data.summary.totalRevenue.toFixed(2)}`}
               accent="blue"
             />
@@ -132,46 +132,35 @@ export default function ProfitAnalyticsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
                 </svg>
               }
-              label={`Gross Profit (${data.summary.grossMarginPercent.toFixed(1)}%)`}
-              value={`$${data.summary.grossProfit.toFixed(2)}`}
+              label="Total Profit"
+              value={`$${data.summary.totalProfit.toFixed(2)}`}
               accent="gold"
             />
 
-            <StatsCard
-              icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                </svg>
-              }
-              label="Operating Expenses"
-              value={`$${data.summary.totalOperatingExpenses.toFixed(2)}`}
-              accent="amber"
-            />
-
-            {/* Net In-Pocket Profit Card */}
+            {/* Profit Margin Card */}
             <div className={`p-6 rounded-2xl border transition-all flex flex-col justify-between ${
-              data.summary.netProfit >= 0
+              data.summary.totalProfit >= 0
                 ? 'bg-gradient-to-br from-[#0c2415] to-[#0a180e] border-emerald-500/40 shadow-lg shadow-emerald-950/40'
                 : 'bg-gradient-to-br from-[#2a0e0e] to-[#180a0a] border-red-500/40 shadow-lg shadow-red-950/40'
             }`}>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">Net Profit</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">Profit Margin</span>
                 <span className={`px-2 py-0.5 rounded-full text-[11px] font-black border ${
-                  data.summary.netProfit >= 0
+                  data.summary.totalProfit >= 0
                     ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
                     : 'bg-red-500/20 text-red-400 border-red-500/40'
                 }`}>
-                  {data.summary.netMarginPercent.toFixed(1)}% Net Margin
+                  {data.summary.totalOrdersCount} Orders
                 </span>
               </div>
               <div className="mt-3">
                 <p className={`text-2xl sm:text-3xl font-black ${
-                  data.summary.netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  data.summary.totalProfit >= 0 ? 'text-emerald-400' : 'text-red-400'
                 }`}>
-                  ${data.summary.netProfit.toFixed(2)}
+                  {data.summary.marginPercent.toFixed(1)}%
                 </p>
                 <p className="text-[11px] text-zinc-400 mt-1">
-                  In-Pocket Earnings after COGS & Operating Costs
+                  Avg. ${data.summary.avgProfitPerOrder.toFixed(2)} profit per order
                 </p>
               </div>
             </div>
@@ -181,7 +170,7 @@ export default function ProfitAnalyticsPage() {
           <div className="glass-card p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-lg font-bold text-white">Daily Revenue vs. Profit Breakdown</h2>
+                <h2 className="text-lg font-bold text-white">Daily Sales vs. Profit Performance</h2>
                 <p className="text-xs text-pc-muted">Sales Revenue (green bar) vs. Gross Profit (gold line)</p>
               </div>
               <div className="flex items-center gap-4 text-xs font-semibold">
@@ -195,7 +184,7 @@ export default function ProfitAnalyticsPage() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-0.5 bg-pc-gold" />
-                  <span className="text-zinc-300">Gross Profit</span>
+                  <span className="text-zinc-300">Profit</span>
                 </div>
               </div>
             </div>
@@ -203,8 +192,7 @@ export default function ProfitAnalyticsPage() {
             <div className="h-64 flex items-end gap-1.5 sm:gap-2 relative">
               {timeline.map((day) => {
                 const revHeight = Math.max((day.revenue / maxRevenue) * 100, 2);
-                const profitHeight = Math.max((day.grossProfit / maxRevenue) * 100, 2);
-                const cogsHeight = Math.max((day.cogs / maxRevenue) * 100, 2);
+                const profitHeight = Math.max((day.profit / maxRevenue) * 100, 2);
 
                 return (
                   <div key={day.date} className="relative flex-1 group flex flex-col justify-end h-full">
@@ -213,12 +201,8 @@ export default function ProfitAnalyticsPage() {
                       <p className="font-bold text-zinc-300 border-b border-zinc-800 pb-1 mb-1.5">{day.date}</p>
                       <p className="text-pc-green">Sales: <strong>${day.revenue.toFixed(2)}</strong> ({day.orders} orders)</p>
                       <p className="text-purple-400">COGS: <strong>${day.cogs.toFixed(2)}</strong></p>
-                      <p className="text-pc-gold">Gross Profit: <strong>${day.grossProfit.toFixed(2)}</strong> ({day.marginPercent}%)</p>
-                      {day.expenses > 0 && (
-                        <p className="text-amber-400">Expenses: <strong>-${day.expenses.toFixed(2)}</strong></p>
-                      )}
                       <p className="text-emerald-400 font-bold pt-1 border-t border-zinc-800 mt-1">
-                        Net Profit: ${day.netProfit.toFixed(2)}
+                        Profit: +${day.profit.toFixed(2)} ({day.marginPercent}%)
                       </p>
                     </div>
 
@@ -247,8 +231,9 @@ export default function ProfitAnalyticsPage() {
             </div>
           </div>
 
-          {/* Category Profit & Margins Breakdown */}
+          {/* Category Profit & High Margin Products Breakdown */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Category Profit Breakdown */}
             <div className="glass-card p-6">
               <h2 className="text-lg font-bold text-white mb-1">Profitability by Category</h2>
               <p className="text-xs text-pc-muted mb-6">Which product categories deliver the highest dollar returns</p>
@@ -265,12 +250,12 @@ export default function ProfitAnalyticsPage() {
                       <div>
                         <p className="text-white font-bold text-sm">{cat.category}</p>
                         <p className="text-xs text-pc-muted mt-0.5">
-                          {cat.unitsSold} units · Sales: ${cat.revenue.toFixed(2)} · COGS: ${cat.cogs.toFixed(2)}
+                          {cat.unitsSold} units · Sales: ${cat.revenue.toFixed(2)} · Cost: ${cat.cogs.toFixed(2)}
                         </p>
                       </div>
 
                       <div className="text-right">
-                        <p className="text-sm font-black text-emerald-400">+${cat.grossProfit.toFixed(2)}</p>
+                        <p className="text-sm font-black text-emerald-400">+${cat.profit.toFixed(2)}</p>
                         <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 mt-1">
                           {cat.marginPercent}% Margin
                         </span>
@@ -281,41 +266,32 @@ export default function ProfitAnalyticsPage() {
               </div>
             </div>
 
-            {/* Operating Expense Logs (Cash Tracker deductions) */}
+            {/* Highest Margin Gems */}
             <div className="glass-card p-6">
-              <div className="flex items-center justify-between mb-1">
-                <h2 className="text-lg font-bold text-white">Operating Expense Deductions</h2>
-                <span className="text-xs text-pc-muted font-bold">
-                  Total: ${data.summary.totalOperatingExpenses.toFixed(2)}
-                </span>
-              </div>
-              <p className="text-xs text-pc-muted mb-6">
-                Cash Tracker payouts, driver commissions, and store payroll deducted from gross profit
-              </p>
+              <h2 className="text-lg font-bold text-white mb-1">Highest Margin Products</h2>
+              <p className="text-xs text-pc-muted mb-6">Inventory with the strongest markup and return rate</p>
 
-              <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
-                {data.recentExpenses.length === 0 ? (
-                  <p className="text-sm text-pc-muted">No recorded operating expenses in this period.</p>
+              <div className="space-y-3">
+                {data.highestMarginProducts.length === 0 ? (
+                  <p className="text-sm text-pc-muted">No product cost data available yet.</p>
                 ) : (
-                  data.recentExpenses.map((exp) => (
+                  data.highestMarginProducts.map((p) => (
                     <div
-                      key={exp.id}
-                      className="p-3 bg-pc-black rounded-xl border border-pc-border/80 flex items-center justify-between text-xs"
+                      key={p.id}
+                      className="p-3 bg-pc-black rounded-xl border border-pc-border/80 flex items-center justify-between gap-4 hover:border-emerald-500/30 transition-colors"
                     >
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-white">{exp.person}</span>
-                          <span className="px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 text-[10px]">
-                            {exp.form}
-                          </span>
-                        </div>
-                        {exp.note && <p className="text-zinc-400 text-[11px] mt-0.5">{exp.note}</p>}
-                      </div>
-                      <div className="text-right">
-                        <span className="font-bold text-amber-400">-${exp.amount.toFixed(2)}</span>
-                        <p className="text-[10px] text-zinc-500 mt-0.5">
-                          {new Date(exp.date).toLocaleDateString()}
+                        <p className="text-white font-bold text-sm">{p.name}</p>
+                        <p className="text-xs text-pc-muted mt-0.5">
+                          Price: ${p.price.toFixed(2)} · Cost: ${p.costPrice.toFixed(2)} · Sold: {p.unitsSold}
                         </p>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="text-xs text-emerald-400 font-bold">+${(p.price - p.costPrice).toFixed(2)} / unit</p>
+                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 mt-1">
+                          {p.marginPercent}% Margin
+                        </span>
                       </div>
                     </div>
                   ))
@@ -324,10 +300,10 @@ export default function ProfitAnalyticsPage() {
             </div>
           </div>
 
-          {/* Top 10 Most Profitable Products */}
+          {/* Top Products by Dollar Profit Generated */}
           <div className="glass-card p-6">
             <h2 className="text-lg font-bold text-white mb-1">Top Products by Dollar Profit Generated</h2>
-            <p className="text-xs text-pc-muted mb-6">Ranked by actual net dollars earned after product cost</p>
+            <p className="text-xs text-pc-muted mb-6">Ranked by actual profit dollars earned after wholesale unit cost</p>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -364,7 +340,7 @@ export default function ProfitAnalyticsPage() {
                       <td className="py-3 text-right text-zinc-200 font-mono font-medium">${p.revenue.toFixed(2)}</td>
                       <td className="py-3 text-right text-purple-400/90 font-mono">${p.cogs.toFixed(2)}</td>
                       <td className="py-3 text-right font-black text-emerald-400 font-mono">
-                        +${p.grossProfit.toFixed(2)}
+                        +${p.profit.toFixed(2)}
                       </td>
                       <td className="py-3 text-right">
                         <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">

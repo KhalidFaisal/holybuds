@@ -61,7 +61,7 @@ export async function GET(request) {
       }
     }
 
-    // 1. Fetch Orders with Items & Product info
+    // Fetch Orders with Items & Product info
     const orders = await prisma.order.findMany({
       where: orderWhere,
       include: {
@@ -72,32 +72,6 @@ export async function GET(request) {
         },
       },
       orderBy: { createdAt: 'asc' },
-    });
-
-    // 2. Fetch Operating Expenses from CashTracker (negative amounts = payouts, payroll, expenses)
-    const expenseWhere = {
-      amount: { lt: 0 },
-    };
-    if (startDate) {
-      expenseWhere.date = { gte: startDate };
-      if (endDate) {
-        expenseWhere.date.lte = endDate;
-      }
-    }
-
-    const cashExpenses = await prisma.cashTrackerEntry.findMany({
-      where: expenseWhere,
-      orderBy: { date: 'asc' },
-    });
-
-    // 3. Fetch Driver Bonus payouts in this period
-    const driverBonusWhere = {};
-    if (startDate) {
-      driverBonusWhere.createdAt = { gte: startDate };
-      if (endDate) driverBonusWhere.createdAt.lte = endDate;
-    }
-    const driverBonuses = await prisma.driverBonus.findMany({
-      where: driverBonusWhere,
     });
 
     // Initialize Accumulators
@@ -117,9 +91,7 @@ export async function GET(request) {
           date: dateKey,
           revenue: 0,
           cogs: 0,
-          grossProfit: 0,
-          expenses: 0,
-          netProfit: 0,
+          profit: 0,
           orders: 0,
         });
       }
@@ -166,13 +138,13 @@ export async function GET(request) {
             unitsSold: 0,
             revenue: 0,
             cogs: 0,
-            grossProfit: 0,
+            profit: 0,
           };
         }
         categoryMap[cat].unitsSold += qty;
         categoryMap[cat].revenue += lineRevenue;
         categoryMap[cat].cogs += itemCOGS;
-        categoryMap[cat].grossProfit += itemProfit;
+        categoryMap[cat].profit += itemProfit;
 
         // Product breakdown
         if (item.product) {
@@ -188,89 +160,47 @@ export async function GET(request) {
               unitsSold: 0,
               revenue: 0,
               cogs: 0,
-              grossProfit: 0,
+              profit: 0,
             };
           }
           productProfitMap[pid].unitsSold += qty;
           productProfitMap[pid].revenue += lineRevenue;
           productProfitMap[pid].cogs += itemCOGS;
-          productProfitMap[pid].grossProfit += itemProfit;
+          productProfitMap[pid].profit += itemProfit;
         }
       }
 
       totalCOGS += orderCOGS;
       tEntry.cogs += orderCOGS;
-      tEntry.grossProfit += (order.total - orderCOGS);
-    }
-
-    // Process Operating Expenses
-    let totalOperatingExpenses = 0;
-    const expenseLogList = [];
-
-    for (const exp of cashExpenses) {
-      const positiveAmount = Math.abs(exp.amount);
-      totalOperatingExpenses += positiveAmount;
-
-      const dateKey = getTzDateStr(new Date(exp.date));
-      const tEntry = ensureTimelineEntry(dateKey);
-      tEntry.expenses += positiveAmount;
-
-      expenseLogList.push({
-        id: exp.id,
-        person: exp.person,
-        form: exp.form,
-        amount: positiveAmount,
-        note: exp.note || '',
-        date: exp.date,
-        type: 'CASH_TRACKER',
-      });
-    }
-
-    for (const bonus of driverBonuses) {
-      totalOperatingExpenses += bonus.bonusAmount;
-      const dateKey = getTzDateStr(new Date(bonus.createdAt));
-      const tEntry = ensureTimelineEntry(dateKey);
-      tEntry.expenses += bonus.bonusAmount;
-
-      expenseLogList.push({
-        id: bonus.id,
-        person: 'Driver Bonus',
-        form: 'Payout',
-        amount: bonus.bonusAmount,
-        note: `Threshold reached (${bonus.referralCount} orders)`,
-        date: bonus.createdAt,
-        type: 'DRIVER_BONUS',
-      });
+      tEntry.profit += (order.total - orderCOGS);
     }
 
     // Final calculations
-    const grossProfit = totalRevenue - totalCOGS;
-    const grossMarginPercent = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
-    const netProfit = grossProfit - totalOperatingExpenses;
-    const netMarginPercent = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+    const totalProfit = totalRevenue - totalCOGS;
+    const marginPercent = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    const avgProfitPerOrder = totalOrdersCount > 0 ? totalProfit / totalOrdersCount : 0;
 
-    // Calculate Net Profit for timeline entries
+    // Timeline entries
     const timeline = Array.from(timelineMap.values()).map((day) => ({
       ...day,
-      netProfit: day.grossProfit - day.expenses,
-      marginPercent: day.revenue > 0 ? Math.round((day.grossProfit / day.revenue) * 100) : 0,
+      marginPercent: day.revenue > 0 ? Math.round((day.profit / day.revenue) * 100) : 0,
     }));
 
     // Format Categories
     const categoryProfit = Object.values(categoryMap)
       .map((c) => ({
         ...c,
-        marginPercent: c.revenue > 0 ? Math.round((c.grossProfit / c.revenue) * 100) : 0,
+        marginPercent: c.revenue > 0 ? Math.round((c.profit / c.revenue) * 100) : 0,
       }))
-      .sort((a, b) => b.grossProfit - a.grossProfit);
+      .sort((a, b) => b.profit - a.profit);
 
     // Format Top Profitable Products
     const topProfitableProducts = Object.values(productProfitMap)
       .map((p) => ({
         ...p,
-        marginPercent: p.revenue > 0 ? Math.round((p.grossProfit / p.revenue) * 100) : 0,
+        marginPercent: p.revenue > 0 ? Math.round((p.profit / p.revenue) * 100) : 0,
       }))
-      .sort((a, b) => b.grossProfit - a.grossProfit)
+      .sort((a, b) => b.profit - a.profit)
       .slice(0, 15);
 
     // High Margin Products
@@ -278,7 +208,7 @@ export async function GET(request) {
       .filter((p) => p.unitsSold > 0 && p.cogs > 0)
       .map((p) => ({
         ...p,
-        marginPercent: p.revenue > 0 ? Math.round((p.grossProfit / p.revenue) * 100) : 0,
+        marginPercent: p.revenue > 0 ? Math.round((p.profit / p.revenue) * 100) : 0,
       }))
       .sort((a, b) => b.marginPercent - a.marginPercent)
       .slice(0, 10);
@@ -288,11 +218,9 @@ export async function GET(request) {
       summary: {
         totalRevenue,
         totalCOGS,
-        grossProfit,
-        grossMarginPercent,
-        totalOperatingExpenses,
-        netProfit,
-        netMarginPercent,
+        totalProfit,
+        marginPercent,
+        avgProfitPerOrder,
         totalDiscounts,
         totalOrdersCount,
       },
@@ -300,7 +228,6 @@ export async function GET(request) {
       categoryProfit,
       topProfitableProducts,
       highestMarginProducts,
-      recentExpenses: expenseLogList.slice(0, 20),
     });
   } catch (error) {
     console.error('Profit analytics error:', error);
