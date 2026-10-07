@@ -737,13 +737,20 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="p-4 text-sm">
                     <p className="text-white font-semibold">${product.price.toFixed(2)}</p>
-                    {product.costPrice > 0 ? (
-                      <p className="text-[11px] text-emerald-400 mt-0.5 flex items-center gap-1 font-mono" title={`Cost: $${product.costPrice.toFixed(2)} | Unit Profit: $${(product.price - product.costPrice).toFixed(2)}`}>
-                        <span>Cost: ${product.costPrice.toFixed(2)}</span>
-                        <span className="text-pc-muted">·</span>
-                        <span className="font-bold">{Math.round(((product.price - product.costPrice) / product.price) * 100)}%</span>
-                      </p>
-                    ) : (
+                    {product.costPrice > 0 ? (() => {
+                      const profit = product.price - product.costPrice;
+                      const margin = Math.round((profit / product.price) * 100);
+                      const isPos = profit >= 0;
+                      return (
+                        <p className="text-[11px] text-pc-muted mt-0.5 flex items-center gap-1 font-mono" title={`Cost: $${product.costPrice.toFixed(2)} | Unit Profit: $${profit.toFixed(2)}`}>
+                          <span>Cost: ${product.costPrice.toFixed(2)}</span>
+                          <span>·</span>
+                          <span className={`font-bold ${isPos ? 'text-pc-green' : 'text-red-400'}`}>
+                            {margin}%
+                          </span>
+                        </p>
+                      );
+                    })() : (
                       <span className="text-[10px] text-pc-muted/60" title="Cost not set">—</span>
                     )}
                   </td>

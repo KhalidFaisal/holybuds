@@ -578,16 +578,20 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
               return (
                 <div className={`p-2.5 rounded-xl text-xs flex items-center justify-between border ${
                   isPositive 
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
-                    : 'bg-red-500/10 border-red-500/30 text-red-400'
+                    ? 'bg-pc-green/10 border-pc-green/30' 
+                    : 'bg-red-500/10 border-red-500/30'
                 }`}>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{isPositive ? '💰' : '⚠️'}</span>
-                    <span>
-                      <strong>Est. Unit Profit:</strong> ${profit.toFixed(2)}
+                    <span className="text-base">{isPositive ? '💰' : '⚠️'}</span>
+                    <span className="text-pc-muted">
+                      Est. Unit Profit: <strong className={isPositive ? 'text-pc-green' : 'text-red-400'}>${profit.toFixed(2)}</strong>
                     </span>
                   </div>
-                  <span className="font-bold px-2 py-0.5 rounded-md bg-black/40 border border-current">
+                  <span className={`font-bold px-2.5 py-1 rounded-lg text-xs ${
+                    isPositive
+                      ? 'bg-pc-green text-black shadow-sm'
+                      : 'bg-red-500 text-white shadow-sm'
+                  }`}>
                     {margin}% Margin
                   </span>
                 </div>

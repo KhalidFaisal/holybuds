@@ -99,7 +99,7 @@ export default function ProfitAnalyticsPage() {
 
       {loading && !data && (
         <div className="flex items-center justify-center py-24">
-          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-12 h-12 border-4 border-pc-green border-t-transparent rounded-full animate-spin" />
         </div>
       )}
 
@@ -273,8 +273,8 @@ export default function ProfitAnalyticsPage() {
                       </div>
 
                       <div className="text-right">
-                        <p className="text-sm font-black text-emerald-400">+${cat.profit.toFixed(2)}</p>
-                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 mt-1">
+                        <p className="text-sm font-black text-pc-green">+${cat.profit.toFixed(2)}</p>
+                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-pc-green/15 text-pc-green border border-pc-green/30 mt-1">
                           {cat.marginPercent}% Margin
                         </span>
                       </div>
@@ -296,7 +296,7 @@ export default function ProfitAnalyticsPage() {
                   data.highestMarginProducts.map((p) => (
                     <div
                       key={p.id}
-                      className="p-3 bg-pc-black rounded-xl border border-pc-border/80 flex items-center justify-between gap-4 hover:border-emerald-500/30 transition-colors"
+                      className="p-3 bg-pc-black rounded-xl border border-pc-border/80 flex items-center justify-between gap-4 hover:border-pc-green/40 transition-colors"
                     >
                       <div>
                         <p className="text-white font-bold text-sm">{p.name}</p>
@@ -306,8 +306,8 @@ export default function ProfitAnalyticsPage() {
                       </div>
 
                       <div className="text-right">
-                        <p className="text-xs text-emerald-400 font-bold">+${(p.price - p.costPrice).toFixed(2)} / unit</p>
-                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 mt-1">
+                        <p className="text-xs text-pc-green font-bold">+${(p.price - p.costPrice).toFixed(2)} / unit</p>
+                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold bg-pc-green/15 text-pc-green border border-pc-green/30 mt-1">
                           {p.marginPercent}% Margin
                         </span>
                       </div>
@@ -364,11 +364,11 @@ export default function ProfitAnalyticsPage() {
                         </td>
                         <td className="py-3 text-right text-zinc-200 font-mono font-medium">${p.revenue.toFixed(2)}</td>
                         <td className="py-3 text-right text-purple-400/90 font-mono">${p.cogs.toFixed(2)}</td>
-                        <td className="py-3 text-right font-black text-emerald-400 font-mono">
+                        <td className="py-3 text-right font-black text-pc-green font-mono">
                           +${p.profit.toFixed(2)}
                         </td>
                         <td className="py-3 text-right">
-                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-pc-green/15 text-pc-green border border-pc-green/30">
                             {p.marginPercent}%
                           </span>
                         </td>
