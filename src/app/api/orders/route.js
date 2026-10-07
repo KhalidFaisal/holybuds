@@ -76,6 +76,7 @@ export async function POST(request) {
         productId: product.id,
         quantity: item.quantity,
         price: product.price,
+        costPrice: product.costPrice || 0,
         category: product.category,
       });
     }
@@ -338,7 +339,8 @@ export async function POST(request) {
             create: itemsData.map(i => ({
               productId: i.productId,
               quantity: i.quantity,
-              price: i.price
+              price: i.price,
+              costPrice: i.costPrice || 0,
             })),
           },
         },

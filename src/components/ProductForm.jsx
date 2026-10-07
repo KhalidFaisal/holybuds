@@ -14,6 +14,7 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
     name: product?.name || '',
     category: product?.category || 'FLOWER',
     price: product?.price ?? '',
+    costPrice: product?.costPrice ?? '',
     weight: product?.weight || '',
     description: product?.description || '',
     image: product?.image || '',
@@ -544,14 +545,21 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
             </div>
           </div>
 
-          {/* Price / Weight / Stock */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Price / Cost / Weight / Stock */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-pc-muted mb-1">Price ($) *</label>
+              <label className="block text-sm font-medium text-pc-muted mb-1">Selling Price ($) *</label>
               <input name="price" type="number" step="0.01" value={form.price} onChange={handleChange} required className="input-field" placeholder="35.00" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-pc-muted mb-1">Weight/Size (Optional)</label>
+              <label className="block text-sm font-medium text-pc-muted mb-1" title="What you paid per unit to supplier/grower">
+                Cost Price ($)
+                <span className="text-[10px] text-pc-muted/70 ml-1 font-normal">(Wholesale)</span>
+              </label>
+              <input name="costPrice" type="number" step="0.01" value={form.costPrice} onChange={handleChange} className="input-field" placeholder="15.00" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-pc-muted mb-1">Weight/Size</label>
               <input name="weight" value={form.weight} onChange={handleChange} className="input-field" placeholder="3.5g, 1pc" />
             </div>
             <div>
@@ -559,6 +567,35 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
               <input name="stock" type="number" value={form.stock} onChange={handleChange} required className="input-field" placeholder="100" />
             </div>
           </div>
+
+          {/* Live Profit & Margin Indicator */}
+          {(() => {
+            const sell = parseFloat(form.price) || 0;
+            const cost = parseFloat(form.costPrice);
+            if (!isNaN(cost) && sell > 0) {
+              const profit = sell - cost;
+              const margin = Math.round((profit / sell) * 100);
+              const isPositive = profit >= 0;
+              return (
+                <div className={`p-2.5 rounded-xl text-xs flex items-center justify-between border ${
+                  isPositive 
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                    : 'bg-red-500/10 border-red-500/30 text-red-400'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{isPositive ? '💰' : '⚠️'}</span>
+                    <span>
+                      <strong>Est. Unit Profit:</strong> ${profit.toFixed(2)}
+                    </span>
+                  </div>
+                  <span className="font-bold px-2 py-0.5 rounded-md bg-black/40 border border-current">
+                    {margin}% Margin
+                  </span>
+                </div>
+              );
+            }
+            return null;
+          })()}
 
           {/* Description */}
           <div>

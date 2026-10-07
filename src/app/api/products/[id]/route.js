@@ -55,6 +55,7 @@ export async function PUT(request, { params }) {
       }
     }
     if (data.price !== undefined) updateData.price = parseFloat(data.price);
+    if (data.costPrice !== undefined) updateData.costPrice = data.costPrice === '' ? 0 : parseFloat(data.costPrice);
     if (data.weight !== undefined) updateData.weight = data.weight;
     if (data.description !== undefined) updateData.description = data.description;
     

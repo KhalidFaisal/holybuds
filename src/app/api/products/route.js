@@ -112,6 +112,7 @@ export async function POST(request) {
         category: primaryCategory,
         categories: JSON.stringify(categoriesArr),
         price: parseFloat(data.price),
+        costPrice: data.costPrice !== undefined && data.costPrice !== '' ? parseFloat(data.costPrice) : 0,
         weight: data.weight || null,
         description: finalDescription,
         image: primaryImage,

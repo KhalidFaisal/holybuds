@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import StatsCard from '@/components/StatsCard';
 
 export default function AnalyticsPage() {
@@ -81,9 +82,18 @@ export default function AnalyticsPage() {
 
   return (
     <div className="animate-fade-in space-y-8">
-      <div>
-        <h1 className="text-3xl font-black text-white">Analytics</h1>
-        <p className="text-pc-muted">Deep dive into your store&apos;s performance</p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-white">Analytics</h1>
+          <p className="text-pc-muted">Deep dive into your store&apos;s performance</p>
+        </div>
+        <Link
+          href="/admin/dashboard/profit"
+          className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-black font-extrabold text-sm shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition-all active:scale-[0.98]"
+        >
+          <span>💰</span>
+          <span>View Profit & Loss (P&L)</span>
+        </Link>
       </div>
 
       {/* Summary Section */}

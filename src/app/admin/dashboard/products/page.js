@@ -646,7 +646,7 @@ export default function AdminProductsPage() {
                 </th>
                 <th className="text-left p-4 text-pc-muted text-xs font-semibold uppercase tracking-wider">Product</th>
                 <th className="text-left p-4 text-pc-muted text-xs font-semibold uppercase tracking-wider">Category</th>
-                <th className="text-left p-4 text-pc-muted text-xs font-semibold uppercase tracking-wider">Price</th>
+                <th className="text-left p-4 text-pc-muted text-xs font-semibold uppercase tracking-wider">Price / Margin</th>
                 <th className="text-left p-4 text-pc-muted text-xs font-semibold uppercase tracking-wider">Stock</th>
                 <th className="text-left p-4 text-pc-muted text-xs font-semibold uppercase tracking-wider">Visible</th>
                 <th className="text-left p-4 text-pc-muted text-xs font-semibold uppercase tracking-wider">Featured</th>
@@ -735,7 +735,18 @@ export default function AdminProductsPage() {
                       );
                     })()}
                   </td>
-                  <td className="p-4 text-white font-semibold text-sm">${product.price.toFixed(2)}</td>
+                  <td className="p-4 text-sm">
+                    <p className="text-white font-semibold">${product.price.toFixed(2)}</p>
+                    {product.costPrice > 0 ? (
+                      <p className="text-[11px] text-emerald-400 mt-0.5 flex items-center gap-1 font-mono" title={`Cost: $${product.costPrice.toFixed(2)} | Unit Profit: $${(product.price - product.costPrice).toFixed(2)}`}>
+                        <span>Cost: ${product.costPrice.toFixed(2)}</span>
+                        <span className="text-pc-muted">·</span>
+                        <span className="font-bold">{Math.round(((product.price - product.costPrice) / product.price) * 100)}%</span>
+                      </p>
+                    ) : (
+                      <span className="text-[10px] text-pc-muted/60" title="Cost not set">—</span>
+                    )}
+                  </td>
                   <td className="p-4">
                     <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${stockColor(product.stock)}`}>
                       {product.stock}

@@ -12,6 +12,7 @@ model Product {
   category    String      // Primary Category
   categories  String      @default("[]") // JSON array of all assigned categories
   price       Float
+  costPrice   Float       @default(0) // Wholesale / acquisition cost
   weight      String?     // e.g. "3.5g", "1g", "7g", "1pc", "10pc"
   description String      @default("")
   image       String      @default("")
@@ -65,6 +66,7 @@ model OrderItem {
   id        String  @id @default(cuid())
   quantity  Int
   price     Float
+  costPrice Float   @default(0) // Snapshot of product costPrice at time of order
   orderId   String
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String
