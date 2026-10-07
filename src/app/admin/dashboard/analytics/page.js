@@ -92,7 +92,7 @@ export default function AnalyticsPage() {
           className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-black font-extrabold text-sm shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition-all active:scale-[0.98]"
         >
           <span>💰</span>
-          <span>View Profit & Loss (P&L)</span>
+          <span>View Profit Tracker</span>
         </Link>
       </div>
 

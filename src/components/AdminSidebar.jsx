@@ -26,7 +26,7 @@ const navGroups = [
         ),
       },
       {
-        label: 'Profit & Loss',
+        label: 'Profit Tracker',
         href: '/admin/dashboard/profit',
         icon: (
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

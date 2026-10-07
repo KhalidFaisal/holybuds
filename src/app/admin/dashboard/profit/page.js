@@ -55,7 +55,7 @@ export default function ProfitAnalyticsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-3xl font-black text-white">Profit & Loss (P&L)</h1>
+            <h1 className="text-3xl font-black text-white">Profit Tracker</h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-pc-green/15 text-pc-green border border-pc-green/30">
               Live Accounting
             </span>

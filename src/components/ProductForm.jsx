@@ -554,7 +554,6 @@ export default function ProductForm({ product, token, onSave, onCancel }) {
             <div>
               <label className="block text-sm font-medium text-pc-muted mb-1" title="What you paid per unit to supplier/grower">
                 Cost Price ($)
-                <span className="text-[10px] text-pc-muted/70 ml-1 font-normal">(Wholesale)</span>
               </label>
               <input name="costPrice" type="number" step="0.01" value={form.costPrice} onChange={handleChange} className="input-field" placeholder="15.00" />
             </div>
