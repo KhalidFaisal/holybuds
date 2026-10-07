@@ -8,6 +8,9 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const period = searchParams.get('period') || 'month'; // 'today', '7d', '30d', 'month', 'all'
+
     const settings = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
     const tz = settings?.timezone || 'UTC';
 
@@ -25,27 +28,53 @@ export async function GET(request) {
       return `${y}-${m}-${d}`;
     };
 
-    const getTzFullFormatted = (date) => {
-      return new Intl.DateTimeFormat('en-US', {
+    const getTzParts = (date) => {
+      const parts = new Intl.DateTimeFormat('en-US', {
         timeZone: tz,
-        dateStyle: 'full',
-        timeStyle: 'short',
-      }).format(date);
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+      }).formatToParts(date);
+      return {
+        year: parseInt(parts.find((p) => p.type === 'year').value, 10),
+        month: parseInt(parts.find((p) => p.type === 'month').value, 10),
+        day: parseInt(parts.find((p) => p.type === 'day').value, 10),
+      };
     };
 
     const now = new Date();
-    const todayStr = getTzDateStr(now); // Store's today (YYYY-MM-DD)
-    const currentSiteTimeFormatted = getTzFullFormatted(now);
+    const { year: currentYear, month: currentMonth, day: currentDay } = getTzParts(now);
+    const todayStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
 
-    // Hard constraint: ONLY orders from today onwards in site time (no previous sales)
-    // Fetch orders from the last 48 hours to safely capture today's start across all global timezones
-    const safetyCutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    let startDateStr = null;
+    let safetyCutoff = null;
+
+    if (period === 'today') {
+      startDateStr = todayStr;
+      safetyCutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    } else if (period === '7d') {
+      const d7 = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+      startDateStr = getTzDateStr(d7);
+      safetyCutoff = new Date(now.getTime() - 9 * 24 * 60 * 60 * 1000);
+    } else if (period === '30d') {
+      const d30 = new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000);
+      startDateStr = getTzDateStr(d30);
+      safetyCutoff = new Date(now.getTime() - 33 * 24 * 60 * 60 * 1000);
+    } else if (period === 'month') {
+      startDateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+      safetyCutoff = new Date(now.getTime() - 35 * 24 * 60 * 60 * 1000);
+    }
+    // 'all' leaves startDateStr = null & safetyCutoff = null
+
+    const orderWhere = {
+      status: { notIn: ['CANCELLED', 'Cancelled', 'cancelled'] },
+    };
+    if (safetyCutoff) {
+      orderWhere.createdAt = { gte: safetyCutoff };
+    }
 
     const orders = await prisma.order.findMany({
-      where: {
-        createdAt: { gte: safetyCutoff },
-        status: { notIn: ['CANCELLED', 'Cancelled', 'cancelled'] },
-      },
+      where: orderWhere,
       include: {
         items: {
           include: {
@@ -56,10 +85,11 @@ export async function GET(request) {
       orderBy: { createdAt: 'asc' },
     });
 
-    // Filter strictly to orders placed today onwards in the site timezone
+    // Filter strictly to orders within the selected period based on site timezone
     const eligibleOrders = orders.filter((order) => {
+      if (!startDateStr) return true;
       const orderDateStr = getTzDateStr(new Date(order.createdAt));
-      return orderDateStr >= todayStr;
+      return orderDateStr >= startDateStr;
     });
 
     // Accumulators
@@ -71,7 +101,6 @@ export async function GET(request) {
 
     const categoryMap = {};
     const productProfitMap = {};
-    const missingCostMap = {};
     const timelineMap = new Map();
 
     const ensureTimelineEntry = (dateKey) => {
@@ -88,8 +117,25 @@ export async function GET(request) {
       return timelineMap.get(dateKey);
     };
 
-    // Ensure today's entry exists
-    ensureTimelineEntry(todayStr);
+    // Prepopulate timeline for smooth chart display
+    if (period === 'month') {
+      for (let dayNum = 1; dayNum <= currentDay; dayNum++) {
+        const dStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+        ensureTimelineEntry(dStr);
+      }
+    } else if (period === '7d') {
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now.getTime() - i * 86400000);
+        ensureTimelineEntry(getTzDateStr(d));
+      }
+    } else if (period === '30d') {
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now.getTime() - i * 86400000);
+        ensureTimelineEntry(getTzDateStr(d));
+      }
+    } else if (period === 'today') {
+      ensureTimelineEntry(todayStr);
+    }
 
     for (const order of eligibleOrders) {
       const dateKey = getTzDateStr(new Date(order.createdAt));
@@ -103,23 +149,9 @@ export async function GET(request) {
         // ONLY calculate for products where costs have been added!
         if (unitCost <= 0) {
           untrackedUnitsSold += qty;
-          if (item.product) {
-            const pid = item.product.id;
-            if (!missingCostMap[pid]) {
-              missingCostMap[pid] = {
-                id: pid,
-                name: item.product.name,
-                category: item.product.category,
-                price: item.product.price,
-                unitsSoldWithoutCost: 0,
-              };
-            }
-            missingCostMap[pid].unitsSoldWithoutCost += qty;
-          }
           continue; // Skip items without cost price so they don't corrupt margins
         }
 
-        // Tracked item with valid cost
         orderHadTrackedItems = true;
         const lineRevenue = item.price * qty;
         const itemCOGS = unitCost * qty;
@@ -185,11 +217,13 @@ export async function GET(request) {
     const totalOrdersCount = trackedOrderIds.size;
     const avgProfitPerOrder = totalOrdersCount > 0 ? totalProfit / totalOrdersCount : 0;
 
-    // Timeline array
-    const timeline = Array.from(timelineMap.values()).map((day) => ({
-      ...day,
-      marginPercent: day.revenue > 0 ? Math.round((day.profit / day.revenue) * 100) : 0,
-    }));
+    // Timeline array sorted chronologically
+    const timeline = Array.from(timelineMap.values())
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((day) => ({
+        ...day,
+        marginPercent: day.revenue > 0 ? Math.round((day.profit / day.revenue) * 100) : 0,
+      }));
 
     // Categories sorted by profit
     const categoryProfit = Object.values(categoryMap)
@@ -216,9 +250,7 @@ export async function GET(request) {
       .sort((a, b) => b.marginPercent - a.marginPercent);
 
     return NextResponse.json({
-      siteTimezone: tz,
-      siteTodayDate: todayStr,
-      currentSiteTimeFormatted,
+      period,
       summary: {
         totalRevenue,
         totalCOGS,
@@ -233,7 +265,6 @@ export async function GET(request) {
       categoryProfit,
       topProfitableProducts,
       highestMarginProducts,
-      missingCostProducts: Object.values(missingCostMap),
     });
   } catch (error) {
     console.error('Profit analytics error:', error);

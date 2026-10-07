@@ -3,12 +3,21 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import StatsCard from '@/components/StatsCard';
 
+const PERIOD_OPTIONS = [
+  { id: 'today', label: 'Today' },
+  { id: '7d', label: '7 Days' },
+  { id: '30d', label: '30 Days' },
+  { id: 'month', label: 'This Month' },
+  { id: 'all', label: 'All Time' },
+];
+
 export default function ProfitAnalyticsPage() {
   const [data, setData] = useState(null);
+  const [period, setPeriod] = useState('month');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchProfitData = useCallback(async () => {
+  const fetchProfitData = useCallback(async (selectedPeriod = period) => {
     setLoading(true);
     setError('');
     try {
@@ -16,7 +25,7 @@ export default function ProfitAnalyticsPage() {
       const headers = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/admin/analytics/profit', { headers });
+      const res = await fetch(`/api/admin/analytics/profit?period=${selectedPeriod}`, { headers });
       if (!res.ok) throw new Error('Failed to load profit analytics');
 
       const json = await res.json();
@@ -27,12 +36,12 @@ export default function ProfitAnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [period]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchProfitData();
-  }, [fetchProfitData]);
+    fetchProfitData(period);
+  }, [period, fetchProfitData]);
 
   const timeline = useMemo(() => data?.timeline || [], [data?.timeline]);
   const maxRevenue = useMemo(() => {
@@ -46,30 +55,37 @@ export default function ProfitAnalyticsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-3xl font-black text-white">Profit & Margins</h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-              Today Onwards
+            <h1 className="text-3xl font-black text-white">Profit & Loss (P&L)</h1>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-pc-green/15 text-pc-green border border-pc-green/30">
+              Live Accounting
             </span>
           </div>
           <p className="text-pc-muted mt-1">
-            Real-time profit tracking strictly for products with wholesale costs added, sold from today onwards.
+            Real-time track of product wholesale costs, gross margins, and net profit.
           </p>
         </div>
 
-        {/* Site Timezone Badge & Refresh Button */}
-        <div className="flex items-center gap-3">
-          {data?.currentSiteTimeFormatted && (
-            <div className="bg-[#141715] px-3.5 py-2 rounded-xl border border-zinc-800 text-right">
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">Store Timezone</p>
-              <p className="text-xs text-white font-mono font-semibold flex items-center gap-1.5 justify-end">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{data.siteTimezone}</span>
-              </p>
-            </div>
-          )}
+        {/* Filter Buttons & Refresh Button */}
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-1 bg-[#141715] p-1 rounded-xl border border-zinc-800">
+            {PERIOD_OPTIONS.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setPeriod(item.id)}
+                disabled={loading}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  period === item.id
+                    ? 'bg-pc-green text-black font-extrabold shadow-sm'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
 
           <button
-            onClick={fetchProfitData}
+            onClick={() => fetchProfitData(period)}
             disabled={loading}
             className="p-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs transition-colors flex items-center justify-center border border-zinc-700/60"
             title="Refresh Profit Data"
@@ -91,7 +107,7 @@ export default function ProfitAnalyticsPage() {
         <div className="glass-card p-8 text-center text-red-400 border border-red-500/30">
           <p>{error}</p>
           <button
-            onClick={fetchProfitData}
+            onClick={() => fetchProfitData(period)}
             className="mt-4 px-4 py-2 bg-zinc-800 text-white rounded-xl text-xs font-bold hover:bg-zinc-700"
           >
             Retry
@@ -137,28 +153,31 @@ export default function ProfitAnalyticsPage() {
             />
 
             {/* Profit Margin Card */}
-            <div className={`p-6 rounded-2xl border transition-all flex flex-col justify-between ${
+            <div className={`glass-card p-6 bg-gradient-to-br flex flex-col justify-between transition-all ${
               data.summary.totalProfit >= 0
-                ? 'bg-gradient-to-br from-[#0c2415] to-[#0a180e] border-emerald-500/40 shadow-lg shadow-emerald-950/40'
-                : 'bg-gradient-to-br from-[#2a0e0e] to-[#180a0a] border-red-500/40 shadow-lg shadow-red-950/40'
+                ? 'from-pc-green/20 to-pc-green/5 border-pc-green/30'
+                : 'from-red-500/20 to-red-500/5 border-red-500/30'
             }`}>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">Profit Margin</span>
-                <span className={`px-2 py-0.5 rounded-full text-[11px] font-black border ${
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">📊</span>
+                  <span className="text-pc-muted text-sm font-medium">Profit Margin</span>
+                </div>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                   data.summary.totalProfit >= 0
-                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                    : 'bg-red-500/20 text-red-400 border-red-500/40'
+                    ? 'bg-pc-green/15 text-pc-green border-pc-green/30'
+                    : 'bg-red-500/15 text-red-400 border-red-500/30'
                 }`}>
                   {data.summary.totalOrdersCount} Tracked Orders
                 </span>
               </div>
               <div className="mt-3">
-                <p className={`text-2xl sm:text-3xl font-black ${
-                  data.summary.totalProfit >= 0 ? 'text-emerald-400' : 'text-red-400'
+                <p className={`text-3xl font-black ${
+                  data.summary.totalProfit >= 0 ? 'text-pc-green' : 'text-red-400'
                 }`}>
                   {data.summary.marginPercent.toFixed(1)}%
                 </p>
-                <p className="text-[11px] text-zinc-400 mt-1">
+                <p className="text-xs text-pc-muted mt-1">
                   Avg. ${data.summary.avgProfitPerOrder.toFixed(2)} profit per order
                 </p>
               </div>
