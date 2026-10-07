@@ -67,16 +67,16 @@ export default function ProfitAnalyticsPage() {
 
         {/* Filter Buttons & Refresh Button */}
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          <div className="flex items-center gap-1 bg-[#141715] p-1 rounded-xl border border-zinc-800">
+          <div className="flex items-center gap-1 bg-pc-card p-1 rounded-xl border border-pc-border shadow-sm">
             {PERIOD_OPTIONS.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setPeriod(item.id)}
                 disabled={loading}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   period === item.id
-                    ? 'bg-pc-green text-black font-extrabold shadow-sm'
-                    : 'text-zinc-400 hover:text-white'
+                    ? 'bg-pc-green text-black shadow-sm'
+                    : 'text-pc-muted hover:text-black hover:bg-pc-smoke'
                 }`}
               >
                 {item.label}
@@ -87,7 +87,7 @@ export default function ProfitAnalyticsPage() {
           <button
             onClick={() => fetchProfitData(period)}
             disabled={loading}
-            className="p-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs transition-colors flex items-center justify-center border border-zinc-700/60"
+            className="p-2.5 bg-pc-card hover:bg-pc-smoke text-pc-muted hover:text-pc-green rounded-xl text-xs transition-colors flex items-center justify-center border border-pc-border shadow-sm"
             title="Refresh Profit Data"
           >
             <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -159,8 +159,10 @@ export default function ProfitAnalyticsPage() {
                 : 'from-red-500/20 to-red-500/5 border-red-500/30'
             }`}>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">📊</span>
+                <div className="flex items-center gap-2.5">
+                  <svg className={`w-6 h-6 ${data.summary.totalProfit >= 0 ? 'text-pc-green' : 'text-red-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+                  </svg>
                   <span className="text-pc-muted text-sm font-medium">Profit Margin</span>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
