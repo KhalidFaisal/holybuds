@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import Link from 'next/link';
 import StatsCard from '@/components/StatsCard';
 
 export default function ProfitAnalyticsPage() {
@@ -81,42 +80,6 @@ export default function ProfitAnalyticsPage() {
           </button>
         </div>
       </div>
-
-      {/* Scope Disclaimer Banner */}
-      <div className="p-3.5 rounded-xl bg-emerald-950/25 border border-emerald-500/25 text-xs text-zinc-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-base">📅</span>
-          <span>
-            Tracking sales baseline: <strong>Today ({data?.siteTodayDate || 'Site Time'}) onwards</strong>. Previous sales are excluded.
-          </span>
-        </div>
-        <span className="text-zinc-400 text-[11px] font-mono">
-          {data?.currentSiteTimeFormatted}
-        </span>
-      </div>
-
-      {/* Missing Cost Notice Banner */}
-      {data?.missingCostProducts?.length > 0 && (
-        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in">
-          <div className="flex items-start sm:items-center gap-2.5">
-            <span className="text-base">⚠️</span>
-            <div>
-              <p className="font-bold text-amber-300">
-                {data.summary.untrackedUnitsSold} unit{data.summary.untrackedUnitsSold !== 1 ? 's' : ''} sold today are missing wholesale cost prices:
-              </p>
-              <p className="text-amber-200/80 mt-0.5">
-                {data.missingCostProducts.map((p) => `${p.name} (${p.unitsSoldWithoutCost} sold)`).join(', ')}
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/admin/dashboard/products"
-            className="px-3 py-1.5 rounded-lg bg-amber-500 text-black font-extrabold text-[11px] hover:bg-amber-400 transition-colors whitespace-nowrap"
-          >
-            Add Cost in Products →
-          </Link>
-        </div>
-      )}
 
       {loading && !data && (
         <div className="flex items-center justify-center py-24">
