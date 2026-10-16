@@ -7,5 +7,9 @@ export const metadata = {
 };
 
 export default function DriverLayout({ children }) {
-  return children;
+  return (
+    <div className="font-admin min-h-screen bg-pc-black text-white antialiased">
+      {children}
+    </div>
+  );
 }
