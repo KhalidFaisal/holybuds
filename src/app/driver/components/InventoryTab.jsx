@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { groupAndSortBoxItems, CategoryIcon } from '@/lib/inventorySorting';
 
 export default function InventoryTab({ driver, refreshDriver }) {
   const [isHandoffMode, setIsHandoffMode] = useState(false);
@@ -10,6 +11,9 @@ export default function InventoryTab({ driver, refreshDriver }) {
   const [loading, setLoading] = useState(false);
 
   const box = driver.currentBox;
+
+  const groupedItems = useMemo(() => groupAndSortBoxItems(box?.items), [box?.items]);
+  const totalExpected = useMemo(() => box?.items?.reduce((sum, i) => sum + (i.expectedQuantity || 0), 0) || 0, [box?.items]);
 
   useEffect(() => {
     // Fetch drivers for the handoff dropdown
@@ -86,21 +90,45 @@ export default function InventoryTab({ driver, refreshDriver }) {
     return (
       <div className="space-y-6">
         <div className="bg-pc-dark border border-pc-border rounded-xl p-6">
-          <h2 className="text-xl font-bold text-white mb-4">Your Box: {box.name}</h2>
-          
-          <div className="space-y-3">
-            {box.items.map(item => (
-              <div key={item.id} className="flex justify-between items-center bg-pc-black rounded-lg p-4 border border-pc-border">
-                <span className="font-bold text-white">{item.product.name}</span>
-                <span className="text-pc-green font-bold bg-pc-green/10 px-4 py-1 rounded-full">
-                  {item.expectedQuantity} Expected
-                </span>
-              </div>
-            ))}
-            {box.items.length === 0 && (
-              <div className="text-pc-muted text-center py-4">Box is empty.</div>
-            )}
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-white">Your Box: {box.name}</h2>
+            <span className="text-xs font-bold text-pc-muted bg-white/5 border border-pc-border px-3 py-1 rounded-full">
+              {totalExpected} Total Items
+            </span>
           </div>
+          
+          {groupedItems.length === 0 ? (
+            <div className="text-pc-muted text-center py-4">Box is empty.</div>
+          ) : (
+            <div className="space-y-6">
+              {groupedItems.map(group => (
+                <div key={group.label} className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-pc-border/60 pb-2">
+                    <div className="flex items-center gap-2">
+                      <CategoryIcon type={group.iconType} className="w-4 h-4" />
+                      <h3 className="text-sm font-bold text-white tracking-wide uppercase">
+                        {group.label}
+                      </h3>
+                    </div>
+                    <span className="text-xs font-semibold text-pc-muted">
+                      {group.totalQuantity} {group.totalQuantity === 1 ? 'item' : 'items'}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {group.items.map(item => (
+                      <div key={item.id} className="flex justify-between items-center bg-pc-black rounded-lg p-3.5 border border-pc-border hover:border-pc-border-light transition-colors">
+                        <span className="font-bold text-white text-sm sm:text-base">{item.product.name}</span>
+                        <span className="text-pc-green font-bold text-xs sm:text-sm bg-pc-green/10 px-3 py-1 rounded-full shrink-0 ml-2">
+                          {item.expectedQuantity} Expected
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <button 
@@ -126,22 +154,40 @@ export default function InventoryTab({ driver, refreshDriver }) {
           Enter the exact physical count of what is currently in your box. The system will calculate any discrepancies.
         </p>
 
-        <div className="space-y-4 mb-6">
-          {box.items.map(item => (
-            <div key={item.id} className="flex items-center justify-between bg-pc-black rounded-lg p-4 border border-pc-border gap-4">
-              <div className="flex-1">
-                <p className="font-bold text-white">{item.product.name}</p>
-                <p className="text-xs text-pc-muted">Expected: {item.expectedQuantity}</p>
+        <div className="space-y-6 mb-6">
+          {groupedItems.map(group => (
+            <div key={group.label} className="space-y-3">
+              <div className="flex items-center justify-between border-b border-pc-border/60 pb-2">
+                <div className="flex items-center gap-2">
+                  <CategoryIcon type={group.iconType} className="w-4 h-4" />
+                  <h3 className="text-sm font-bold text-white tracking-wide uppercase">
+                    {group.label}
+                  </h3>
+                </div>
+                <span className="text-xs font-semibold text-pc-muted">
+                  {group.items.length} {group.items.length === 1 ? 'product' : 'products'}
+                </span>
               </div>
-              <div className="w-24">
-                <input
-                  type="number"
-                  min="0"
-                  className="w-full bg-pc-dark border border-pc-border rounded-lg px-3 py-2 text-white text-center font-bold focus:border-pc-green focus:outline-none"
-                  value={actualCounts[item.productId] ?? ''}
-                  onChange={(e) => handleCountChange(item.productId, e.target.value)}
-                  placeholder="Actual"
-                />
+
+              <div className="space-y-2">
+                {group.items.map(item => (
+                  <div key={item.id} className="flex items-center justify-between bg-pc-black rounded-lg p-3 border border-pc-border gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-white text-sm sm:text-base truncate">{item.product.name}</p>
+                      <p className="text-xs text-pc-muted">Expected: {item.expectedQuantity}</p>
+                    </div>
+                    <div className="w-24 shrink-0">
+                      <input
+                        type="number"
+                        min="0"
+                        className="w-full bg-pc-dark border border-pc-border rounded-lg px-3 py-2 text-white text-center font-bold focus:border-pc-green focus:outline-none text-sm"
+                        value={actualCounts[item.productId] ?? ''}
+                        onChange={(e) => handleCountChange(item.productId, e.target.value)}
+                        placeholder="Actual"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}

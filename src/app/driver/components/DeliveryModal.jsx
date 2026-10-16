@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { groupAndSortBoxItems, CategoryIcon } from '@/lib/inventorySorting';
 
 export default function DeliveryModal({ order, driver, onClose, onSubmit }) {
   const [isSwapping, setIsSwapping] = useState(false);
@@ -10,6 +11,11 @@ export default function DeliveryModal({ order, driver, onClose, onSubmit }) {
   const [paidZelle, setPaidZelle] = useState('');
   const [amountOwed, setAmountOwed] = useState(0);
   const [newTotal, setNewTotal] = useState(order.total);
+
+  const availableBoxGroups = useMemo(() => {
+    const availableItems = driver.currentBox?.items?.filter(bi => bi.expectedQuantity > 0) || [];
+    return groupAndSortBoxItems(availableItems);
+  }, [driver.currentBox?.items]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -152,20 +158,48 @@ export default function DeliveryModal({ order, driver, onClose, onSubmit }) {
               </div>
 
               <div className="bg-pc-black p-3 rounded-lg border border-pc-border">
-                <h4 className="text-xs uppercase text-pc-muted font-bold mb-2">Add from your box</h4>
-                <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
-                  {driver.currentBox?.items?.filter(bi => bi.expectedQuantity > 0).length > 0 ? (
-                    driver.currentBox.items.filter(bi => bi.expectedQuantity > 0).map(bi => (
-                      <div key={bi.id} className="flex justify-between items-center bg-pc-dark p-2 rounded">
-                        <div className="flex flex-col">
-                          <span className="text-sm text-white">{bi.product.name}</span>
-                          <span className="text-xs text-pc-muted">Available: {bi.expectedQuantity}</span>
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-xs uppercase text-pc-muted font-bold">Add from your box</h4>
+                  <span className="text-[11px] text-pc-muted font-semibold">
+                    {availableBoxGroups.reduce((acc, g) => acc + g.items.length, 0)} available
+                  </span>
+                </div>
+                <div className="max-h-56 overflow-y-auto space-y-3 pr-1">
+                  {availableBoxGroups.length > 0 ? (
+                    availableBoxGroups.map(group => (
+                      <div key={group.label} className="space-y-1.5">
+                        <div className="sticky top-0 bg-pc-black/95 backdrop-blur-sm py-1 border-b border-pc-border/40 flex items-center justify-between z-10">
+                          <div className="flex items-center gap-1.5">
+                            <CategoryIcon type={group.iconType} className="w-3.5 h-3.5" />
+                            <span className="text-[11px] font-bold text-white uppercase tracking-wider">
+                              {group.label}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-pc-muted font-semibold">
+                            ({group.items.length})
+                          </span>
                         </div>
-                        <button onClick={() => handleAddItem(bi)} className="w-6 h-6 rounded bg-pc-green/20 text-pc-green hover:bg-pc-green/40 flex items-center justify-center font-bold text-lg">+</button>
+                        <div className="space-y-1.5">
+                          {group.items.map(bi => (
+                            <div key={bi.id} className="flex justify-between items-center bg-pc-dark p-2 rounded-lg border border-pc-border/60 hover:border-pc-border transition-colors">
+                              <div className="flex flex-col min-w-0 pr-2">
+                                <span className="text-sm text-white font-medium truncate">{bi.product.name}</span>
+                                <span className="text-xs text-pc-muted">Available: <strong className="text-white font-mono">{bi.expectedQuantity}</strong></span>
+                              </div>
+                              <button 
+                                onClick={() => handleAddItem(bi)} 
+                                className="w-7 h-7 rounded-lg bg-pc-green/20 text-pc-green hover:bg-pc-green/40 active:scale-95 flex items-center justify-center font-bold text-lg transition-transform shrink-0"
+                                title="Add one to order"
+                              >
+                                +
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-pc-muted italic">Your box is empty.</p>
+                    <p className="text-sm text-pc-muted italic py-2 text-center">Your box is empty.</p>
                   )}
                 </div>
               </div>
