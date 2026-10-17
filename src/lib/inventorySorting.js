@@ -152,6 +152,45 @@ export function groupAndSortBoxItems(items) {
 }
 
 /**
+ * Groups raw products into ordered categories, then sorts products within each category
+ * strictly in alphabetical order (A to Z) by product name.
+ *
+ * @param {Array} products - Array of product objects with { name, category, ... }
+ * @returns {Array} - Array of grouped category objects:
+ *   [{ label: 'Flowers', iconType: 'flower', rank: 1, products: [...] }, ...]
+ */
+export function groupAndSortProducts(products) {
+  if (!Array.isArray(products) || products.length === 0) return [];
+
+  const groupsMap = {};
+
+  for (const product of products) {
+    const meta = getCategoryMeta(product);
+    if (!groupsMap[meta.label]) {
+      groupsMap[meta.label] = {
+        label: meta.label,
+        iconType: meta.iconType,
+        rank: meta.rank,
+        products: [],
+      };
+    }
+    groupsMap[meta.label].products.push(product);
+  }
+
+  const sortedGroups = Object.values(groupsMap).sort((a, b) => a.rank - b.rank);
+
+  for (const group of sortedGroups) {
+    group.products.sort((a, b) => {
+      const nameA = a.name || '';
+      const nameB = b.name || '';
+      return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }
+
+  return sortedGroups;
+}
+
+/**
  * Pure SVG Category Icon Component (Strictly NO Emojis)
  */
 export function CategoryIcon({ type = 'other', className = 'w-4 h-4' }) {

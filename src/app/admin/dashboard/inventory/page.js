@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { groupAndSortBoxItems, groupAndSortProducts, CategoryIcon } from '@/lib/inventorySorting';
 
 function InlineEditQuantity({ boxId, productId, initialQuantity, onUpdate }) {
   const [editValue, setEditValue] = useState(null);
@@ -431,20 +432,48 @@ export default function AdminInventory() {
                   );
                 })()}
 
-                {[...box.items].sort((a, b) => a.product.name.localeCompare(b.product.name)).map(item => (
-                  <div key={item.id} className="flex justify-between items-center bg-pc-black rounded-lg p-3 border border-pc-border">
-                    <span className="text-white text-sm">{item.product.name}</span>
-                    <InlineEditQuantity 
-                      boxId={box.id} 
-                      productId={item.productId} 
-                      initialQuantity={item.expectedQuantity} 
-                      onUpdate={() => fetchData(true)} 
-                    />
-                  </div>
-                ))}
-                {box.items.length === 0 && (
-                  <p className="text-pc-muted text-sm italic">Box is empty.</p>
-                )}
+                {(() => {
+                  const groupedCategories = groupAndSortBoxItems(box.items);
+                  if (groupedCategories.length === 0) {
+                    return <p className="text-pc-muted text-sm italic">Box is empty.</p>;
+                  }
+
+                  return (
+                    <div className="space-y-3.5">
+                      {groupedCategories.map((group) => (
+                        <div key={group.label} className="space-y-1.5">
+                          {/* Category Header with Icon and Unit Total */}
+                          <div className="flex items-center justify-between px-2.5 py-1 bg-white/[0.04] border-l-2 border-pc-green rounded-r-lg">
+                            <div className="flex items-center gap-2">
+                              <CategoryIcon type={group.iconType} className="w-3.5 h-3.5" />
+                              <span className="text-xs font-black text-white uppercase tracking-wider">
+                                {group.label}
+                              </span>
+                            </div>
+                            <span className="text-[11px] font-bold text-pc-muted bg-pc-black px-2 py-0.5 rounded border border-pc-border">
+                              {group.totalQuantity} {group.totalQuantity === 1 ? 'unit' : 'units'}
+                            </span>
+                          </div>
+
+                          {/* Items sorted A-Z in this category */}
+                          <div className="space-y-1.5">
+                            {group.items.map((item) => (
+                              <div key={item.id} className="flex justify-between items-center bg-pc-black rounded-lg p-2.5 border border-pc-border hover:border-pc-green/30 transition-colors">
+                                <span className="text-white text-sm font-medium">{item.product.name}</span>
+                                <InlineEditQuantity 
+                                  boxId={box.id} 
+                                  productId={item.productId} 
+                                  initialQuantity={item.expectedQuantity} 
+                                  onUpdate={() => fetchData(true)} 
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -457,28 +486,52 @@ export default function AdminInventory() {
             <h2 className="text-xl font-bold text-white mb-2">Restock Box</h2>
             <p className="text-pc-muted mb-6">Enter the quantities you are adding to the box.</p>
             
-            <div className="overflow-y-auto flex-1 space-y-4 mb-6 pr-2">
-              {products.map(product => {
-                const currentQty = boxes.find(b => b.id === restockModalBoxId)?.items.find(i => i.productId === product.id)?.expectedQuantity || 0;
-                return (
-                  <div key={product.id} className="flex items-center justify-between bg-pc-black rounded-lg p-3 border border-pc-border">
-                    <div className="flex-1 pr-4">
-                      <p className="text-white text-sm font-bold">{product.name}</p>
-                      <p className="text-xs text-pc-muted">Current Expected: {currentQty}</p>
+            <div className="overflow-y-auto flex-1 space-y-5 mb-6 pr-2">
+              {(() => {
+                const groupedProducts = groupAndSortProducts(products);
+                const targetBox = boxes.find(b => b.id === restockModalBoxId);
+
+                return groupedProducts.map(group => (
+                  <div key={group.label} className="space-y-2">
+                    {/* Category Header */}
+                    <div className="flex items-center justify-between px-2.5 py-1.5 bg-pc-dark/95 border-l-2 border-pc-green rounded-r-lg sticky top-0 z-10 backdrop-blur-md shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <CategoryIcon type={group.iconType} className="w-3.5 h-3.5" />
+                        <span className="text-xs font-black text-white uppercase tracking-wider">
+                          {group.label}
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-bold text-pc-muted bg-pc-black px-2 py-0.5 rounded border border-pc-border">
+                        {group.products.length} {group.products.length === 1 ? 'item' : 'items'}
+                      </span>
                     </div>
-                    <div className="w-24">
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="Add +"
-                        value={restockCounts[product.id] || ''}
-                        onChange={e => setRestockCounts(prev => ({ ...prev, [product.id]: parseInt(e.target.value) || 0 }))}
-                        className="w-full bg-pc-dark border border-pc-border rounded-lg px-2 py-1.5 text-white text-center text-sm focus:outline-none focus:border-pc-green"
-                      />
+
+                    <div className="space-y-2">
+                      {group.products.map(product => {
+                        const currentQty = targetBox?.items?.find(i => i.productId === product.id)?.expectedQuantity || 0;
+                        return (
+                          <div key={product.id} className="flex items-center justify-between bg-pc-black rounded-lg p-3 border border-pc-border hover:border-pc-green/40 transition-colors">
+                            <div className="flex-1 pr-4">
+                              <p className="text-white text-sm font-bold">{product.name}</p>
+                              <p className="text-xs text-pc-muted">Current Expected: {currentQty}</p>
+                            </div>
+                            <div className="w-24">
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="Add +"
+                                value={restockCounts[product.id] || ''}
+                                onChange={e => setRestockCounts(prev => ({ ...prev, [product.id]: parseInt(e.target.value) || 0 }))}
+                                className="w-full bg-pc-dark border border-pc-border rounded-lg px-2 py-1.5 text-white text-center text-sm focus:outline-none focus:border-pc-green"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                );
-              })}
+                ));
+              })()}
             </div>
 
             <div className="flex gap-4">
