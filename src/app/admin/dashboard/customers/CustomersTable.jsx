@@ -691,7 +691,11 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
               }`}
             >
               <span>All Customers</span>
-              <span className="px-1.5 py-0.5 rounded-md bg-black/40 text-[10px] font-mono">
+              <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
+                retentionFilter === 'ALL'
+                  ? 'bg-white text-zinc-950 shadow-sm'
+                  : 'bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100'
+              }`}>
                 {retentionCounts.ALL}
               </span>
             </button>
@@ -709,7 +713,11 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
             >
               <span className="w-2 h-2 rounded-full bg-pc-green shadow-[0_0_6px_rgba(34,197,94,0.6)] inline-block"></span>
               <span>Active (&lt;30d)</span>
-              <span className="px-1.5 py-0.5 rounded-md bg-black/40 text-[10px] font-mono text-pc-green">
+              <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
+                retentionFilter === 'ACTIVE'
+                  ? 'bg-pc-green text-black shadow-sm'
+                  : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/40 dark:border-emerald-700/50'
+              }`}>
                 {retentionCounts.ACTIVE}
               </span>
             </button>
@@ -727,7 +735,11 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
             >
               <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)] inline-block"></span>
               <span>At-Risk (30-60d)</span>
-              <span className="px-1.5 py-0.5 rounded-md bg-black/40 text-[10px] font-mono text-amber-400">
+              <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
+                retentionFilter === 'AT_RISK'
+                  ? 'bg-amber-400 text-zinc-950 shadow-sm'
+                  : 'bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-300 border border-amber-300/40 dark:border-amber-700/50'
+              }`}>
                 {retentionCounts.AT_RISK}
               </span>
             </button>
@@ -745,7 +757,11 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
             >
               <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.6)] inline-block"></span>
               <span>Churned (60d+)</span>
-              <span className="px-1.5 py-0.5 rounded-md bg-black/40 text-[10px] font-mono text-rose-400">
+              <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
+                retentionFilter === 'CHURNED'
+                  ? 'bg-rose-500 text-white shadow-sm'
+                  : 'bg-rose-100 text-rose-900 dark:bg-rose-950 dark:text-rose-300 border border-rose-300/40 dark:border-rose-700/50'
+              }`}>
                 {retentionCounts.CHURNED}
               </span>
             </button>
@@ -763,7 +779,11 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
             >
               <span className="w-2 h-2 rounded-full bg-zinc-500 inline-block"></span>
               <span>Never Ordered</span>
-              <span className="px-1.5 py-0.5 rounded-md bg-black/40 text-[10px] font-mono text-zinc-400">
+              <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
+                retentionFilter === 'NEVER_ORDERED'
+                  ? 'bg-zinc-400 text-zinc-950 shadow-sm'
+                  : 'bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-200 border border-zinc-300/40 dark:border-zinc-700/50'
+              }`}>
                 {retentionCounts.NEVER_ORDERED}
               </span>
             </button>
@@ -893,44 +913,52 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
                         {formatDate(customer.createdAt, false)}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end items-center gap-2">
+                        <div className="flex justify-end items-center gap-1.5">
                           <button
                             onClick={() => openHistoryModal(customer)}
-                            className="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1"
-                            title="View customer activity & orders history"
+                            className="p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all"
+                            title="View customer history & orders"
+                            aria-label="View history"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            History
                           </button>
                           <button
                             onClick={() => handleExportSpecificCustomer(customer)}
                             disabled={exportingCustomerId === customer.id}
-                            className="px-2.5 py-1 rounded-lg bg-pc-dark border border-pc-border text-pc-muted hover:text-pc-green hover:border-pc-green/50 transition-all text-xs font-medium flex items-center gap-1"
+                            className="p-2 rounded-lg bg-pc-dark border border-pc-border text-pc-muted hover:text-pc-green hover:border-pc-green/50 transition-all disabled:opacity-50"
                             title={`Export ${customer.name}'s history to CSV`}
+                            aria-label="Export history"
                           >
                             {exportingCustomerId === customer.id ? (
-                              <div className="w-3.5 h-3.5 border-2 border-pc-green border-t-transparent rounded-full animate-spin" />
+                              <div className="w-4 h-4 border-2 border-pc-green border-t-transparent rounded-full animate-spin" />
                             ) : (
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                               </svg>
                             )}
-                            <span className="hidden sm:inline">Export</span>
                           </button>
                           <button
                             onClick={() => openEditModal(customer)}
-                            className="px-2.5 py-1 rounded-lg bg-pc-dark border border-pc-border text-pc-muted hover:text-white hover:border-pc-muted transition-all text-xs font-medium"
+                            className="p-2 rounded-lg bg-pc-dark border border-pc-border text-pc-muted hover:text-white hover:border-pc-muted transition-all"
+                            title="Edit customer points & store credit"
+                            aria-label="Edit customer"
                           >
-                            Edit
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
                           </button>
                           <button
                             onClick={() => handleDelete(customer.id)}
                             disabled={saving}
-                            className="px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all text-xs font-medium"
+                            className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+                            title="Delete customer"
+                            aria-label="Delete customer"
                           >
-                            Delete
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                           </button>
                         </div>
                       </td>
