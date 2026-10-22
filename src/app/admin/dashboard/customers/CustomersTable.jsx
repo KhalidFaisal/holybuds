@@ -4,9 +4,26 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 
 export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
-  const [customers, setCustomers] = useState(initialCustomers);
+  const [customers, setCustomers] = useState(() => {
+    const now = Date.now();
+    return (initialCustomers || []).map(c => {
+      let daysSinceLastOrder = null;
+      let retentionStatus = 'NEVER_ORDERED';
+      if (c.lastOrderDate) {
+        const diffMs = Math.max(0, now - new Date(c.lastOrderDate).getTime());
+        daysSinceLastOrder = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        if (daysSinceLastOrder <= 30) retentionStatus = 'ACTIVE';
+        else if (daysSinceLastOrder <= 60) retentionStatus = 'AT_RISK';
+        else retentionStatus = 'CHURNED';
+      } else if ((c.totalOrders || 0) > 0) {
+        retentionStatus = 'CHURNED';
+      }
+      return { ...c, daysSinceLastOrder, retentionStatus };
+    });
+  });
   const [activeTab, setActiveTab] = useState('directory'); // 'directory' | 'activity'
   const [searchQuery, setSearchQuery] = useState('');
+  const [retentionFilter, setRetentionFilter] = useState('ALL'); // 'ALL' | 'ACTIVE' | 'AT_RISK' | 'CHURNED' | 'NEVER_ORDERED'
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -134,8 +151,10 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
       return;
     }
 
-    // Full export mode
-    if (customers.length === 0) {
+    // Full export mode or Current Filtered View mode
+    const exportData = mode === 'current_view' ? filteredCustomers : customers;
+
+    if (exportData.length === 0) {
       alert('No customers to export.');
       return;
     }
@@ -144,6 +163,9 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
       'Name',
       'Email',
       'Phone',
+      'Retention Status',
+      'Last Order Date',
+      'Days Since Last Order',
       'Total Orders',
       'Loyalty Points',
       'Store Credit ($)',
@@ -153,10 +175,20 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
       'Sign Up Date'
     ];
 
-    const rows = customers.map(c => [
+    const getStatusLabel = (status) => {
+      if (status === 'ACTIVE') return 'Active (<30d)';
+      if (status === 'AT_RISK') return 'At-Risk (30-60d)';
+      if (status === 'CHURNED') return 'Churned (60d+)';
+      return 'Never Ordered';
+    };
+
+    const rows = exportData.map(c => [
       `"${(c.name || '').replace(/"/g, '""')}"`,
       `"${(c.email || '').replace(/"/g, '""')}"`,
       `"${(c.phone || '').replace(/"/g, '""')}"`,
+      `"${getStatusLabel(c.retentionStatus)}"`,
+      `"${c.lastOrderDate ? formatDate(c.lastOrderDate, false) : 'Never'}"`,
+      c.daysSinceLastOrder !== null && c.daysSinceLastOrder !== undefined ? c.daysSinceLastOrder : 'N/A',
       c.totalOrders || 0,
       c.points || 0,
       (c.storeCredit || 0).toFixed(2),
@@ -171,7 +203,8 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `customers_all_${new Date().toISOString().split('T')[0]}.csv`;
+    const suffix = mode === 'current_view' && retentionFilter !== 'ALL' ? `_${retentionFilter.toLowerCase()}` : '_all';
+    link.download = `customers${suffix}_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -449,18 +482,32 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
     }));
   };
 
+  // Retention counts
+  const retentionCounts = { ALL: customers.length, ACTIVE: 0, AT_RISK: 0, CHURNED: 0, NEVER_ORDERED: 0 };
+  for (const c of customers) {
+    const status = c.retentionStatus || 'NEVER_ORDERED';
+    if (retentionCounts[status] !== undefined) {
+      retentionCounts[status]++;
+    } else {
+      retentionCounts.NEVER_ORDERED++;
+    }
+  }
+
   // Filter Customers
-  const filteredCustomers = useMemo(() => {
-    if (!searchQuery.trim()) return customers;
+  let filteredCustomers = customers;
+  if (retentionFilter !== 'ALL') {
+    filteredCustomers = filteredCustomers.filter(c => (c.retentionStatus || 'NEVER_ORDERED') === retentionFilter);
+  }
+  if (searchQuery.trim()) {
     const q = searchQuery.toLowerCase().trim();
-    return customers.filter(c =>
+    filteredCustomers = filteredCustomers.filter(c =>
       c.name?.toLowerCase().includes(q) ||
       c.phone?.toLowerCase().includes(q) ||
       c.email?.toLowerCase().includes(q) ||
       c.referralCode?.toLowerCase().includes(q) ||
       c.referredByCode?.toLowerCase().includes(q)
     );
-  }, [customers, searchQuery]);
+  }
 
   const totalPages = Math.max(1, Math.ceil(filteredCustomers.length / itemsPerPage));
   const currentCustomers = filteredCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -507,10 +554,31 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
                   </div>
                   <button
                     onClick={() => {
-                      handleExportCSV('name_email');
+                      handleExportCSV('current_view');
                       setShowExportMenu(false);
                     }}
                     className="w-full text-left px-4 py-3 text-xs text-white hover:bg-white/5 flex items-center justify-between gap-3 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <svg className="w-4 h-4 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                      </svg>
+                      <div>
+                        <p className="font-bold text-white">Current Filtered View</p>
+                        <p className="text-[10px] text-pc-muted">Matches active tab &amp; search</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-400 font-mono font-bold text-[11px]">
+                      {filteredCustomers.length}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleExportCSV('name_email');
+                      setShowExportMenu(false);
+                    }}
+                    className="w-full text-left px-4 py-3 text-xs text-white hover:bg-white/5 flex items-center justify-between gap-3 border-t border-pc-border/40 transition-colors"
                   >
                     <div className="flex items-center gap-2.5">
                       <svg className="w-4 h-4 text-pc-green shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -539,7 +607,7 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
                       </svg>
                       <div>
                         <p className="font-medium text-pc-light">All Customer Details</p>
-                        <p className="text-[10px] text-pc-muted">All columns (Phone, Points, Credit...)</p>
+                        <p className="text-[10px] text-pc-muted">All columns including retention data</p>
                       </div>
                     </div>
                     <span className="px-2 py-0.5 rounded-full bg-white/10 text-pc-muted font-mono font-bold text-[11px]">
@@ -609,6 +677,98 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
       {/* TAB 1: CUSTOMERS DIRECTORY */}
       {activeTab === 'directory' && (
         <div className="space-y-4">
+          {/* Retention Cohort Filter Tabs */}
+          <div className="flex flex-wrap items-center gap-2 p-1.5 bg-pc-card/60 border border-pc-border/80 rounded-2xl">
+            <button
+              onClick={() => {
+                setRetentionFilter('ALL');
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                retentionFilter === 'ALL'
+                  ? 'bg-white/10 text-white shadow-sm border border-white/20'
+                  : 'text-pc-muted hover:text-white hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <span>All Customers</span>
+              <span className="px-1.5 py-0.5 rounded-md bg-black/40 text-[10px] font-mono">
+                {retentionCounts.ALL}
+              </span>
+            </button>
+
+            <button
+              onClick={() => {
+                setRetentionFilter('ACTIVE');
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                retentionFilter === 'ACTIVE'
+                  ? 'bg-pc-green/20 text-pc-green border border-pc-green/40 shadow-sm'
+                  : 'text-pc-muted hover:text-pc-green hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-pc-green shadow-[0_0_6px_rgba(34,197,94,0.6)] inline-block"></span>
+              <span>Active (&lt;30d)</span>
+              <span className="px-1.5 py-0.5 rounded-md bg-black/40 text-[10px] font-mono text-pc-green">
+                {retentionCounts.ACTIVE}
+              </span>
+            </button>
+
+            <button
+              onClick={() => {
+                setRetentionFilter('AT_RISK');
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                retentionFilter === 'AT_RISK'
+                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 shadow-sm'
+                  : 'text-pc-muted hover:text-amber-400 hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)] inline-block"></span>
+              <span>At-Risk (30-60d)</span>
+              <span className="px-1.5 py-0.5 rounded-md bg-black/40 text-[10px] font-mono text-amber-400">
+                {retentionCounts.AT_RISK}
+              </span>
+            </button>
+
+            <button
+              onClick={() => {
+                setRetentionFilter('CHURNED');
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                retentionFilter === 'CHURNED'
+                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40 shadow-sm'
+                  : 'text-pc-muted hover:text-rose-400 hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.6)] inline-block"></span>
+              <span>Churned (60d+)</span>
+              <span className="px-1.5 py-0.5 rounded-md bg-black/40 text-[10px] font-mono text-rose-400">
+                {retentionCounts.CHURNED}
+              </span>
+            </button>
+
+            <button
+              onClick={() => {
+                setRetentionFilter('NEVER_ORDERED');
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                retentionFilter === 'NEVER_ORDERED'
+                  ? 'bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 shadow-sm'
+                  : 'text-pc-muted hover:text-zinc-300 hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-zinc-500 inline-block"></span>
+              <span>Never Ordered</span>
+              <span className="px-1.5 py-0.5 rounded-md bg-black/40 text-[10px] font-mono text-zinc-400">
+                {retentionCounts.NEVER_ORDERED}
+              </span>
+            </button>
+          </div>
+
           {/* Search Bar */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-pc-muted">
@@ -647,6 +807,7 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Points</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Store Credit</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Orders</th>
+                    <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Last Order</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Referral Code</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Joined</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-right">Actions</th>
@@ -681,6 +842,38 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
                       </td>
                       <td className="px-6 py-4">
                         <span className="font-mono text-white font-semibold">{customer.totalOrders}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {customer.lastOrderDate ? (
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={`inline-block w-2 h-2 rounded-full ${
+                                  customer.retentionStatus === 'ACTIVE'
+                                    ? 'bg-pc-green shadow-[0_0_8px_rgba(34,197,94,0.5)]'
+                                    : customer.retentionStatus === 'AT_RISK'
+                                    ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                                    : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]'
+                                }`}
+                              />
+                              <span className="font-mono text-xs font-semibold text-white">
+                                {customer.daysSinceLastOrder === 0
+                                  ? 'Today'
+                                  : customer.daysSinceLastOrder === 1
+                                  ? '1 day ago'
+                                  : `${customer.daysSinceLastOrder}d ago`}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-pc-muted mt-0.5">
+                              {formatDate(customer.lastOrderDate, false)}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-block w-2 h-2 rounded-full bg-zinc-600" />
+                            <span className="text-xs text-pc-muted/60 italic">Never</span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         {customer.referralCode ? (
@@ -745,7 +938,7 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
                   ))}
                   {filteredCustomers.length === 0 && (
                     <tr>
-                      <td colSpan="8" className="px-6 py-12 text-center text-pc-muted">
+                      <td colSpan="9" className="px-6 py-12 text-center text-pc-muted">
                         No customers found matching &quot;{searchQuery}&quot;.
                       </td>
                     </tr>

@@ -7,7 +7,14 @@ export default async function CustomersPage() {
   const [rawCustomers, settings] = await Promise.all([
     prisma.customer.findMany({
       orderBy: { totalOrders: 'desc' },
-      include: { user: true },
+      include: {
+        user: true,
+        orders: {
+          select: { createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1
+        }
+      },
     }),
     prisma.siteSettings.findUnique({ where: { id: 'global' } })
   ]);
@@ -15,20 +22,24 @@ export default async function CustomersPage() {
   const timezone = settings?.timezone || 'UTC';
 
   // Serialize Date objects for the client component
-  const customers = rawCustomers.map(customer => ({
-    id: customer.id,
-    name: customer.name,
-    phone: customer.phone,
-    email: customer.user?.email || null,
-    address: customer.address || '',
-    points: customer.points || 0,
-    storeCredit: customer.storeCredit || 0,
-    totalOrders: customer.totalOrders || 0,
-    referralCode: customer.referralCode || null,
-    referredByCode: customer.referredByCode || null,
-    createdAt: customer.createdAt.toISOString(),
-    updatedAt: customer.updatedAt.toISOString(),
-  }));
+  const customers = rawCustomers.map(customer => {
+    const lastOrder = customer.orders?.[0];
+    return {
+      id: customer.id,
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.user?.email || null,
+      address: customer.address || '',
+      points: customer.points || 0,
+      storeCredit: customer.storeCredit || 0,
+      totalOrders: customer.totalOrders || 0,
+      lastOrderDate: lastOrder ? lastOrder.createdAt.toISOString() : null,
+      referralCode: customer.referralCode || null,
+      referredByCode: customer.referredByCode || null,
+      createdAt: customer.createdAt.toISOString(),
+      updatedAt: customer.updatedAt.toISOString(),
+    };
+  });
 
   return (
     <div className="space-y-8 animate-fade-in pb-12">
