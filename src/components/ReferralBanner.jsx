@@ -49,7 +49,7 @@ export default function ReferralBanner() {
 
   return (
     <div className="fixed top-16 md:top-20 left-0 right-0 z-[40] bg-pc-green text-black text-center py-2 px-4 text-sm font-semibold tracking-wide shadow-lg animate-fade-in">
-      🎉 You've unlocked ${discountAmount?.toFixed(2)} off your first order from {driverName}!
+      You&apos;ve unlocked ${discountAmount?.toFixed(2)} off your first order from {driverName}!
       <button 
         onClick={() => setVisible(false)}
         className="ml-4 opacity-70 hover:opacity-100 transition-opacity"
