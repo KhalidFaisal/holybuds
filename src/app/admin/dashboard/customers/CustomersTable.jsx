@@ -51,6 +51,16 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
   // Export State
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [exportingCustomerId, setExportingCustomerId] = useState(null);
+  const [smsCopied, setSmsCopied] = useState(false);
+
+  const handleCopyWinBackSMS = () => {
+    const text = "Hey! We miss you at Holy Buds. Enjoy 10% off your return order when you shop with us today. Auto-applied at checkout or use code BACK10: https://holybuds.co/menu?promo=BACK10";
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setSmsCopied(true);
+      setTimeout(() => setSmsCopied(false), 2500);
+    }
+  };
   const customersWithEmail = useMemo(() => {
     return customers.filter(c => c.email && c.email.trim().length > 0);
   }, [customers]);
@@ -789,6 +799,51 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
             </button>
           </div>
 
+          {/* Win-Back Campaign Action Card */}
+          {(retentionFilter === 'AT_RISK' || retentionFilter === 'CHURNED') && (
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-pc-card to-emerald-500/15 border border-amber-500/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-black border border-amber-600">
+                    Win-Back Active
+                  </span>
+                  <h3 className="font-extrabold text-white text-sm sm:text-base">
+                    10% Welcome Back Campaign
+                  </h3>
+                </div>
+                <p className="text-xs text-pc-muted">
+                  These {retentionFilter === 'AT_RISK' ? 'At-Risk (30–60d)' : 'Churned (60d+)'} customers haven&apos;t ordered recently. They automatically receive a <strong className="text-pc-green">flat 10% off</strong> upon returning.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={handleCopyWinBackSMS}
+                  className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-pc-dark border border-pc-border hover:border-pc-green/50 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                  title="Copy ready-to-send SMS text to clipboard"
+                >
+                  <svg className="w-3.5 h-3.5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  </svg>
+                  <span>{smsCopied ? 'Copied to Clipboard!' : 'Copy SMS Template'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleExportCSV('current_view')}
+                  className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-black font-extrabold text-xs shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                  title="Export phone numbers of this cohort for SMS marketing"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>Export Audience ({filteredCustomers.length})</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Search Bar */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-pc-muted">
@@ -914,6 +969,20 @@ export default function CustomersTable({ initialCustomers, timezone = 'UTC' }) {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end items-center gap-1.5">
+                          {customer.phone && (customer.retentionStatus === 'AT_RISK' || customer.retentionStatus === 'CHURNED') && (
+                            <a
+                              href={`sms:${customer.phone.replace(/[^0-9+]/g, '')}?&body=${encodeURIComponent(
+                                `Hey ${customer.name || 'there'}! We miss you at Holy Buds. Enjoy 10% off your return order when you shop with us today with code BACK10: https://holybuds.co/menu?promo=BACK10`
+                              )}`}
+                              className="p-2 rounded-lg bg-emerald-500/10 text-pc-green hover:bg-pc-green hover:text-black transition-all"
+                              title={`Send 10% Win-Back SMS to ${customer.name || customer.phone}`}
+                              aria-label="Send Win-Back SMS"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                              </svg>
+                            </a>
+                          )}
                           <button
                             onClick={() => openHistoryModal(customer)}
                             className="p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all"

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getCustomerRetentionStatus, WINBACK_DISCOUNT_PERCENT, WINBACK_DISCOUNT_NAME, WINBACK_PROMO_CODE } from '@/lib/retention';
 
 export async function GET(request) {
   try {
@@ -46,6 +47,21 @@ export async function GET(request) {
       });
     }
 
+    // Check latest order for win-back 10% eligibility
+    const latestOrder = await prisma.order.findFirst({
+      where: {
+        OR: [
+          { customerId: customer.id },
+          { customerPhone: phone }
+        ],
+        status: { not: 'CANCELLED' }
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true }
+    });
+
+    const retention = getCustomerRetentionStatus(latestOrder?.createdAt, customer.totalOrders);
+
     return NextResponse.json({
       success: true,
       isNewCustomer: false,
@@ -55,6 +71,13 @@ export async function GET(request) {
         totalOrders: customer.totalOrders,
         referralCode: referralCode,
         address: customer.address
+      },
+      winBack: {
+        eligible: retention.isWinBackEligible,
+        discountPercent: WINBACK_DISCOUNT_PERCENT,
+        discountName: WINBACK_DISCOUNT_NAME,
+        promoCode: WINBACK_PROMO_CODE,
+        daysSinceLastOrder: retention.daysSinceLastOrder
       },
       settings: {
         pointsPerDollar,

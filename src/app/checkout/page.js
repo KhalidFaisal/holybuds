@@ -45,6 +45,15 @@ function CheckoutContent() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [referralData, setReferralData] = useState(null);
   const [useStoreCredit, setUseStoreCredit] = useState(false);
+  const [winBackData, setWinBackData] = useState(null);
+  const [promoCodeInput, setPromoCodeInput] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const promo = params.get('promo') || params.get('code');
+      return promo ? promo.toUpperCase().trim() : '';
+    }
+    return '';
+  });
 
   useEffect(() => {
     if (typeof window !== 'undefined' && localStorage.getItem('admin_token')) {
@@ -202,6 +211,7 @@ function CheckoutContent() {
             }
             setCustomerProfile(data.customer);
             setIsNewCustomer(data.isNewCustomer || false);
+            setWinBackData(data.winBack || null);
 
             if (data.customer) {
               setForm(prev => {
@@ -233,12 +243,14 @@ function CheckoutContent() {
           } else {
             setCustomerProfile(null);
             setIsNewCustomer(false);
+            setWinBackData(null);
             setSelectedReward(null);
             setShowFullLoyaltyPanel(false);
           }
         } catch (e) {
           setCustomerProfile(null);
           setIsNewCustomer(false);
+          setWinBackData(null);
           setSelectedReward(null);
           setShowFullLoyaltyPanel(false);
         } finally {
@@ -311,8 +323,17 @@ function CheckoutContent() {
   const meetsMinSpend = total >= minSpendRequired;
   const appliedReferralDiscount = isNewCustomer && referralData && meetsMinSpend ? referralData.discountAmount : 0;
   
+  // Win-Back 10% discount evaluation
+  const isWinBackActive = Boolean(winBackData?.eligible);
+  const winBackDiscount = isWinBackActive ? Number((subtotal * 0.10).toFixed(2)) : 0;
+  const additionalWinBackDiscount = isWinBackActive ? Math.max(0, winBackDiscount - discountAmount) : 0;
+  const effectiveGeneralDiscount = Math.max(discountAmount, winBackDiscount);
+  const effectiveDiscountName = isWinBackActive && winBackDiscount >= discountAmount
+    ? (winBackData?.discountName || 'Welcome Back (10% Off)')
+    : discountName;
+
   const isDelivery = form.deliveryMethod === 'DELIVERY';
-  let effectiveTotal = total - rewardDiscount - appliedReferralDiscount;
+  let effectiveTotal = total - rewardDiscount - appliedReferralDiscount - additionalWinBackDiscount;
   if (effectiveTotal < 0) effectiveTotal = 0;
   
   const deliveryFee = isDelivery && effectiveTotal < 100 ? 10 : 0;
@@ -645,6 +666,19 @@ function CheckoutContent() {
                     type="tel" 
                   />
                 </div>
+
+                {/* Promo Code Info for Inactive Customers */}
+                {promoCodeInput === 'BACK10' && !customerProfile && (
+                  <div className="mt-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2 animate-fade-in">
+                    <span className="font-bold shrink-0">Promo &quot;BACK10&quot;:</span>
+                    <span>Enter your phone number above to verify and auto-apply your 10% Welcome Back discount!</span>
+                  </div>
+                )}
+                {promoCodeInput === 'BACK10' && customerProfile && !isWinBackActive && (
+                  <div className="mt-2 p-3 rounded-xl bg-white/5 border border-pc-border text-pc-muted text-xs animate-fade-in">
+                    The 10% Welcome Back offer is reserved for customers returning after 30+ days. You are an active regular customer!
+                  </div>
+                )}
                 
                 {/* NEW CUSTOMER REFERRAL INPUT */}
                 {isNewCustomer && !loyaltyLoading && (
@@ -678,6 +712,27 @@ function CheckoutContent() {
                 )}
                 {customerProfile && !loyaltyLoading && !isNewCustomer && (
                   <div className="bg-pc-green/10 border border-pc-green/30 rounded-xl p-4 mt-4 animate-fade-in-up">
+                    {/* Welcome Back 10% Discount Banner */}
+                    {isWinBackActive && (
+                      <div className="mb-3.5 p-3.5 rounded-xl bg-gradient-to-r from-emerald-500/20 via-white/5 to-amber-500/15 border-2 border-pc-green text-left shadow-sm animate-scale-in">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-pc-green text-black">
+                              10% Off Unlocked
+                            </span>
+                            <span className="text-xs font-bold text-pc-green">Welcome Back Special</span>
+                          </div>
+                          {winBackData?.daysSinceLastOrder !== undefined && winBackData?.daysSinceLastOrder !== null && (
+                            <span className="text-[11px] font-mono font-bold text-pc-muted">
+                              Last ordered {winBackData.daysSinceLastOrder}d ago
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-pc-muted mt-1">
+                          We missed you! A flat <strong className="text-pc-green font-bold">10% Welcome Back discount</strong> has been automatically applied to your cart today.
+                        </p>
+                      </div>
+                    )}
                     {/* Admin Preview Notice */}
                     {isAdmin && rewardsMaintenanceMode && (
                       <div className="mb-3.5 px-3 py-2 rounded-lg bg-amber-500 text-black text-xs font-black flex items-center justify-between border border-amber-600 shadow-xs">
@@ -980,10 +1035,10 @@ function CheckoutContent() {
                   <span>Subtotal</span>
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-pc-green">
-                    <span>Discount: {discountName}</span>
-                    <span>-${discountAmount.toFixed(2)}</span>
+                {effectiveGeneralDiscount > 0 && (
+                  <div className="flex justify-between text-pc-green font-semibold">
+                    <span>Discount: {effectiveDiscountName}</span>
+                    <span>-${effectiveGeneralDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 {rewardDiscount > 0 && (

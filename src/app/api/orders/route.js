@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { auth } from '@/auth';
 import webpush from 'web-push';
+import { getCustomerRetentionStatus, WINBACK_DISCOUNT_PERCENT, WINBACK_DISCOUNT_NAME } from '@/lib/retention';
 
 function generateOrderNumber() {
   const prefix = 'ELV';
@@ -308,6 +309,43 @@ export async function POST(request) {
           if (loyaltyEnabled) {
              pointsEarned = Math.floor(effectiveTotal) * pointsPerDollar;
              if (pointsEarned < 0) pointsEarned = 0;
+          }
+        }
+      }
+
+      // Check if returning customer qualifies for Win-Back 10% discount (>= 30 days inactive)
+      if (customer.totalOrders > 0) {
+        const previousLatestOrder = await tx.order.findFirst({
+          where: {
+            OR: [
+              { customerId: customer.id },
+              { customerPhone: sanitizedPhone }
+            ],
+            status: { not: 'CANCELLED' }
+          },
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true }
+        });
+
+        const retention = getCustomerRetentionStatus(previousLatestOrder?.createdAt, customer.totalOrders);
+        if (retention.isWinBackEligible) {
+          const winBackDiscount = Number((subtotal * (WINBACK_DISCOUNT_PERCENT / 100)).toFixed(2));
+          if (winBackDiscount > finalDiscountAmount) {
+            finalDiscountAmount = winBackDiscount;
+            finalDiscountName = WINBACK_DISCOUNT_NAME;
+
+            if (finalDiscountAmount > subtotal) {
+              finalDiscountAmount = subtotal;
+            }
+
+            effectiveTotal = subtotal - finalDiscountAmount - rewardDiscountAmount;
+            if (effectiveTotal < 0) effectiveTotal = 0;
+            total = effectiveTotal + deliveryFee;
+
+            if (loyaltyEnabled) {
+              pointsEarned = Math.floor(effectiveTotal) * pointsPerDollar;
+              if (pointsEarned < 0) pointsEarned = 0;
+            }
           }
         }
       }
