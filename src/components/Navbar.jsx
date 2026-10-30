@@ -198,6 +198,7 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-4 xl:gap-6 2xl:gap-8 absolute left-[44%] -translate-x-1/2">
             <Link href="/" className="text-sm font-medium text-pc-muted hover:text-white transition-colors">Home</Link>
             <Link href="/menu" className="text-sm font-medium text-pc-muted hover:text-white transition-colors">Menu</Link>
+            <Link href="/blog" className="text-sm font-medium text-pc-muted hover:text-white transition-colors">Blog</Link>
             {categories.map(cat => (
               <Link key={cat.id} href={`/menu?category=${cat.slug}`} className="text-sm font-medium text-pc-muted hover:text-white transition-colors">
                 {cat.name}
@@ -348,13 +349,13 @@ export default function Navbar() {
             </div>
 
             {/* Quick Navigation Pills */}
-            <div className="grid grid-cols-2 gap-2 mb-4">
+            <div className="grid grid-cols-3 gap-2 mb-4">
               <Link 
                 href="/" 
                 onClick={() => setMobileOpen(false)} 
-                className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-white/5 hover:bg-pc-green/10 border border-pc-border/50 hover:border-pc-green/40 text-sm font-semibold text-white transition-all active:scale-[0.98]"
+                className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-white/5 hover:bg-pc-green/10 border border-pc-border/50 hover:border-pc-green/40 text-xs font-semibold text-white transition-all active:scale-[0.98]"
               >
-                <svg className="w-4 h-4 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-3.5 h-3.5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                 </svg>
                 Home
@@ -362,12 +363,22 @@ export default function Navbar() {
               <Link 
                 href="/menu" 
                 onClick={() => setMobileOpen(false)} 
-                className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-pc-green/15 hover:bg-pc-green/25 border border-pc-green/40 text-sm font-semibold text-pc-green transition-all active:scale-[0.98]"
+                className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-pc-green/15 hover:bg-pc-green/25 border border-pc-green/40 text-xs font-semibold text-pc-green transition-all active:scale-[0.98]"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                 </svg>
-                All Menu
+                Menu
+              </Link>
+              <Link 
+                href="/blog" 
+                onClick={() => setMobileOpen(false)} 
+                className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-white/5 hover:bg-white/10 border border-pc-border/50 hover:border-pc-green/40 text-xs font-semibold text-white transition-all active:scale-[0.98]"
+              >
+                <svg className="w-3.5 h-3.5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
+                </svg>
+                Blog
               </Link>
             </div>
 

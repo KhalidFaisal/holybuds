@@ -36,6 +36,7 @@ export async function GET(request) {
       aiModel: settings.aiModel || "openai/gpt-4o-mini",
       openRouterApiKey: settings.openRouterApiKey ? '••••••••••••••••' : '', // Masked in response
       groqApiKey: settings.groqApiKey ? '••••••••••••••••' : '', // Masked in response
+      neodymiumApiKey: settings.neodymiumApiKey ? '••••••••••••••••' : '', // Masked in response
       groqEnabled: settings.groqEnabled ?? true,
       openRouterEnabled: settings.openRouterEnabled ?? true,
       enabledGroqModels: settings.enabledGroqModels || "[\"openai/gpt-oss-120b\", \"qwen/qwen3.8-27b\", \"openai/gpt-oss-20b\"]",
@@ -115,6 +116,10 @@ export async function POST(request) {
     if (data.openRouterApiKey !== undefined) {
       // Allow clearing the key if empty string is passed
       updateData.openRouterApiKey = data.openRouterApiKey === '' ? null : data.openRouterApiKey;
+    }
+
+    if (data.neodymiumApiKey !== undefined) {
+      updateData.neodymiumApiKey = data.neodymiumApiKey === '' ? null : data.neodymiumApiKey;
     }
 
     if (data.groqApiKey !== undefined) {

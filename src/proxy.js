@@ -16,6 +16,7 @@ export function proxy(request) {
     pathname.startsWith('/admin') ||
     pathname.startsWith('/driver') ||
     pathname.startsWith('/password') ||
+    pathname.startsWith('/blog') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/sitemap.xml') ||
     pathname.startsWith('/robots.txt') ||

@@ -279,6 +279,7 @@ function Footer({ categories }) {
             <h4 className="font-semibold text-white mb-4">Quick Links</h4>
             <div className={`grid ${categories && categories.length >= 5 ? 'grid-cols-2' : 'grid-cols-1'} gap-x-4 gap-y-2`}>
               <Link href="/menu" className="block text-pc-muted text-sm hover:text-white transition-colors">Full Menu</Link>
+              <Link href="/blog" className="block text-pc-muted text-sm hover:text-white transition-colors">Blog & Guides</Link>
               <Link href="/faq" className="block text-pc-muted text-sm hover:text-white transition-colors">FAQ</Link>
               {categories?.map(cat => (
                 <Link key={cat.id} href={`/menu?category=${cat.slug}`} className="block text-pc-muted text-sm hover:text-white transition-colors">
@@ -362,7 +363,7 @@ export default function HomeClient({ customer, deals, staffPicks, newArrivals, b
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 md:mt-12">
             <div className="glass-card p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 glow-emerald">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Welcome back{customer.name ? `, ${customer.name.split(' ')[0]}` : ''} 👋</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Welcome back{customer.name ? `, ${customer.name.split(' ')[0]}` : ''}</h2>
                 <p className="text-pc-muted text-sm sm:text-base">
                   You have <span className="text-pc-gold font-bold">{customer.points} points</span> available
                 </p>
