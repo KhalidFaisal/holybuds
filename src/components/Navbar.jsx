@@ -181,7 +181,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 md:h-20 relative">
           
           {/* Logo (hidden on mobile if search is open) */}
-          <div className={`${mobileSearchOpen ? 'hidden sm:flex' : 'flex'} items-center gap-2 sm:gap-3`}>
+          <div className={`${mobileSearchOpen ? 'hidden sm:flex' : 'flex'} items-center`}>
             <Link href="/" className="flex items-center gap-2 group">
               <Image 
                 src="/logo.png" 
@@ -192,15 +192,10 @@ export default function Navbar() {
                 className="h-10 w-auto transition-transform duration-300 group-hover:scale-105" 
               />
             </Link>
-
-            {/* Subtle Pulsing Live Status Badge (Desktop) */}
-            <div className="hidden lg:inline-flex items-center">
-              <StoreHoursBadge status={storeStatus} />
-            </div>
           </div>
 
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
+          <div className="hidden lg:flex items-center gap-5 xl:gap-8 absolute left-1/2 -translate-x-1/2">
             <Link href="/" className="text-sm font-medium text-pc-muted hover:text-white transition-colors">Home</Link>
             <Link href="/menu" className="text-sm font-medium text-pc-muted hover:text-white transition-colors">Menu</Link>
             {categories.map(cat => (
@@ -213,10 +208,10 @@ export default function Navbar() {
           {/* Right side icons & Desktop Search */}
           <div className="flex items-center gap-1 sm:gap-3 ml-auto" ref={searchContainerRef}>
             
-            {/* Subtle Pulsing Status Badge on Mobile/Tablet */}
+            {/* Subtle Pulsing Live Status Badge */}
             {!mobileSearchOpen && (
-              <div className="lg:hidden flex items-center mr-0.5">
-                <StoreHoursBadge status={storeStatus} isMobileCompact />
+              <div className="flex items-center mr-0.5 sm:mr-1">
+                <StoreHoursBadge status={storeStatus} />
               </div>
             )}
 
@@ -314,7 +309,7 @@ export default function Navbar() {
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 text-pc-muted hover:text-white transition-colors"
+              className="lg:hidden p-2 text-pc-muted hover:text-white transition-colors"
               id="mobile-menu-toggle"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -330,7 +325,7 @@ export default function Navbar() {
 
         {/* Mobile navigation menu */}
         {mobileOpen && (
-          <div className="md:hidden pb-6 pt-3 animate-fade-in border-t border-pc-border/40 mt-2 max-h-[calc(100vh-5.5rem)] overflow-y-auto">
+          <div className="lg:hidden pb-6 pt-3 animate-fade-in border-t border-pc-border/40 mt-2 max-h-[calc(100vh-5.5rem)] overflow-y-auto">
             {/* Mobile Store Hours Card */}
             <div className="p-3 mb-3.5 rounded-xl bg-pc-card border border-pc-green/30 flex items-center justify-between shadow-xs">
               <div className="flex items-center gap-2.5">

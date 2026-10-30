@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
-export default function StoreHoursBadge({ status, isMobileCompact = false }) {
+export default function StoreHoursBadge({ status }) {
   const [showPopover, setShowPopover] = useState(false);
   const popoverRef = useRef(null);
 
@@ -25,7 +25,7 @@ export default function StoreHoursBadge({ status, isMobileCompact = false }) {
         type="button"
         onClick={() => setShowPopover(!showPopover)}
         onMouseEnter={() => setShowPopover(true)}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-pc-card/90 border border-pc-green/40 hover:border-pc-green text-xs font-semibold text-white transition-all shadow-xs group cursor-pointer"
+        className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-pc-card/90 border border-pc-green/40 hover:border-pc-green text-xs font-semibold text-white transition-all shadow-xs group cursor-pointer"
         title="Holy Buds Delivery Hours"
         aria-label="Holy Buds Delivery Hours"
       >
@@ -33,18 +33,16 @@ export default function StoreHoursBadge({ status, isMobileCompact = false }) {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pc-green opacity-75"></span>
           <span className="relative inline-flex rounded-full h-2 w-2 bg-pc-green"></span>
         </span>
-        <span className="text-pc-green font-bold text-[11px] sm:text-xs">
-          {isMobileCompact ? (
-            <span>{status.isWeekend ? 'Till 12 AM' : 'Till 10 PM'}</span>
-          ) : (
-            <>
-              <span className="hidden xl:inline">{status.isWeekend ? 'Open Late Tonight • Till 12 AM' : 'Open Today • Till 10 PM'}</span>
-              <span className="xl:hidden">{status.isWeekend ? 'Open till 12 AM' : 'Open till 10 PM'}</span>
-            </>
-          )}
+        <span className="text-pc-green font-bold text-[11px] sm:text-xs whitespace-nowrap">
+          <span className="hidden sm:inline">
+            {status.isWeekend ? 'Open till 12 AM' : 'Open till 10 PM'}
+          </span>
+          <span className="sm:hidden">
+            {status.isWeekend ? 'Till 12 AM' : 'Till 10 PM'}
+          </span>
         </span>
         <svg
-          className="w-3 h-3 text-pc-muted group-hover:text-white transition-transform duration-200"
+          className="w-3 h-3 text-pc-muted group-hover:text-white transition-transform duration-200 shrink-0"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -54,11 +52,11 @@ export default function StoreHoursBadge({ status, isMobileCompact = false }) {
         </svg>
       </button>
 
-      {/* Schedule Popover */}
+      {/* Schedule Popover - always aligned to right to prevent any clipping */}
       {showPopover && (
         <div
           onMouseLeave={() => setShowPopover(false)}
-          className={`absolute ${isMobileCompact ? 'right-0' : 'left-0'} mt-2 w-64 bg-pc-dark border border-pc-border rounded-xl shadow-2xl p-3.5 z-50 animate-scale-in text-left text-xs`}
+          className="absolute right-0 mt-2 w-64 bg-pc-dark border border-pc-border rounded-xl shadow-2xl p-3.5 z-50 animate-scale-in text-left text-xs"
         >
           <div className="flex items-center justify-between border-b border-pc-border/60 pb-2 mb-2.5">
             <div className="flex items-center gap-1.5 font-bold text-white">
@@ -107,4 +105,3 @@ export default function StoreHoursBadge({ status, isMobileCompact = false }) {
     </div>
   );
 }
-
