@@ -34,12 +34,7 @@ export default function StoreHoursBadge({ status }) {
           <span className="relative inline-flex rounded-full h-2 w-2 bg-pc-green"></span>
         </span>
         <span className="text-pc-green font-bold text-[11px] sm:text-xs whitespace-nowrap">
-          <span className="hidden sm:inline">
-            {status.isWeekend ? 'Open till 12 AM' : 'Open till 10 PM'}
-          </span>
-          <span className="sm:hidden">
-            {status.isWeekend ? 'Till 12 AM' : 'Till 10 PM'}
-          </span>
+          {status.isWeekend ? 'Open till 12 AM' : 'Open till 10 PM'}
         </span>
         <svg
           className="w-3 h-3 text-pc-muted group-hover:text-white transition-transform duration-200 shrink-0"

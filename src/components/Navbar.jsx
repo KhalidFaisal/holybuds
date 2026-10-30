@@ -195,7 +195,7 @@ export default function Navbar() {
           </div>
 
           {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-5 xl:gap-8 absolute left-1/2 -translate-x-1/2">
+          <div className="hidden lg:flex items-center gap-4 xl:gap-6 2xl:gap-8 absolute left-[44%] -translate-x-1/2">
             <Link href="/" className="text-sm font-medium text-pc-muted hover:text-white transition-colors">Home</Link>
             <Link href="/menu" className="text-sm font-medium text-pc-muted hover:text-white transition-colors">Menu</Link>
             {categories.map(cat => (
