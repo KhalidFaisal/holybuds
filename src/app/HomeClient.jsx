@@ -92,6 +92,16 @@ function HeroSection() {
           />
         </div>
 
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-pc-card/80 border border-pc-green/40 mb-6 shadow-sm">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pc-green opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-pc-green"></span>
+          </span>
+          <span className="text-xs font-bold text-white">
+            Weekend Hours: <span className="text-pc-green">Fri–Sat 10 AM – 12 AM (Open Late)</span> | Sun–Thu 10 AM – 10 PM
+          </span>
+        </div>
+
         <p className="text-xl md:text-2xl text-pc-green font-bold tracking-widest uppercase mb-8 text-gradient">
           PREMIUM CANNABIS DISPENSARY
         </p>

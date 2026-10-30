@@ -5,6 +5,9 @@ import Image from 'next/image';
 import { useCart } from './CartProvider';
 import { useState, useEffect, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
+import StoreHoursBanner from './StoreHoursBanner';
+import StoreHoursBadge from './StoreHoursBadge';
+import { getStoreHoursStatus } from '@/lib/operatingHours';
 
 function SearchDropdown({ query, onSelect }) {
   const [results, setResults] = useState([]);
@@ -140,6 +143,14 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const accountRef = useRef(null);
+  const [storeStatus, setStoreStatus] = useState(() => getStoreHoursStatus());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setStoreStatus(getStoreHoursStatus());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
   
   useEffect(() => {
     fetch('/api/categories')
@@ -167,11 +178,12 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-pc-black/80 backdrop-blur-xl border-b border-pc-border/50">
+      <StoreHoursBanner status={storeStatus} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20 relative">
           
           {/* Logo (hidden on mobile if search is open) */}
-          <div className={`${mobileSearchOpen ? 'hidden sm:flex' : 'flex'} items-center`}>
+          <div className={`${mobileSearchOpen ? 'hidden sm:flex' : 'flex'} items-center gap-2 sm:gap-3`}>
             <Link href="/" className="flex items-center gap-2 group">
               <Image 
                 src="/logo.png" 
@@ -182,6 +194,11 @@ export default function Navbar() {
                 className="h-10 w-auto transition-transform duration-300 group-hover:scale-105" 
               />
             </Link>
+
+            {/* Subtle Pulsing Live Status Badge (Desktop) */}
+            <div className="hidden lg:inline-flex items-center">
+              <StoreHoursBadge status={storeStatus} />
+            </div>
           </div>
 
           {/* Desktop nav */}
@@ -196,8 +213,15 @@ export default function Navbar() {
           </div>
 
           {/* Right side icons & Desktop Search */}
-          <div className="flex items-center gap-1 sm:gap-4 ml-auto" ref={searchContainerRef}>
+          <div className="flex items-center gap-1 sm:gap-3 ml-auto" ref={searchContainerRef}>
             
+            {/* Subtle Pulsing Status Badge on Mobile/Tablet */}
+            {!mobileSearchOpen && (
+              <div className="lg:hidden flex items-center mr-0.5">
+                <StoreHoursBadge status={storeStatus} isMobileCompact />
+              </div>
+            )}
+
             {/* Search */}
             {mobileSearchOpen ? (
               <form 
@@ -309,6 +333,27 @@ export default function Navbar() {
         {/* Mobile navigation menu */}
         {mobileOpen && (
           <div className="md:hidden pb-6 pt-3 animate-fade-in border-t border-pc-border/40 mt-2 max-h-[calc(100vh-5.5rem)] overflow-y-auto">
+            {/* Mobile Store Hours Card */}
+            <div className="p-3 mb-3.5 rounded-xl bg-pc-card border border-pc-green/30 flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pc-green opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-pc-green"></span>
+                </span>
+                <div>
+                  <p className="text-xs font-bold text-white">
+                    {storeStatus?.isWeekend ? 'Open Late Tonight till 12 AM' : 'Open Today till 10 PM'}
+                  </p>
+                  <p className="text-[10px] text-pc-muted">
+                    Sun–Thu: 10 AM – 10 PM | Fri–Sat: 10 AM – 12 AM
+                  </p>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-pc-green text-black shrink-0">
+                {storeStatus?.isOpen ? 'Open Now' : 'Closed'}
+              </span>
+            </div>
+
             {/* Quick Navigation Pills */}
             <div className="grid grid-cols-2 gap-2 mb-4">
               <Link 

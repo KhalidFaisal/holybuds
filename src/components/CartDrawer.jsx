@@ -254,6 +254,10 @@ export default function CartDrawer() {
                 <span>${total.toFixed(2)}</span>
               </div>
             </div>
+            <div className="py-2 px-3 rounded-xl bg-white/5 border border-pc-border/60 flex items-center justify-between text-xs">
+              <span className="text-pc-muted font-medium">Delivery Hours:</span>
+              <span className="text-pc-green font-bold">Fri–Sat till 12 AM | Sun–Thu till 10 PM</span>
+            </div>
             <Link
               href="/checkout"
               onClick={() => setIsOpen(false)}
