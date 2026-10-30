@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
@@ -7,16 +8,20 @@ const JWT_SECRET = process.env.JWT_SECRET || 'pc-super-secret-key-change-in-prod
 
 export async function GET(request) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.split(' ')[1];
-    try {
-      jwt.verify(token, JWT_SECRET);
-    } catch (e) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    const isAuth = requireAdmin(request);
+    if (!isAuth) {
+      const authHeader = request.headers.get('authorization');
+      let localValid = false;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        try {
+          jwt.verify(token, JWT_SECRET);
+          localValid = true;
+        } catch {}
+      }
+      if (!localValid) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
     }
 
     let settings = await prisma.siteSettings.findUnique({
@@ -65,16 +70,20 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     // Verify admin
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.split(' ')[1];
-    try {
-      jwt.verify(token, JWT_SECRET);
-    } catch (e) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    const isAuth = requireAdmin(request);
+    if (!isAuth) {
+      const authHeader = request.headers.get('authorization');
+      let localValid = false;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        try {
+          jwt.verify(token, JWT_SECRET);
+          localValid = true;
+        } catch {}
+      }
+      if (!localValid) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
     }
 
     const data = await request.json();
@@ -213,4 +222,8 @@ export async function POST(request) {
     console.error('Settings error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
+}
+
+export async function PUT(request) {
+  return POST(request);
 }

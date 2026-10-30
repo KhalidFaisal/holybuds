@@ -1,27 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getAllBlogPosts, deleteBlogPost, togglePublishBlogPost } from '@/lib/blogStorage';
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
+import { requireAdmin } from '@/lib/auth';
 
 function checkAdminAuth(request) {
-  const authHeader = request.headers.get('authorization');
-  let token = null;
-
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.split(' ')[1];
-  } else {
-    token = request.cookies.get('admin_token')?.value;
-  }
-
-  if (!token) return false;
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    return decoded && (decoded.role === 'admin' || decoded.admin);
-  } catch {
-    return false;
-  }
+  return requireAdmin(request);
 }
 
 // Public GET: list blog posts

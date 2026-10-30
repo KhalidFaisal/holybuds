@@ -54,11 +54,14 @@ export default function BlogsManagementClient() {
       }
 
       try {
-        const token = localStorage.getItem('admin_token');
+        const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
+        const headers = {};
+        if (token && token !== 'null' && token !== 'undefined') {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
         const res = await fetch('/api/admin/settings', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers,
+          credentials: 'include'
         });
         if (res.ok && active) {
           const data = await res.json();
@@ -77,6 +80,18 @@ export default function BlogsManagementClient() {
     };
   }, []);
 
+  // Helper to build headers with token
+  const getAuthHeaders = () => {
+    const headers = { 'Content-Type': 'application/json' };
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('admin_token');
+      if (token && token !== 'null' && token !== 'undefined') {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+    return headers;
+  };
+
   // Save Neodymium API Key
   const handleSaveApiKey = async (e) => {
     e.preventDefault();
@@ -85,29 +100,27 @@ export default function BlogsManagementClient() {
     setSavingKey(true);
     setKeyMsg('');
     try {
-      const token = localStorage.getItem('admin_token');
       const res = await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include',
         body: JSON.stringify({
           neodymiumApiKey: apiKeyInput.trim()
         })
       });
 
+      const d = await res.json().catch(() => ({}));
       if (res.ok) {
         setIsKeyConfigured(true);
         setApiKeyInput('');
         setKeyMsg('Neodymium API Key saved successfully');
         setTimeout(() => setKeyMsg(''), 4000);
       } else {
-        const d = await res.json();
-        setKeyMsg(d.error || 'Failed to save API key');
+        setKeyMsg(d.error || `Failed to save API key (Status: ${res.status})`);
       }
     } catch (err) {
-      setKeyMsg('Network error saving API key');
+      console.error('Error saving API key:', err);
+      setKeyMsg(err.message || 'Error saving API key');
     } finally {
       setSavingKey(false);
     }
@@ -121,15 +134,12 @@ export default function BlogsManagementClient() {
     setGenerationStep('Connecting to Neodymium AI Proxy...');
 
     try {
-      const token = localStorage.getItem('admin_token');
       setGenerationStep('Generating in-depth cannabis educational content...');
 
       const res = await fetch('/api/blog/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers: getAuthHeaders(),
+        credentials: 'include',
         body: JSON.stringify({
           topic: topic.trim() || undefined,
           category: category || undefined
@@ -156,13 +166,10 @@ export default function BlogsManagementClient() {
   // Toggle publish
   const handleTogglePublish = async (id, currentStatus) => {
     try {
-      const token = localStorage.getItem('admin_token');
       const res = await fetch('/api/blog', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers: getAuthHeaders(),
+        credentials: 'include',
         body: JSON.stringify({
           id,
           published: !currentStatus
@@ -184,12 +191,10 @@ export default function BlogsManagementClient() {
     if (!window.confirm(`Are you sure you want to delete "${title}"?`)) return;
 
     try {
-      const token = localStorage.getItem('admin_token');
       const res = await fetch(`/api/blog?id=${id}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: getAuthHeaders(),
+        credentials: 'include'
       });
 
       if (res.ok) {
