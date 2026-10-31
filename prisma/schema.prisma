@@ -129,6 +129,9 @@ model SiteSettings {
   wholesalePassword        String  @default("Onlyholy")
   rewardsMaintenanceMode   Boolean @default(true)
   neodymiumApiKey          String?
+  autoBlogEnabled          Boolean   @default(false)
+  autoBlogIntervalHours    Int       @default(24)
+  autoBlogLastRun          DateTime?
 }
 
 model Category {

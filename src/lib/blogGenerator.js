@@ -1,26 +1,71 @@
 import prisma from '@/lib/prisma';
 
 export const TRENDING_TOPICS = [
+  // Category: Delivery & Lifestyle
   {
     topic: 'Long Island Same-Day Weed Delivery: How Holy Buds Delivers Top-Shelf Strains to Your Door',
     category: 'Delivery & Lifestyle',
     defaultImage: 'https://images.unsplash.com/photo-1512428559087-560fa5ceab42?auto=format&fit=crop&w=1200&q=80'
   },
   {
+    topic: 'Discreet Cannabis Etiquette: How to Store and Enjoy Weed in Suburban Long Island',
+    category: 'Delivery & Lifestyle',
+    defaultImage: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Weekend Wind-Down on Long Island: Late Night Delivery Hours Until Midnight',
+    category: 'Delivery & Lifestyle',
+    defaultImage: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Beach Vibes and Boardwalks: Safe and Responsible Summer Cannabis Use in NY',
+    category: 'Delivery & Lifestyle',
+    defaultImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Hosting a Cannabis Dinner Party: Pairing Strains with Gourmet Courses',
+    category: 'Delivery & Lifestyle',
+    defaultImage: 'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=1200&q=80'
+  },
+
+  // Category: Cannabis 101
+  {
     topic: 'Indica vs. Sativa vs. Hybrid: The Real Difference and How Cannabinoids Shape Your Vibe',
     category: 'Cannabis 101',
     defaultImage: 'https://images.unsplash.com/photo-1603909223429-69bb7101f420?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
-    topic: 'Cannabis Edibles Dosing Guide: From 5mg Microdose to 50mg Connoisseur Level',
-    category: 'Edibles & Dosing',
-    defaultImage: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1200&q=80'
   },
   {
     topic: 'Terpenes Explained: Why Myrcene, Limonene, and Caryophyllene Matter More Than THC',
     category: 'Cannabis 101',
     defaultImage: 'https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=1200&q=80'
   },
+  {
+    topic: 'How to Read a Cannabis Certificate of Analysis (COA): Lab Testing 101',
+    category: 'Cannabis 101',
+    defaultImage: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'The Entourage Effect: How Cannabinoids, Terpenes, and Flavonoids Work in Harmony',
+    category: 'Cannabis 101',
+    defaultImage: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Anatomy of the Cannabis Trichome: Where Flavor and Potency Are Born',
+    category: 'Cannabis 101',
+    defaultImage: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Beginner Guide to Cannabis Pre-Rolls: Infused vs Standard Joints Explained',
+    category: 'Cannabis 101',
+    defaultImage: 'https://images.unsplash.com/photo-1536939459926-301728717817?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Grinders, Papers, and Glass: The Essential Gear Every Connoisseur Needs',
+    category: 'Cannabis 101',
+    defaultImage: 'https://images.unsplash.com/photo-1528740561666-dc2479dc08ab?auto=format&fit=crop&w=1200&q=80'
+  },
+
+  // Category: Strain Guides
   {
     topic: 'THCA Flower Demystified: Potency, Legality, and How It Transforms When Heated',
     category: 'Strain Guides',
@@ -32,14 +77,83 @@ export const TRENDING_TOPICS = [
     defaultImage: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=1200&q=80'
   },
   {
+    topic: 'Gelato, Runtz, and Cookies: Exploring the Sweet Terpene Revolution',
+    category: 'Strain Guides',
+    defaultImage: 'https://images.unsplash.com/photo-1603909223429-69bb7101f420?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Sour Diesel Heritage: The Legendary East Coast Strain That Defined an Era',
+    category: 'Strain Guides',
+    defaultImage: 'https://images.unsplash.com/photo-1568644396922-5c3bfae12521?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'OG Kush Lineage: Deep Dive into the Backbone of West Coast and East Coast Gas',
+    category: 'Strain Guides',
+    defaultImage: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Live Resin vs Cured Resin: Cartridge and Concentrate Buyer Guide',
+    category: 'Strain Guides',
+    defaultImage: 'https://images.unsplash.com/photo-1536939459926-301728717817?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Diamond Sauce and Badder: Understanding Concentrate Textures and Temperatures',
+    category: 'Strain Guides',
+    defaultImage: 'https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=1200&q=80'
+  },
+
+  // Category: Edibles & Dosing
+  {
+    topic: 'Cannabis Edibles Dosing Guide: From 5mg Microdose to 50mg Connoisseur Level',
+    category: 'Edibles & Dosing',
+    defaultImage: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Fast-Acting Nano Edibles: How Water-Soluble THC Delivers Effects in 15 Minutes',
+    category: 'Edibles & Dosing',
+    defaultImage: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Cannabis Chocolates vs Gummies: Digestion Rates and Experience Differences',
+    category: 'Edibles & Dosing',
+    defaultImage: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'What to Do If You Take Too Many Edibles: Simple Remedies to Ground Yourself',
+    category: 'Edibles & Dosing',
+    defaultImage: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Cannabis Beverages: The Modern Alternative to Alcohol for Social Evenings',
+    category: 'Edibles & Dosing',
+    defaultImage: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=1200&q=80'
+  },
+
+  // Category: Wellness
+  {
     topic: 'Cannabis for Evening Wind-Down and Deep Sleep: Strains and Routines That Work',
     category: 'Wellness',
     defaultImage: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=1200&q=80'
   },
   {
-    topic: 'Beginner Guide to Cannabis Pre-Rolls: Infused vs Standard Joints Explained',
-    category: 'Cannabis 101',
-    defaultImage: 'https://images.unsplash.com/photo-1536939459926-301728717817?auto=format&fit=crop&w=1200&q=80'
+    topic: 'CBN and CBD for Rest: The Non-Intoxicating Cannabinoids Gaining Fame',
+    category: 'Wellness',
+    defaultImage: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Cannabis and Post-Workout Recovery: Easing Muscle Soreness and Tension',
+    category: 'Wellness',
+    defaultImage: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Mindful Consumption: Combining Microdosing with Meditation and Yoga',
+    category: 'Wellness',
+    defaultImage: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Daytime Clarity: High-CBG and Pinene Strains for Productive Afternoon Focus',
+    category: 'Wellness',
+    defaultImage: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=80'
   }
 ];
 
@@ -194,7 +308,7 @@ export async function getNeodymiumApiKey() {
 }
 
 /**
- * Generate a new blog post using the Neodymium API
+ * Generate a new blog post using the Neodymium API with anti-duplication
  */
 export async function generateBlogPost({ topic, category } = {}) {
   const apiKey = await getNeodymiumApiKey();
@@ -203,19 +317,48 @@ export async function generateBlogPost({ topic, category } = {}) {
     throw new Error('Neodymium API Key is not configured. Please add it in the Admin Dashboard or set NEODYMIUM_API_KEY.');
   }
 
-  // Select topic if not provided
+  // 1. Fetch existing article titles from database to prevent duplicate content
+  let existingTitles = [];
+  try {
+    if (prisma && prisma.blogPost) {
+      const existing = await prisma.blogPost.findMany({
+        select: { title: true, slug: true, category: true },
+        take: 100,
+        orderBy: { createdAt: 'desc' }
+      });
+      existingTitles = existing.map(e => e.title);
+    }
+  } catch (err) {
+    console.warn('Could not query existing posts to deduplicate:', err.message);
+  }
+
+  // 2. Select topic if not explicitly provided
   let selectedTopic = topic;
   let selectedCategory = category;
   let defaultCover = 'https://images.unsplash.com/photo-1603909223429-69bb7101f420?auto=format&fit=crop&w=1200&q=80';
 
   if (!selectedTopic) {
-    const randomItem = TRENDING_TOPICS[Math.floor(Math.random() * TRENDING_TOPICS.length)];
+    // Filter out topics already written
+    const unwrittenTopics = TRENDING_TOPICS.filter(t => 
+      !existingTitles.some(et => 
+        et.toLowerCase().includes(t.topic.toLowerCase().slice(0, 20)) ||
+        t.topic.toLowerCase().includes(et.topic.toLowerCase().slice(0, 20))
+      )
+    );
+
+    const pool = unwrittenTopics.length > 0 ? unwrittenTopics : TRENDING_TOPICS;
+    const randomItem = pool[Math.floor(Math.random() * pool.length)];
     selectedTopic = randomItem.topic;
     selectedCategory = selectedCategory || randomItem.category;
     defaultCover = randomItem.defaultImage;
   }
 
-  const systemPrompt = `You are a professional cannabis copywriter, educator, and master budtender writing for Holy Buds, Long Island's premier cannabis brand and delivery service.
+  // Build exclusion list for system prompt
+  const exclusionText = existingTitles.length > 0
+    ? `\n\nALREADY PUBLISHED ARTICLES (DO NOT DUPLICATE THESE OR WRITE SIMILAR TITLES):\n${existingTitles.slice(0, 25).map(t => `- ${t}`).join('\n')}\nPick a fresh, unique angle or new subject that has NOT been covered above.`
+    : '';
+
+  const systemPrompt = `You are a master cannabis educator and senior copywriter writing for Holy Buds, Long Island's premier dispensary and delivery brand.
 Your tone is knowledgeable, welcoming, sophisticated, and engaging.
 
 CRITICAL RULES:
@@ -238,11 +381,11 @@ Article Content Guidelines:
 - Length: Minimum 700 to 1200 words.
 - Format: Clean Markdown with multiple H2 (##) and H3 (###) sections.
 - Incorporate subtle mentions of Holy Buds discreet delivery across Long Island, NY, and operating hours until midnight on weekends.
-- Mention visiting /menu to browse curated lab-tested products.`;
+- Mention visiting /menu to browse curated lab-tested products.${exclusionText}`;
 
   const userPrompt = `Write an in-depth, authoritative, and engaging educational blog post about: "${selectedTopic}".
 Category: ${selectedCategory || 'Cannabis 101'}.
-Ensure the content is well-structured with clear markdown headings and zero emojis.`;
+Ensure the content is well-structured with clear markdown headings, completely unique from existing articles, and contains zero emojis.`;
 
   const response = await fetch('https://api.neodymium.app/v1/chat/completions', {
     method: 'POST',
@@ -256,7 +399,7 @@ Ensure the content is well-structured with clear markdown headings and zero emoj
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      temperature: 0.7
+      temperature: 0.75
     })
   });
 
@@ -308,4 +451,3 @@ Ensure the content is well-structured with clear markdown headings and zero emoj
     seoDescription
   };
 }
-

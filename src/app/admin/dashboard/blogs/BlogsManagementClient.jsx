@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 
 export default function BlogsManagementClient() {
   const [posts, setPosts] = useState([]);
@@ -20,6 +21,19 @@ export default function BlogsManagementClient() {
   const [isKeyConfigured, setIsKeyConfigured] = useState(false);
   const [savingKey, setSavingKey] = useState(false);
   const [keyMsg, setKeyMsg] = useState('');
+
+  // Automated Schedule settings state
+  const [autoBlogEnabled, setAutoBlogEnabled] = useState(false);
+  const [autoBlogIntervalHours, setAutoBlogIntervalHours] = useState(24);
+  const [autoBlogLastRun, setAutoBlogLastRun] = useState(null);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [scheduleMsg, setScheduleMsg] = useState('');
+  const [cronCopied, setCronCopied] = useState(false);
+
+  // Edit Article Modal state
+  const [editingPost, setEditingPost] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editTab, setEditTab] = useState('edit'); // 'edit' | 'preview'
 
   // Fetch blogs on manual refresh
   const fetchBlogs = async () => {
@@ -67,6 +81,15 @@ export default function BlogsManagementClient() {
           const data = await res.json();
           if (data.neodymiumApiKey && data.neodymiumApiKey !== '') {
             setIsKeyConfigured(true);
+          }
+          if (data.autoBlogEnabled !== undefined) {
+            setAutoBlogEnabled(Boolean(data.autoBlogEnabled));
+          }
+          if (data.autoBlogIntervalHours !== undefined) {
+            setAutoBlogIntervalHours(parseInt(data.autoBlogIntervalHours, 10) || 24);
+          }
+          if (data.autoBlogLastRun !== undefined) {
+            setAutoBlogLastRun(data.autoBlogLastRun);
           }
         }
       } catch (err) {
@@ -126,6 +149,37 @@ export default function BlogsManagementClient() {
     }
   };
 
+  // Save Automated Schedule settings
+  const handleSaveSchedule = async (newEnabled, newInterval) => {
+    setSavingSchedule(true);
+    setScheduleMsg('');
+    try {
+      const payload = {
+        autoBlogEnabled: newEnabled !== undefined ? newEnabled : autoBlogEnabled,
+        autoBlogIntervalHours: newInterval !== undefined ? newInterval : autoBlogIntervalHours
+      };
+
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        setScheduleMsg('Automated schedule saved');
+        setTimeout(() => setScheduleMsg(''), 3500);
+      } else {
+        setScheduleMsg('Failed to update schedule');
+      }
+    } catch (err) {
+      console.error('Error updating schedule:', err);
+      setScheduleMsg('Error updating schedule');
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
+
   // Generate article (1-click or custom)
   const handleGenerate = async (topic = '', category = '') => {
     setGenerating(true);
@@ -177,8 +231,8 @@ export default function BlogsManagementClient() {
       });
 
       if (res.ok) {
-        setPosts(prev =>
-          prev.map(p => (p.id === id ? { ...p, published: !currentStatus } : p))
+        setPosts((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, published: !currentStatus } : p))
         );
       }
     } catch (err) {
@@ -198,10 +252,70 @@ export default function BlogsManagementClient() {
       });
 
       if (res.ok) {
-        setPosts(prev => prev.filter(p => p.id !== id));
+        setPosts((prev) => prev.filter((p) => p.id !== id));
       }
     } catch (err) {
       console.error('Failed to delete post:', err);
+    }
+  };
+
+  // Open Edit Modal
+  const handleOpenEdit = (post) => {
+    setEditingPost({
+      id: post.id,
+      title: post.title || '',
+      slug: post.slug || '',
+      category: post.category || 'Cannabis 101',
+      excerpt: post.excerpt || '',
+      readTime: post.readTime || '5 min read',
+      coverImage: post.coverImage || '',
+      content: post.content || '',
+      published: Boolean(post.published),
+      seoTitle: post.seoTitle || post.title || '',
+      seoDescription: post.seoDescription || post.excerpt || ''
+    });
+    setEditTab('edit');
+  };
+
+  // Save Edited Post
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    if (!editingPost || !editingPost.title.trim()) return;
+
+    setSavingEdit(true);
+    setError('');
+    try {
+      const res = await fetch('/api/blog', {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify(editingPost)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to save changes');
+      }
+
+      setPosts((prev) =>
+        prev.map((p) => (p.id === editingPost.id ? { ...p, ...editingPost } : p))
+      );
+      setSuccessMsg(`Saved changes to "${editingPost.title}"`);
+      setEditingPost(null);
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (err) {
+      setError(err.message || 'Error updating article');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const copyCronUrl = () => {
+    if (typeof window !== 'undefined') {
+      const url = `${window.location.origin}/api/cron/blog`;
+      navigator.clipboard.writeText(url);
+      setCronCopied(true);
+      setTimeout(() => setCronCopied(false), 2500);
     }
   };
 
@@ -211,7 +325,7 @@ export default function BlogsManagementClient() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-pc-border/60 pb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
-            Blog & AI Content Publisher
+            Blog &amp; AI Content Publisher
           </h1>
           <p className="text-sm text-pc-muted mt-1">
             Automated cannabis educational articles, strain breakdowns, and Long Island delivery guides.
@@ -229,9 +343,10 @@ export default function BlogsManagementClient() {
             View Public Blog (/blog)
           </Link>
           <button
+            type="button"
             onClick={fetchBlogs}
             disabled={loading}
-            className="p-2 rounded-xl bg-pc-card hover:bg-pc-border/60 text-pc-muted hover:text-white border border-pc-border transition-all"
+            className="p-2 rounded-xl bg-pc-card hover:bg-pc-border/60 text-pc-muted hover:text-white border border-pc-border transition-all cursor-pointer"
             title="Refresh"
           >
             <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -266,8 +381,9 @@ export default function BlogsManagementClient() {
         </div>
       )}
 
-      {/* Grid: AI Generator + API Key Card */}
+      {/* Grid: AI Generator + API Key + Auto-Publish Schedule Card */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
         {/* Card 1 & 2: AI Publisher (2 cols) */}
         <div className="lg:col-span-2 glass-card p-6 border border-pc-border rounded-2xl relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
@@ -277,7 +393,7 @@ export default function BlogsManagementClient() {
                 AI Auto-Generator (Neodymium)
               </h2>
               <p className="text-xs text-pc-muted mt-0.5">
-                Automatically writes 800+ word SEO articles with markdown headings, FAQs, and product links.
+                Automatically writes 800+ word SEO articles with markdown headings, FAQs, and product links without duplicates.
               </p>
             </div>
             <span className="px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase bg-pc-green/10 border border-pc-green/30 text-pc-green">
@@ -290,13 +406,14 @@ export default function BlogsManagementClient() {
             <div>
               <div className="text-sm font-semibold text-white">Instant 1-Click Publishing</div>
               <div className="text-xs text-pc-muted">
-                Picks the next trending cannabis topic and publishes immediately.
+                Picks the next trending cannabis topic, verifies uniqueness, and publishes immediately.
               </div>
             </div>
             <button
+              type="button"
               onClick={() => handleGenerate()}
               disabled={generating}
-              className="px-5 py-2.5 rounded-xl text-sm font-bold bg-pc-green hover:bg-[#1db326] text-black transition-all shadow-lg shadow-pc-green/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0"
+              className="px-5 py-2.5 rounded-xl text-sm font-bold bg-pc-green hover:bg-[#1db326] text-black transition-all shadow-lg shadow-pc-green/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0 cursor-pointer"
             >
               {generating ? (
                 <>
@@ -327,28 +444,29 @@ export default function BlogsManagementClient() {
                 type="text"
                 placeholder="e.g. Best weed strains for outdoor concerts..."
                 value={customTopic}
-                onChange={e => setCustomTopic(e.target.value)}
+                onChange={(e) => setCustomTopic(e.target.value)}
                 disabled={generating}
                 className="sm:col-span-2 px-3.5 py-2.5 rounded-xl bg-pc-dark border border-pc-border text-white text-sm placeholder-pc-muted/60 focus:outline-none focus:border-pc-green transition-all"
               />
               <select
                 value={customCategory}
-                onChange={e => setCustomCategory(e.target.value)}
+                onChange={(e) => setCustomCategory(e.target.value)}
                 disabled={generating}
                 className="px-3.5 py-2.5 rounded-xl bg-pc-dark border border-pc-border text-white text-sm focus:outline-none focus:border-pc-green transition-all"
               >
                 <option value="Cannabis 101">Cannabis 101</option>
                 <option value="Strain Guides">Strain Guides</option>
-                <option value="Edibles & Dosing">Edibles & Dosing</option>
-                <option value="Delivery & Lifestyle">Delivery & Lifestyle</option>
+                <option value="Edibles &amp; Dosing">Edibles &amp; Dosing</option>
+                <option value="Delivery &amp; Lifestyle">Delivery &amp; Lifestyle</option>
                 <option value="Wellness">Wellness</option>
               </select>
             </div>
             <div className="flex justify-end pt-1">
               <button
+                type="button"
                 onClick={() => handleGenerate(customTopic, customCategory)}
                 disabled={generating || !customTopic.trim()}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-pc-border transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-pc-border transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 Generate Custom Article
               </button>
@@ -391,13 +509,13 @@ export default function BlogsManagementClient() {
                 type="password"
                 placeholder={isKeyConfigured ? '••••••••••••••••••••••••' : 'Enter freellmapi-... key'}
                 value={apiKeyInput}
-                onChange={e => setApiKeyInput(e.target.value)}
+                onChange={(e) => setApiKeyInput(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-pc-dark border border-pc-border text-white text-xs placeholder-pc-muted/50 focus:outline-none focus:border-pc-green transition-all"
               />
               <button
                 type="submit"
                 disabled={savingKey || !apiKeyInput.trim()}
-                className="w-full py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-pc-border transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-pc-border transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 {savingKey ? 'Saving...' : 'Update API Key'}
               </button>
@@ -419,6 +537,128 @@ export default function BlogsManagementClient() {
               <span>Model Routing:</span>
               <span className="text-pc-green font-mono text-[10px]">auto</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Automated Publishing Schedule Card */}
+      <div className="glass-card p-6 border border-pc-border rounded-2xl relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-pc-border/60">
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <svg className="w-5 h-5 text-pc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Automated Publishing Schedule
+            </h2>
+            <p className="text-xs text-pc-muted mt-1">
+              Automatically generate fresh, unique cannabis articles on a recurring time interval.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold text-pc-muted">Auto-Generation:</span>
+            <button
+              type="button"
+              onClick={() => {
+                const nextVal = !autoBlogEnabled;
+                setAutoBlogEnabled(nextVal);
+                handleSaveSchedule(nextVal, autoBlogIntervalHours);
+              }}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                autoBlogEnabled ? 'bg-pc-green' : 'bg-white/10'
+              }`}
+              role="switch"
+              aria-checked={autoBlogEnabled}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-black shadow-lg ring-0 transition duration-200 ease-in-out ${
+                  autoBlogEnabled ? 'translate-x-5 bg-black' : 'translate-x-0 bg-white'
+                }`}
+              />
+            </button>
+            <span className={`text-xs font-bold uppercase tracking-wider ${autoBlogEnabled ? 'text-pc-green' : 'text-pc-muted'}`}>
+              {autoBlogEnabled ? 'Enabled' : 'Paused'}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-5">
+          {/* Interval Selector */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-2">
+              Publishing Frequency
+            </label>
+            <select
+              value={autoBlogIntervalHours}
+              onChange={(e) => {
+                const nextHours = parseInt(e.target.value, 10);
+                setAutoBlogIntervalHours(nextHours);
+                handleSaveSchedule(autoBlogEnabled, nextHours);
+              }}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-pc-dark border border-pc-border text-white text-sm focus:outline-none focus:border-pc-green transition-all cursor-pointer"
+            >
+              <option value={6}>Every 6 Hours (4 articles/day)</option>
+              <option value={12}>Every 12 Hours (2 articles/day)</option>
+              <option value={24}>Every 24 Hours (1 article/day - Recommended)</option>
+              <option value={48}>Every 48 Hours (Every 2 days)</option>
+              <option value={168}>Every 7 Days (Weekly)</option>
+            </select>
+            <p className="text-[11px] text-pc-muted/70 mt-1.5">
+              The AI verifies topic uniqueness and skips duplicate themes before generating.
+            </p>
+          </div>
+
+          {/* Last Run Status */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-2">
+              Last Automatic Run
+            </label>
+            <div className="px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-pc-border text-sm text-white flex items-center justify-between">
+              <span>
+                {autoBlogLastRun
+                  ? new Date(autoBlogLastRun).toLocaleString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true
+                    })
+                  : 'Never run'}
+              </span>
+              <span className="w-2 h-2 rounded-full bg-pc-green" />
+            </div>
+            {scheduleMsg && (
+              <p className="text-[11px] text-pc-green mt-1.5 font-medium">
+                {scheduleMsg}
+              </p>
+            )}
+          </div>
+
+          {/* Webhook & Trigger Endpoint */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-2">
+              Cron Webhook Endpoint
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value="/api/cron/blog"
+                className="w-full px-3 py-2 rounded-xl bg-pc-dark border border-pc-border text-pc-muted text-xs font-mono select-all focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={copyCronUrl}
+                className="px-3 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-pc-border transition-all shrink-0 cursor-pointer"
+                title="Copy Full URL"
+              >
+                {cronCopied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+            <p className="text-[11px] text-pc-muted/70 mt-1.5">
+              Ping this endpoint from Vercel Cron or GitHub Actions with <code className="text-pc-green font-mono">Authorization: Bearer CRON_SECRET</code>.
+            </p>
           </div>
         </div>
       </div>
@@ -463,7 +703,7 @@ export default function BlogsManagementClient() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-pc-border/40">
-                {posts.map(post => (
+                {posts.map((post) => (
                   <tr key={post.id || post.slug} className="hover:bg-white/[0.02] transition-colors">
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
@@ -512,8 +752,9 @@ export default function BlogsManagementClient() {
 
                     <td className="py-3.5 px-4">
                       <button
+                        type="button"
                         onClick={() => handleTogglePublish(post.id, post.published)}
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase transition-all ${
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase transition-all cursor-pointer ${
                           post.published
                             ? 'bg-pc-green/15 text-pc-green border border-pc-green/30 hover:bg-pc-green/25'
                             : 'bg-white/5 text-pc-muted border border-pc-border hover:bg-white/10'
@@ -525,6 +766,19 @@ export default function BlogsManagementClient() {
 
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Edit Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(post)}
+                          className="p-1.5 rounded-lg bg-white/5 hover:bg-emerald-500/20 text-pc-muted hover:text-pc-green transition-all cursor-pointer"
+                          title="Edit article"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                          </svg>
+                        </button>
+
+                        {/* View on Public Site Button */}
                         <Link
                           href={`/blog/${post.slug}`}
                           target="_blank"
@@ -535,10 +789,13 @@ export default function BlogsManagementClient() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                           </svg>
                         </Link>
+
+                        {/* Delete Button */}
                         {post.id && !post.id.startsWith('seed-') && (
                           <button
+                            type="button"
                             onClick={() => handleDeletePost(post.id, post.title)}
-                            className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-pc-muted hover:text-red-400 transition-all"
+                            className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-pc-muted hover:text-red-400 transition-all cursor-pointer"
                             title="Delete article"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -555,6 +812,274 @@ export default function BlogsManagementClient() {
           </div>
         )}
       </div>
+
+      {/* Edit Article Modal */}
+      {editingPost && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="bg-[#0b1410] border border-pc-border rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-pc-border flex items-center justify-between bg-pc-card/50">
+              <div className="flex items-center gap-3">
+                <span className="p-2 rounded-xl bg-pc-green/10 text-pc-green border border-pc-green/20">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                  </svg>
+                </span>
+                <div>
+                  <h3 className="text-base font-bold text-white">Edit Blog Article</h3>
+                  <p className="text-xs text-pc-muted">/blog/{editingPost.slug}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="flex rounded-xl bg-pc-dark p-1 border border-pc-border">
+                  <button
+                    type="button"
+                    onClick={() => setEditTab('edit')}
+                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                      editTab === 'edit'
+                        ? 'bg-pc-green text-black shadow-xs'
+                        : 'text-pc-muted hover:text-white'
+                    }`}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditTab('preview')}
+                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                      editTab === 'preview'
+                        ? 'bg-pc-green text-black shadow-xs'
+                        : 'text-pc-muted hover:text-white'
+                    }`}
+                  >
+                    Preview
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setEditingPost(null)}
+                  className="p-2 rounded-xl text-pc-muted hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleSaveEdit} className="p-6 overflow-y-auto space-y-5 flex-1">
+              {editTab === 'edit' ? (
+                <>
+                  {/* Title & Slug */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-1.5">
+                        Article Title
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editingPost.title}
+                        onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-pc-dark border border-pc-border text-white text-sm focus:outline-none focus:border-pc-green"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-1.5">
+                        URL Slug
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editingPost.slug}
+                        onChange={(e) => setEditingPost({ ...editingPost, slug: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-pc-dark border border-pc-border text-white text-sm font-mono focus:outline-none focus:border-pc-green"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Category, Read Time, Published */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-1.5">
+                        Category
+                      </label>
+                      <select
+                        value={editingPost.category}
+                        onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-pc-dark border border-pc-border text-white text-sm focus:outline-none focus:border-pc-green"
+                      >
+                        <option value="Cannabis 101">Cannabis 101</option>
+                        <option value="Strain Guides">Strain Guides</option>
+                        <option value="Edibles &amp; Dosing">Edibles &amp; Dosing</option>
+                        <option value="Delivery &amp; Lifestyle">Delivery &amp; Lifestyle</option>
+                        <option value="Wellness">Wellness</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-1.5">
+                        Read Time
+                      </label>
+                      <input
+                        type="text"
+                        value={editingPost.readTime}
+                        onChange={(e) => setEditingPost({ ...editingPost, readTime: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-pc-dark border border-pc-border text-white text-sm focus:outline-none focus:border-pc-green"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-1.5">
+                        Publication Status
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setEditingPost({ ...editingPost, published: !editingPost.published })}
+                        className={`w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
+                          editingPost.published
+                            ? 'bg-pc-green/20 text-pc-green border-pc-green/40'
+                            : 'bg-white/5 text-pc-muted border-pc-border'
+                        }`}
+                      >
+                        {editingPost.published ? 'Published (Live)' : 'Draft (Hidden)'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Cover Image URL */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-1.5">
+                      Cover Image URL
+                    </label>
+                    <input
+                      type="url"
+                      value={editingPost.coverImage}
+                      onChange={(e) => setEditingPost({ ...editingPost, coverImage: e.target.value })}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-pc-dark border border-pc-border text-white text-sm focus:outline-none focus:border-pc-green"
+                    />
+                  </div>
+
+                  {/* Excerpt */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-1.5">
+                      Article Summary / Excerpt
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={editingPost.excerpt}
+                      onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-pc-dark border border-pc-border text-white text-sm focus:outline-none focus:border-pc-green leading-relaxed"
+                    />
+                  </div>
+
+                  {/* Markdown Content */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-1.5">
+                      Markdown Body Content
+                    </label>
+                    <textarea
+                      rows={14}
+                      required
+                      value={editingPost.content}
+                      onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
+                      className="w-full p-3.5 rounded-xl bg-pc-dark border border-pc-border text-white text-xs sm:text-sm font-mono focus:outline-none focus:border-pc-green leading-relaxed"
+                    />
+                  </div>
+
+                  {/* SEO Metadata Accordion/Fields */}
+                  <div className="pt-2 border-t border-pc-border/40 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-1.5">
+                        Custom SEO Title (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={editingPost.seoTitle}
+                        onChange={(e) => setEditingPost({ ...editingPost, seoTitle: e.target.value })}
+                        className="w-full px-3.5 py-2 rounded-xl bg-pc-dark border border-pc-border text-white text-xs focus:outline-none focus:border-pc-green"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-1.5">
+                        Custom Meta Description (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={editingPost.seoDescription}
+                        onChange={(e) => setEditingPost({ ...editingPost, seoDescription: e.target.value })}
+                        className="w-full px-3.5 py-2 rounded-xl bg-pc-dark border border-pc-border text-white text-xs focus:outline-none focus:border-pc-green"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Markdown Preview Tab */
+                <div className="bg-white text-slate-900 p-6 sm:p-8 rounded-2xl overflow-y-auto border border-slate-200">
+                  <div className="mb-4">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-emerald-600 text-white">
+                      {editingPost.category}
+                    </span>
+                    <h1 className="text-2xl sm:text-3xl font-black mt-3 text-slate-900">
+                      {editingPost.title}
+                    </h1>
+                    <p className="text-slate-600 text-sm mt-2 italic">
+                      {editingPost.excerpt}
+                    </p>
+                  </div>
+
+                  {editingPost.coverImage && (
+                    <div className="h-60 rounded-xl overflow-hidden my-6 bg-slate-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={editingPost.coverImage}
+                        alt={editingPost.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  <div className="prose prose-slate max-w-none text-slate-800 text-sm leading-relaxed space-y-4">
+                    <ReactMarkdown>{editingPost.content}</ReactMarkdown>
+                  </div>
+                </div>
+              )}
+
+              {/* Modal Footer */}
+              <div className="pt-4 border-t border-pc-border flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingPost(null)}
+                  className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-pc-muted hover:text-white transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit}
+                  className="px-6 py-2.5 rounded-xl text-xs font-bold bg-pc-green hover:bg-[#1db326] text-black transition-all shadow-md shadow-pc-green/20 disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                >
+                  {savingEdit ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin text-black" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

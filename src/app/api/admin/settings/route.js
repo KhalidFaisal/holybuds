@@ -60,7 +60,10 @@ export async function GET(request) {
       driverBonusThreshold: settings.driverBonusThreshold ?? 10,
       driverBonusAmount: settings.driverBonusAmount ?? 100.0,
       wholesalePassword: settings.wholesalePassword || 'Onlyholy',
-      rewardsMaintenanceMode: settings.rewardsMaintenanceMode ?? true
+      rewardsMaintenanceMode: settings.rewardsMaintenanceMode ?? true,
+      autoBlogEnabled: settings.autoBlogEnabled ?? false,
+      autoBlogIntervalHours: settings.autoBlogIntervalHours ?? 24,
+      autoBlogLastRun: settings.autoBlogLastRun ? settings.autoBlogLastRun.toISOString() : null
     });
   } catch (error) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -125,6 +128,18 @@ export async function POST(request) {
     if (data.openRouterApiKey !== undefined) {
       // Allow clearing the key if empty string is passed
       updateData.openRouterApiKey = data.openRouterApiKey === '' ? null : data.openRouterApiKey;
+    }
+
+    if (data.autoBlogEnabled !== undefined) {
+      updateData.autoBlogEnabled = Boolean(data.autoBlogEnabled);
+    }
+
+    if (data.autoBlogIntervalHours !== undefined) {
+      updateData.autoBlogIntervalHours = parseInt(data.autoBlogIntervalHours, 10) || 24;
+    }
+
+    if (data.autoBlogLastRun !== undefined) {
+      updateData.autoBlogLastRun = data.autoBlogLastRun ? new Date(data.autoBlogLastRun) : null;
     }
 
     if (data.neodymiumApiKey !== undefined) {

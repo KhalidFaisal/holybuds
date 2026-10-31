@@ -45,6 +45,23 @@ export default async function sitemap() {
     priority: 0.85,
   }));
 
+  let blogPosts = [];
+  try {
+    blogPosts = await prisma.blogPost.findMany({
+      where: { published: true },
+      select: { slug: true, updatedAt: true },
+    });
+  } catch (error) {
+    console.error('Failed to load blog posts for sitemap:', error);
+  }
+
+  const blogUrls = blogPosts.map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: post.updatedAt,
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  }));
+
   return [
     {
       url: baseUrl,
@@ -58,7 +75,14 @@ export default async function sitemap() {
       changeFrequency: 'daily',
       priority: 0.9,
     },
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
     ...effectUrls,
+    ...blogUrls,
     {
       url: `${baseUrl}/faq`,
       lastModified: new Date(),

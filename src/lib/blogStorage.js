@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { PRESEEDED_BLOGS } from '@/lib/blogGenerator';
+import { revalidatePath } from 'next/cache';
 
 /**
  * Fetch all blog posts with filtering, search, and pagination.
@@ -8,7 +9,7 @@ import { PRESEEDED_BLOGS } from '@/lib/blogGenerator';
 export async function getAllBlogPosts({
   category = 'All',
   search = '',
-  limit = 20,
+  limit = 24,
   page = 1,
   includeUnpublished = false
 } = {}) {
@@ -122,7 +123,7 @@ export async function saveBlogPost(postData) {
     throw new Error('Database client for BlogPost is unavailable.');
   }
 
-  return await prisma.blogPost.create({
+  const post = await prisma.blogPost.create({
     data: {
       title: postData.title,
       slug: postData.slug,
@@ -139,6 +140,56 @@ export async function saveBlogPost(postData) {
       seoDescription: postData.seoDescription || postData.excerpt
     }
   });
+
+  try {
+    revalidatePath('/blog');
+    revalidatePath(`/blog/${post.slug}`);
+    revalidatePath('/sitemap.xml');
+  } catch (revErr) {
+    console.warn('Cache revalidation error on save:', revErr.message);
+  }
+
+  return post;
+}
+
+/**
+ * Update an existing blog post by ID
+ */
+export async function updateBlogPost(id, updateData) {
+  if (!prisma || !prisma.blogPost) {
+    throw new Error('Database client for BlogPost is unavailable.');
+  }
+
+  const dataToUpdate = {};
+  if (updateData.title !== undefined) dataToUpdate.title = updateData.title;
+  if (updateData.slug !== undefined) dataToUpdate.slug = updateData.slug;
+  if (updateData.excerpt !== undefined) dataToUpdate.excerpt = updateData.excerpt;
+  if (updateData.content !== undefined) dataToUpdate.content = updateData.content;
+  if (updateData.category !== undefined) dataToUpdate.category = updateData.category;
+  if (updateData.tags !== undefined) {
+    dataToUpdate.tags = typeof updateData.tags === 'string' ? updateData.tags : JSON.stringify(updateData.tags || []);
+  }
+  if (updateData.coverImage !== undefined) dataToUpdate.coverImage = updateData.coverImage;
+  if (updateData.readTime !== undefined) dataToUpdate.readTime = updateData.readTime;
+  if (updateData.author !== undefined) dataToUpdate.author = updateData.author;
+  if (updateData.published !== undefined) dataToUpdate.published = Boolean(updateData.published);
+  if (updateData.seoTitle !== undefined) dataToUpdate.seoTitle = updateData.seoTitle;
+  if (updateData.seoDescription !== undefined) dataToUpdate.seoDescription = updateData.seoDescription;
+
+  const updated = await prisma.blogPost.update({
+    where: { id },
+    data: dataToUpdate
+  });
+
+  try {
+    revalidatePath('/blog');
+    revalidatePath(`/blog/${updated.slug}`);
+    revalidatePath('/sitemap.xml');
+  } catch (revErr) {
+    console.warn('Cache revalidation error on update:', revErr.message);
+  }
+
+  return updated;
 }
 
 /**
@@ -149,9 +200,18 @@ export async function deleteBlogPost(id) {
     throw new Error('Database client for BlogPost is unavailable.');
   }
 
-  return await prisma.blogPost.delete({
+  const deleted = await prisma.blogPost.delete({
     where: { id }
   });
+
+  try {
+    revalidatePath('/blog');
+    revalidatePath('/sitemap.xml');
+  } catch (revErr) {
+    console.warn('Cache revalidation error on delete:', revErr.message);
+  }
+
+  return deleted;
 }
 
 /**
@@ -162,10 +222,20 @@ export async function togglePublishBlogPost(id, published) {
     throw new Error('Database client for BlogPost is unavailable.');
   }
 
-  return await prisma.blogPost.update({
+  const updated = await prisma.blogPost.update({
     where: { id },
     data: { published }
   });
+
+  try {
+    revalidatePath('/blog');
+    revalidatePath(`/blog/${updated.slug}`);
+    revalidatePath('/sitemap.xml');
+  } catch (revErr) {
+    console.warn('Cache revalidation error on toggle publish:', revErr.message);
+  }
+
+  return updated;
 }
 
 /**
@@ -192,4 +262,3 @@ export async function getRelatedPosts(currentSlug, category, limit = 3) {
 
   return PRESEEDED_BLOGS.filter(p => p.slug !== currentSlug && p.published).slice(0, limit);
 }
-

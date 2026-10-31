@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllBlogPosts, deleteBlogPost, togglePublishBlogPost } from '@/lib/blogStorage';
+import { getAllBlogPosts, deleteBlogPost, togglePublishBlogPost, updateBlogPost } from '@/lib/blogStorage';
 import { requireAdmin } from '@/lib/auth';
 
 function checkAdminAuth(request) {
@@ -13,7 +13,7 @@ export async function GET(request) {
     const category = searchParams.get('category') || 'All';
     const search = searchParams.get('search') || '';
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '12', 10);
+    const limit = parseInt(searchParams.get('limit') || '24', 10);
     const includeUnpublished = searchParams.get('includeUnpublished') === 'true';
 
     // If requesting unpublished, ensure user is admin
@@ -32,6 +32,28 @@ export async function GET(request) {
   } catch (error) {
     console.error('Error in GET /api/blog:', error);
     return NextResponse.json({ error: 'Failed to fetch blog posts' }, { status: 500 });
+  }
+}
+
+// Admin PUT: update full blog post content/metadata
+export async function PUT(request) {
+  try {
+    if (!checkAdminAuth(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id, ...updateData } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Article ID is required' }, { status: 400 });
+    }
+
+    const updated = await updateBlogPost(id, updateData);
+    return NextResponse.json({ success: true, post: updated });
+  } catch (error) {
+    console.error('Error in PUT /api/blog:', error);
+    return NextResponse.json({ error: error.message || 'Failed to update article' }, { status: 500 });
   }
 }
 
@@ -78,4 +100,3 @@ export async function PATCH(request) {
     return NextResponse.json({ error: error.message || 'Failed to update post' }, { status: 500 });
   }
 }
-

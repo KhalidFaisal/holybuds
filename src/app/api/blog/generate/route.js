@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { generateBlogPost } from '@/lib/blogGenerator';
 import { saveBlogPost } from '@/lib/blogStorage';
 import { requireAdmin } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
 
 function isAuthorized(request) {
   const authHeader = request.headers.get('authorization');
@@ -34,17 +36,31 @@ export async function POST(request) {
     const generated = await generateBlogPost({ topic, category });
 
     // Save to PostgreSQL table
-    let saved = null;
+    const saved = await saveBlogPost(generated);
+
+    // Update autoBlogLastRun in SiteSettings
     try {
-      saved = await saveBlogPost(generated);
-    } catch (dbErr) {
-      console.warn('Could not save post directly to DB (table may be pending migration):', dbErr.message);
-      saved = { ...generated, id: 'temp-' + Date.now() };
+      if (prisma && prisma.siteSettings) {
+        await prisma.siteSettings.upsert({
+          where: { id: 'global' },
+          update: { autoBlogLastRun: new Date() },
+          create: { id: 'global', autoBlogLastRun: new Date() }
+        });
+      }
+    } catch (settingErr) {
+      console.warn('Could not update autoBlogLastRun:', settingErr.message);
+    }
+
+    try {
+      revalidatePath('/blog');
+      revalidatePath('/sitemap.xml');
+    } catch (revErr) {
+      console.warn('Revalidation error:', revErr.message);
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Blog post generated successfully',
+      message: 'Blog post generated and published successfully',
       post: saved
     });
   } catch (error) {
@@ -55,4 +71,3 @@ export async function POST(request) {
     );
   }
 }
-

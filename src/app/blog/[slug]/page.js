@@ -2,6 +2,11 @@ import { getBlogPostBySlug, getRelatedPosts } from '@/lib/blogStorage';
 import { notFound } from 'next/navigation';
 import BlogPostClient from './BlogPostClient';
 
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://holybuds.net';
+
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const post = await getBlogPostBySlug(slug);
@@ -64,12 +69,12 @@ export default async function BlogPostPage({ params }) {
       name: 'Holy Buds',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://holybuds.com/logo.png'
+        url: `${siteUrl}/logo.png`
       }
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://holybuds.com/blog/${post.slug}`
+      '@id': `${siteUrl}/blog/${post.slug}`
     }
   };
 
@@ -83,4 +88,3 @@ export default async function BlogPostPage({ params }) {
     </>
   );
 }
-
