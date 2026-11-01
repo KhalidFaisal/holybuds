@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { generateCoverImage } from '@/lib/imageGenerator';
 
 export const TRENDING_TOPICS = [
   // Category: Delivery & Lifestyle
@@ -375,6 +376,7 @@ CRITICAL RULES:
   "slug": "url-friendly-slug-with-hyphens",
   "excerpt": "A concise 2-sentence summary hook (under 160 characters)",
   "category": "Cannabis 101" | "Strain Guides" | "Edibles & Dosing" | "Delivery & Lifestyle" | "Wellness",
+  "imagePrompt": "A vivid editorial photography prompt describing a luxury cannabis scene for this article. Focus on natural botanical textures, macro trichomes, amber glass jars, warm cinematic lighting, and clean minimalist composition. Strictly no text, no letters, no logos, no watermarks, no emojis.",
   "tags": ["Tag1", "Tag2", "Tag3"],
   "readTime": "5 min read",
   "content": "Rich markdown formatted article body with ## and ### headings, informative paragraphs, bullet points, pro tips, and an invitation to check out the Holy Buds menu at /menu",
@@ -440,6 +442,21 @@ Ensure the content is well-structured with clear markdown headings, completely u
   const seoTitle = sanitizeNoEmojis(parsed.seoTitle || `${title} | Holy Buds`);
   const seoDescription = sanitizeNoEmojis(parsed.seoDescription || excerpt);
 
+  // Generate unique cover image via /v1/images/generations with fallback
+  let generatedCover = null;
+  try {
+    generatedCover = await generateCoverImage({
+      prompt: parsed.imagePrompt,
+      title,
+      category: categoryFinal,
+      slug
+    });
+  } catch (imgErr) {
+    console.warn('[BlogGenerator] AI cover image generation error:', imgErr.message);
+  }
+
+  const finalCoverImage = generatedCover || parsed.coverImage || defaultCover;
+
   return {
     title,
     slug,
@@ -447,7 +464,7 @@ Ensure the content is well-structured with clear markdown headings, completely u
     content,
     category: categoryFinal,
     tags: JSON.stringify(tags),
-    coverImage: parsed.coverImage || defaultCover,
+    coverImage: finalCoverImage,
     readTime,
     author: 'Holy Buds Editorial',
     published: true,

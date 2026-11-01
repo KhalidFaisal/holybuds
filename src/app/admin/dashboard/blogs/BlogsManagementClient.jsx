@@ -33,6 +33,8 @@ export default function BlogsManagementClient() {
   // Edit Article Modal state
   const [editingPost, setEditingPost] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [imageGenError, setImageGenError] = useState('');
   const [editTab, setEditTab] = useState('edit'); // 'edit' | 'preview'
 
   // Fetch blogs on manual refresh
@@ -274,7 +276,46 @@ export default function BlogsManagementClient() {
       seoTitle: post.seoTitle || post.title || '',
       seoDescription: post.seoDescription || post.excerpt || ''
     });
+    setImageGenError('');
     setEditTab('edit');
+  };
+
+  // Generate Cover Image on demand via /v1/images/generations
+  const handleGenerateCoverImage = async () => {
+    if (!editingPost || !editingPost.title.trim()) {
+      setImageGenError('Please provide an article title before generating a cover image.');
+      return;
+    }
+
+    setGeneratingImage(true);
+    setImageGenError('');
+    try {
+      const res = await fetch('/api/blog/generate-image', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({
+          title: editingPost.title,
+          category: editingPost.category,
+          slug: editingPost.slug
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to generate cover image');
+      }
+
+      setEditingPost((prev) => ({
+        ...prev,
+        coverImage: data.url
+      }));
+    } catch (err) {
+      console.error('Image generation error:', err);
+      setImageGenError(err.message || 'Image generation failed');
+    } finally {
+      setGeneratingImage(false);
+    }
   };
 
   // Save Edited Post
@@ -530,8 +571,12 @@ export default function BlogsManagementClient() {
 
           <div className="mt-6 pt-4 border-t border-pc-border/40 text-[11px] text-pc-muted space-y-1">
             <div className="flex justify-between">
-              <span>Endpoint:</span>
-              <span className="text-white font-mono text-[10px]">neodymium.app/v1</span>
+              <span>Text Endpoint:</span>
+              <span className="text-white font-mono text-[10px]">/v1/chat/completions</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Image Endpoint:</span>
+              <span className="text-white font-mono text-[10px]">/v1/images/generations</span>
             </div>
             <div className="flex justify-between">
               <span>Model Routing:</span>
@@ -950,18 +995,48 @@ export default function BlogsManagementClient() {
                     </div>
                   </div>
 
-                  {/* Cover Image URL */}
+                  {/* Cover Image URL and AI Generator */}
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted mb-1.5">
-                      Cover Image URL
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-pc-muted">
+                        Cover Image URL
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleGenerateCoverImage}
+                        disabled={generatingImage || !editingPost.title.trim()}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-pc-green/15 text-pc-green border border-pc-green/30 hover:bg-pc-green/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        {generatingImage ? (
+                          <>
+                            <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            <span>Generating Cover...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                            </svg>
+                            <span>Generate AI Cover</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <input
                       type="url"
                       value={editingPost.coverImage}
                       onChange={(e) => setEditingPost({ ...editingPost, coverImage: e.target.value })}
-                      placeholder="https://images.unsplash.com/..."
+                      placeholder="https://..."
                       className="w-full px-3.5 py-2.5 rounded-xl bg-pc-dark border border-pc-border text-white text-sm focus:outline-none focus:border-pc-green"
                     />
+                    {imageGenError && (
+                      <p className="text-[11px] text-red-400 mt-1.5">
+                        {imageGenError}
+                      </p>
+                    )}
                   </div>
 
                   {/* Excerpt */}
