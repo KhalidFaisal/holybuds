@@ -339,12 +339,17 @@ export async function generateBlogPost({ topic, category } = {}) {
 
   if (!selectedTopic) {
     // Filter out topics already written
-    const unwrittenTopics = TRENDING_TOPICS.filter(t => 
-      !existingTitles.some(et => 
-        et.toLowerCase().includes(t.topic.toLowerCase().slice(0, 20)) ||
-        t.topic.toLowerCase().includes(et.topic.toLowerCase().slice(0, 20))
-      )
-    );
+    const unwrittenTopics = TRENDING_TOPICS.filter((t) => {
+      const topicLower = (t.topic || '').toLowerCase();
+      return !existingTitles.some((titleStr) => {
+        if (!titleStr || typeof titleStr !== 'string') return false;
+        const existingLower = titleStr.toLowerCase();
+        return (
+          existingLower.includes(topicLower.slice(0, 25)) ||
+          topicLower.includes(existingLower.slice(0, 25))
+        );
+      });
+    });
 
     const pool = unwrittenTopics.length > 0 ? unwrittenTopics : TRENDING_TOPICS;
     const randomItem = pool[Math.floor(Math.random() * pool.length)];

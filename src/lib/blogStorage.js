@@ -53,14 +53,14 @@ export async function getAllBlogPosts({
     filtered = filtered.filter(p => p.published);
   }
   if (category && category !== 'All') {
-    filtered = filtered.filter(p => p.category.toLowerCase() === category.toLowerCase());
+    filtered = filtered.filter(p => (p.category || '').toLowerCase() === category.toLowerCase());
   }
   if (search && search.trim() !== '') {
     const q = search.trim().toLowerCase();
     filtered = filtered.filter(p =>
-      p.title.toLowerCase().includes(q) ||
-      p.excerpt.toLowerCase().includes(q) ||
-      p.content.toLowerCase().includes(q)
+      (p.title || '').toLowerCase().includes(q) ||
+      (p.excerpt || '').toLowerCase().includes(q) ||
+      (p.content || '').toLowerCase().includes(q)
     );
   }
 
