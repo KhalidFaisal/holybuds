@@ -11,13 +11,13 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://holybuds.net';
 
 export const metadata = {
   title: 'HolyBuds | Premium Long Island Cannabis Delivery & Dispensary',
-  description: 'Fast, discreet same-day weed delivery across Long Island. Browse our curated menu of top-shelf flower, edibles, vape carts, and concentrates.',
+  description: 'Fast, discreet same-day weed delivery across Long Island (Nassau & Suffolk County). Browse our curated menu of top-shelf flower, edibles, vape carts, and concentrates.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
     title: 'HolyBuds | Premium Long Island Cannabis Delivery & Dispensary',
-    description: 'Fast, discreet same-day weed delivery across Long Island. Browse our curated menu of top-shelf flower, edibles, vape carts, and concentrates.',
+    description: 'Fast, discreet same-day weed delivery across Long Island (Nassau & Suffolk County). Browse our curated menu of top-shelf flower, edibles, vape carts, and concentrates.',
     url: siteUrl,
     siteName: 'HolyBuds Dispensary',
     locale: 'en_US',
@@ -36,7 +36,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'HolyBuds | Premium Long Island Cannabis Delivery & Dispensary',
-    description: 'Fast, discreet same-day weed delivery across Long Island. Browse our curated menu of top-shelf flower, edibles, vape carts, and concentrates.',
+    description: 'Fast, discreet same-day weed delivery across Long Island (Nassau & Suffolk County). Browse our curated menu of top-shelf flower, edibles, vape carts, and concentrates.',
     images: [`${siteUrl}/og-image.jpg`],
   },
 };

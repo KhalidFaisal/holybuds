@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import BlogHeader from '@/components/BlogHeader';
 import BlogFooter from '@/components/BlogFooter';
+import AgeVerificationModal from '@/components/AgeVerificationModal';
 
 const CATEGORIES = [
   'All',
@@ -300,6 +301,7 @@ export default function BlogClient({ initialData }) {
 
       {/* Blog Footer */}
       <BlogFooter />
+      <AgeVerificationModal />
     </div>
   );
 }

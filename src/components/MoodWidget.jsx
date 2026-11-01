@@ -12,7 +12,7 @@ export default function MoodWidget() {
   const router = useRouter();
   const pathname = usePathname();
 
-  if (pathname?.startsWith('/admin') || pathname?.startsWith('/password')) {
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/password') || pathname?.startsWith('/blog')) {
     return null;
   }
 

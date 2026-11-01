@@ -20,11 +20,13 @@ export const metadata = {
     default: 'HolyBuds | Long Island Cannabis Dispensary & Weed Delivery',
     template: '%s | HolyBuds',
   },
-  description: 'Order premium cannabis flower, edibles, concentrates, and vapes with same-day weed delivery across Long Island or fast pickup from HolyBuds.',
+  description: 'Order premium cannabis flower, edibles, concentrates, and vapes with same-day weed delivery across Long Island (Nassau & Suffolk Counties) or fast pickup from HolyBuds.',
   keywords: [
     'cannabis delivery Long Island',
     'weed delivery Long Island NY',
     'dispensary Long Island',
+    'Nassau County weed delivery',
+    'Suffolk County cannabis delivery',
     'dispensaries near me',
     'HolyBuds dispensary',
     'same day dispensary delivery Long Island',
@@ -51,7 +53,7 @@ export const metadata = {
   },
   openGraph: {
     title: 'HolyBuds | Long Island Cannabis Dispensary & Weed Delivery',
-    description: 'Top-shelf flower, edibles, vapes, and concentrates delivered across Long Island. Fast, friendly, and discreet.',
+    description: 'Top-shelf flower, edibles, vapes, and concentrates delivered across Nassau and Suffolk Counties, Long Island. Fast, friendly, and discreet.',
     url: siteUrl,
     siteName: 'HolyBuds Dispensary',
     locale: 'en_US',
@@ -70,7 +72,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'HolyBuds | Long Island Cannabis Dispensary & Delivery',
-    description: 'Fast same-day cannabis delivery across Long Island. Shop premium flower, edibles, & vapes.',
+    description: 'Fast same-day cannabis delivery across Nassau & Suffolk County, Long Island. Shop premium flower, edibles, & vapes.',
     images: [`${siteUrl}/og-image.jpg`],
   },
   robots: {
@@ -90,7 +92,7 @@ const localBusinessSchema = {
   '@context': 'https://schema.org',
   '@type': ['Store', 'LocalBusiness'],
   name: 'HolyBuds Dispensary',
-  description: 'Premium cannabis dispensary offering in-store pickup and fast same-day weed delivery across Long Island, NY.',
+  description: 'Premium cannabis dispensary offering in-store pickup and fast same-day weed delivery across Long Island (Nassau and Suffolk Counties), NY.',
   url: siteUrl,
   logo: `${siteUrl}/Leaf-Logo.png`,
   image: `${siteUrl}/Leaf-Logo.png`,
@@ -101,6 +103,14 @@ const localBusinessSchema = {
     {
       '@type': 'AdministrativeArea',
       name: 'Long Island, NY',
+    },
+    {
+      '@type': 'AdministrativeArea',
+      name: 'Nassau County, NY',
+    },
+    {
+      '@type': 'AdministrativeArea',
+      name: 'Suffolk County, NY',
     },
   ],
   openingHoursSpecification: [
@@ -122,7 +132,7 @@ const localBusinessSchema = {
 import ChatWidget from '@/components/ChatWidget';
 import AuthProvider from '@/components/AuthProvider';
 import MixpanelTracker from '@/components/MixpanelTracker';
-import AgeVerificationModal from '@/components/AgeVerificationModal';
+import MoodWidget from '@/components/MoodWidget';
 import ReferralBanner from '@/components/ReferralBanner';
 import { Analytics } from '@vercel/analytics/react';
 import { Suspense } from 'react';
@@ -148,7 +158,7 @@ export default function RootLayout({ children }) {
             {children}
           </div>
           <ChatWidget />
-          <AgeVerificationModal />
+          <MoodWidget />
           <Analytics />
         </AuthProvider>
       </body>

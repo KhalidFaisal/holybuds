@@ -5,6 +5,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import BlogHeader from '@/components/BlogHeader';
 import BlogFooter from '@/components/BlogFooter';
+import AgeVerificationModal from '@/components/AgeVerificationModal';
 
 export default function BlogPostClient({ post, related = [] }) {
   const [copied, setCopied] = useState(false);
@@ -282,6 +283,7 @@ export default function BlogPostClient({ post, related = [] }) {
 
       {/* Blog Footer */}
       <BlogFooter />
+      <AgeVerificationModal />
     </div>
   );
 }
