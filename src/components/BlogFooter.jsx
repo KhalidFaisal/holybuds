@@ -42,15 +42,13 @@ export default function BlogFooter() {
           {/* Brand Info */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2">
-              <div className="bg-[#0b1410] px-3 py-1.5 rounded-xl border border-emerald-900/40 inline-flex items-center">
-                <Image
-                  src="/logo.png"
-                  alt="Holy Buds"
-                  width={200}
-                  height={50}
-                  className="h-6 w-auto object-contain"
-                />
-              </div>
+              <Image
+                src="/logo.png"
+                alt="Holy Buds"
+                width={180}
+                height={45}
+                className="h-7 w-auto object-contain"
+              />
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
@@ -154,7 +152,7 @@ export default function BlogFooter() {
                 <div className="text-emerald-400 font-medium">Fri - Sat: 10 AM - 12 AM</div>
               </div>
               <div className="text-[11px] text-slate-400">
-                Delivering across Nassau &amp; Suffolk County, Long Island, New York.
+                Delivering across Long Island, New York.
               </div>
             </div>
           </div>

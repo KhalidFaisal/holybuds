@@ -295,28 +295,6 @@ export default function BlogClient({ initialData }) {
               ))}
             </div>
           )}
-
-          {/* Local Long Island Delivery CTA Banner */}
-          <div className="rounded-3xl border border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950 p-8 sm:p-12 relative overflow-hidden text-center sm:text-left flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 shadow-2xl text-white">
-            <div className="max-w-xl">
-              <span className="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-pc-green text-black mb-3">
-                Fast Delivery Across Long Island
-              </span>
-              <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">
-                Craving Fresh Strains Delivered Today?
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
-                Discreet door-to-door cannabis delivery across Nassau and Suffolk counties. Open until midnight (12:00 AM) on Friday and Saturday nights.
-              </p>
-            </div>
-
-            <Link
-              href="/menu"
-              className="px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-wider bg-pc-green hover:bg-[#1db326] text-black transition-all shadow-xl shadow-pc-green/20 shrink-0 self-center sm:self-auto hover:scale-105 active:scale-95"
-            >
-              Explore Live Menu
-            </Link>
-          </div>
         </div>
       </main>
 

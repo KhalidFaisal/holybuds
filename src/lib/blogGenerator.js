@@ -162,7 +162,7 @@ export const PRESEEDED_BLOGS = [
     id: 'seed-post-1',
     slug: 'long-island-cannabis-delivery-guide',
     title: 'The Ultimate Guide to Long Island Cannabis Delivery: Fast, Discreet, and Reliable',
-    excerpt: 'Everything you need to know about ordering top-shelf cannabis delivered directly to your doorstep across Nassau and Suffolk counties.',
+    excerpt: 'Everything you need to know about ordering top-shelf cannabis delivered directly to your doorstep across Long Island.',
     category: 'Delivery & Lifestyle',
     tags: JSON.stringify(['Long Island', 'Delivery', 'Cannabis Guide', 'Holy Buds']),
     coverImage: 'https://images.unsplash.com/photo-1512428559087-560fa5ceab42?auto=format&fit=crop&w=1200&q=80',
@@ -176,7 +176,7 @@ export const PRESEEDED_BLOGS = [
     updatedAt: new Date('2026-10-25T14:00:00Z'),
     content: `## Quick, Discreet, and Hassle-Free Long Island Delivery
 
-Finding clean, high-grade cannabis on Long Island has never been easier. Gone are the days of sketchy meetups or driving out of your way to upstate dispensaries. With Holy Buds, premium cannabis products are delivered straight to your residence across Nassau and Suffolk counties.
+Finding clean, high-grade cannabis on Long Island has never been easier. Gone are the days of sketchy meetups or driving out of your way to upstate dispensaries. With Holy Buds, premium cannabis products are delivered straight to your residence across Long Island.
 
 ### How Our Direct Delivery Works
 
