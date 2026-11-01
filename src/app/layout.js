@@ -10,7 +10,6 @@ const customFont = localFont({
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://holybuds.net';
