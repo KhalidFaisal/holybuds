@@ -3,6 +3,21 @@ import { PRESEEDED_BLOGS } from '@/lib/blogGenerator';
 import { revalidatePath } from 'next/cache';
 
 /**
+ * Ensures coverImage does not bloat HTML/RSC payloads with raw base64 data URIs.
+ * Maps base64 strings to the high-performance binary streaming route: /api/blog/image/[slug]
+ */
+export function formatPostImage(post) {
+  if (!post) return post;
+  if (post.coverImage && post.coverImage.startsWith('data:image/')) {
+    return {
+      ...post,
+      coverImage: `/api/blog/image/${post.slug}`
+    };
+  }
+  return post;
+}
+
+/**
  * Fetch all blog posts with filtering, search, and pagination.
  * Gracefully falls back to pre-seeded content if the database table is not yet initialized.
  */
@@ -34,13 +49,31 @@ export async function getAllBlogPosts({
       const total = await prisma.blogPost.count({ where });
       const posts = await prisma.blogPost.findMany({
         where,
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          excerpt: true,
+          category: true,
+          tags: true,
+          coverImage: true,
+          readTime: true,
+          author: true,
+          published: true,
+          views: true,
+          seoTitle: true,
+          seoDescription: true,
+          createdAt: true,
+          updatedAt: true
+        },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit
       });
 
       if (posts && posts.length > 0) {
-        return { posts, total, page, totalPages: Math.ceil(total / limit) };
+        const sanitized = posts.map(formatPostImage);
+        return { posts: sanitized, total, page, totalPages: Math.ceil(total / limit) };
       }
     }
   } catch (err) {
@@ -66,7 +99,7 @@ export async function getAllBlogPosts({
 
   const total = filtered.length;
   const startIndex = (page - 1) * limit;
-  const paginated = filtered.slice(startIndex, startIndex + limit);
+  const paginated = filtered.slice(startIndex, startIndex + limit).map(formatPostImage);
 
   return {
     posts: paginated,
@@ -100,7 +133,7 @@ export async function getBlogPostBySlug(slug, incrementView = false) {
             console.warn('Failed to increment blog post view:', viewErr.message);
           }
         }
-        return post;
+        return formatPostImage(post);
       }
     }
   } catch (err) {
@@ -112,7 +145,7 @@ export async function getBlogPostBySlug(slug, incrementView = false) {
   if (found && incrementView) {
     found.views = (found.views || 0) + 1;
   }
-  return found || null;
+  return found ? formatPostImage(found) : null;
 }
 
 /**
@@ -250,15 +283,23 @@ export async function getRelatedPosts(currentSlug, category, limit = 3) {
           slug: { not: currentSlug },
           category: category ? { equals: category, mode: 'insensitive' } : undefined
         },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          category: true,
+          coverImage: true,
+          createdAt: true
+        },
         orderBy: { createdAt: 'desc' },
         take: limit
       });
 
-      if (posts && posts.length > 0) return posts;
+      if (posts && posts.length > 0) return posts.map(formatPostImage);
     }
   } catch (err) {
     console.warn('Prisma related posts query failed:', err.message);
   }
 
-  return PRESEEDED_BLOGS.filter(p => p.slug !== currentSlug && p.published).slice(0, limit);
+  return PRESEEDED_BLOGS.filter(p => p.slug !== currentSlug && p.published).slice(0, limit).map(formatPostImage);
 }
