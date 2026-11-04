@@ -3,7 +3,7 @@ import MenuClient from './MenuClient';
 import { withProductDiscounts } from '@/lib/discounts';
 import { cookies } from 'next/headers';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://holybuds.net';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.holybuds.net';
 
 const EFFECT_DESCRIPTIONS = {
   Sleep: 'Shop top-rated sleep aid cannabis strains, edibles, and tinctures for deep relaxation and insomnia relief.',

@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function sitemap() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://holybuds.net';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.holybuds.net';
 
   const products = await prisma.product.findMany({
     where: {

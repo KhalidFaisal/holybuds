@@ -12,7 +12,7 @@ const inter = Inter({
   subsets: ['latin'],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://holybuds.net';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.holybuds.net';
 
 export const metadata = {
   metadataBase: new URL(siteUrl),

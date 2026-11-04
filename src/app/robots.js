@@ -1,5 +1,5 @@
 export default function robots() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://holybuds.net';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.holybuds.net';
 
   return {
     rules: {
