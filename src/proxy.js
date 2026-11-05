@@ -20,6 +20,8 @@ export function proxy(request) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/sitemap.xml') ||
     pathname.startsWith('/robots.txt') ||
+    pathname.startsWith('/rss.xml') ||
+    pathname.startsWith('/feed.xml') ||
     pathname.startsWith('/favicon.ico') ||
     pathname.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)$/)
   ) {
