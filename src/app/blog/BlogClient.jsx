@@ -12,7 +12,8 @@ const CATEGORIES = [
   'Strain Guides',
   'Edibles & Dosing',
   'Delivery & Lifestyle',
-  'Wellness'
+  'Wellness',
+  'Travel & Laws'
 ];
 
 export default function BlogClient({ initialData }) {

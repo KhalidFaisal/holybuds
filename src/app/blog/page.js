@@ -16,6 +16,7 @@ export const metadata = {
     title: 'Cannabis Journal & Guides | Holy Buds Long Island',
     description: 'Expert cannabis guides, strain reviews, and Long Island weed delivery knowledge.',
     type: 'website',
+    locale: 'en_US',
     url: `${siteUrl}/blog`
   }
 };

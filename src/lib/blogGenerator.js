@@ -155,6 +155,100 @@ export const TRENDING_TOPICS = [
     topic: 'Daytime Clarity: High-CBG and Pinene Strains for Productive Afternoon Focus',
     category: 'Wellness',
     defaultImage: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=80'
+  },
+
+  // Category: Travel & Laws (High National US Search Volume)
+  {
+    topic: 'Can You Bring Weed on Domestic US Flights? Official TSA Rules Explained',
+    category: 'Travel & Laws',
+    defaultImage: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'THCA vs Delta 9: The 2018 Farm Bill Legal Distinction Explained for Connoisseurs',
+    category: 'Travel & Laws',
+    defaultImage: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Traveling Across State Lines with Legal Cannabis: Federal Risk Breakdown',
+    category: 'Travel & Laws',
+    defaultImage: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Can Out-of-State Tourists Buy Cannabis in New York Legally?',
+    category: 'Travel & Laws',
+    defaultImage: 'https://images.unsplash.com/photo-1512428559087-560fa5ceab42?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'State-by-State Cannabis Reciprocity: Where Out-of-State Medical Cards Are Honored',
+    category: 'Travel & Laws',
+    defaultImage: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Federal Rescheduling of Cannabis: What Moving to Schedule III Means for Consumers',
+    category: 'Travel & Laws',
+    defaultImage: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=80'
+  },
+
+  // High-Volume US National Consumer Intent Queries
+  {
+    topic: 'How Long Does Cannabis Stay in Your System? Urine, Blood, and Saliva Timelines',
+    category: 'Cannabis 101',
+    defaultImage: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Does Weed Go Bad? Shelf Life, Mold Signs, and Proper Storage Techniques',
+    category: 'Cannabis 101',
+    defaultImage: 'https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'CBD to THC Ratios: How to Balance Anxiety and Euphoria for Beginners',
+    category: 'Cannabis 101',
+    defaultImage: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Can You Build a THC Tolerance Quickly? The Science of Cannabinoid Resensitization',
+    category: 'Cannabis 101',
+    defaultImage: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'The Ultimate Terpene Chart: Boiling Points, Aromas, and Targeted Effects',
+    category: 'Cannabis 101',
+    defaultImage: 'https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Dry Herb Vaping vs Smoking: Temperature Guide, Terpene Preservation, and Lung Health',
+    category: 'Strain Guides',
+    defaultImage: 'https://images.unsplash.com/photo-1568644396922-5c3bfae12521?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Best Vaporizers for Hash Rosin and Wax: Portable vs Desktop Rigs',
+    category: 'Strain Guides',
+    defaultImage: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Live Rosin vs Live Resin: What Makes Solventless Concentrates Worth the Premium?',
+    category: 'Strain Guides',
+    defaultImage: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'What to Do If You Took Too Many Edibles: Proven Techniques to Ground Yourself Fast',
+    category: 'Edibles & Dosing',
+    defaultImage: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'The 11-Hydroxy-THC Factor: Why Ingested Cannabis Feels Different from Inhaled Smoke',
+    category: 'Edibles & Dosing',
+    defaultImage: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Cannabis Decarboxylation 101: Exact Time and Temperatures for Potent Infusions',
+    category: 'Edibles & Dosing',
+    defaultImage: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    topic: 'Cannabis and Sleep Architecture: How THC and CBN Affect REM Cycles',
+    category: 'Wellness',
+    defaultImage: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=1200&q=80'
   }
 ];
 
@@ -194,7 +288,18 @@ We understand that Friday and Saturday nights require flexibility. Holy Buds ope
 
 All items on Holy Buds are sourced from licensed cultivators who test for potency, purity, heavy metals, and residual pesticides. When you order from us, you get clean burns, pure aromas, and consistent effects.
 
-Ready to test the experience? Visit our menu to place your next delivery order today.`
+Ready to test the experience? Visit our menu to place your next delivery order today.
+
+## Frequently Asked Questions
+
+### How fast is weed delivery on Long Island?
+Holy Buds provides same-day delivery across Nassau and Suffolk counties. Typical delivery windows range between 45 and 90 minutes from dispatch, with real-time tracking updates provided.
+
+### Do I need a medical marijuana card to order?
+No. In New York State, adults aged 21 and older with valid government-issued identification can legally purchase adult-use recreational cannabis products for delivery.
+
+### What are Holy Buds weekend operating hours?
+Holy Buds delivers extended weekend hours on Friday and Saturday nights until 12:00 AM midnight, ensuring access to curated top-shelf cannabis when you need it.`
   },
   {
     id: 'seed-post-2',
@@ -233,7 +338,18 @@ These physical traits do not dictate the psychoactive effects on their own. Inst
 
 ### Finding Your Ideal Match
 
-When browsing our live menu, look beyond THC percentages. Check the dominant terpene profile and customer reviews to find the exact sensation you desire, whether that is energetic creativity or peaceful slumber.`
+When browsing our live menu, look beyond THC percentages. Check the dominant terpene profile and customer reviews to find the exact sensation you desire, whether that is energetic creativity or peaceful slumber.
+
+## Frequently Asked Questions
+
+### What is the main difference between Indica and Sativa?
+While traditionally Sativas are considered energizing and Indicas sedating, modern cannabis science proves that cannabinoid ratios and terpene profiles like myrcene versus limonene determine the actual psychoactive and physical effects.
+
+### What is the Entourage Effect?
+The Entourage Effect describes how cannabinoids like THC, CBD, and CBG together with aromatic terpenes work synergistically to produce a richer, more balanced experience than isolated THC compounds.
+
+### Can a Hybrid strain lean more toward energy or sleep?
+Yes. Hybrids are categorized as Sativa-dominant (uplifting), Indica-dominant (relaxing), or balanced (50/50), allowing consumers to tailor their vibe based on specific needs and times of day.`
   },
   {
     id: 'seed-post-3',
@@ -270,7 +386,18 @@ With edibles, THC travels through your digestive system into your liver, where i
 2. **Eat Something First**: Consuming edibles with a small snack containing healthy fats helps your digestive system absorb cannabinoids more evenly.
 3. **Stay Hydrated**: Keep fresh water nearby to keep dry mouth at bay.
 
-Explore our artisanal gummies, chocolates, and specialty edibles on our storefront.`
+Explore our artisanal gummies, chocolates, and specialty edibles on our storefront.
+
+## Frequently Asked Questions
+
+### How long does it take for cannabis edibles to kick in?
+Edibles typically take between 45 and 120 minutes to take effect because the cannabinoids must be processed through your digestive system and metabolized by your liver into 11-hydroxy-THC.
+
+### What is a recommended starting dose for beginners?
+First-time consumers should start with a low dose of 2.5mg to 5mg of THC. Wait at least two full hours before considering taking any additional amount.
+
+### What should I do if I accidentally consume too much THC in an edible?
+Stay calm and remember that the sensation is temporary. Drink fresh water, ingest black peppercorns rich in calming caryophyllene, consider non-intoxicating CBD, and rest in a comfortable quiet space.`
   }
 ];
 
@@ -375,7 +502,7 @@ CRITICAL RULES:
   "title": "Clear and compelling article headline",
   "slug": "url-friendly-slug-with-hyphens",
   "excerpt": "A concise 2-sentence summary hook (under 160 characters)",
-  "category": "Cannabis 101" | "Strain Guides" | "Edibles & Dosing" | "Delivery & Lifestyle" | "Wellness",
+  "category": "Cannabis 101" | "Strain Guides" | "Edibles & Dosing" | "Delivery & Lifestyle" | "Wellness" | "Travel & Laws",
   "imagePrompt": "A vivid editorial photography prompt describing a luxury cannabis scene for this article. Focus on natural botanical textures, macro trichomes, amber glass jars, warm cinematic lighting, and clean minimalist composition. Strictly no text, no letters, no logos, no watermarks, no emojis.",
   "tags": ["Tag1", "Tag2", "Tag3"],
   "readTime": "5 min read",
@@ -388,7 +515,8 @@ Article Content Guidelines:
 - Length: Minimum 700 to 1200 words.
 - Format: Clean Markdown with multiple H2 (##) and H3 (###) sections.
 - Incorporate subtle mentions of Holy Buds discreet delivery across Long Island, NY, and operating hours until midnight on weekends.
-- Mention visiting /menu to browse curated lab-tested products.${exclusionText}`;
+- Mention visiting /menu to browse curated lab-tested products.
+- MANDATORY FAQ SECTION: End every article with a dedicated '## Frequently Asked Questions' section containing 3 to 4 high-intent questions (formatted as ### Question?) with direct, comprehensive answers (2 to 4 sentences each). This structure directly earns Google Position Zero FAQ rich snippets.${exclusionText}`;
 
   const userPrompt = `Write an in-depth, authoritative, and engaging educational blog post about: "${selectedTopic}".
 Category: ${selectedCategory || 'Cannabis 101'}.

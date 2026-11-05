@@ -50,6 +50,9 @@ export const metadata = {
   },
   alternates: {
     canonical: '/',
+    types: {
+      'application/rss+xml': `${siteUrl}/rss.xml`,
+    },
   },
   openGraph: {
     title: 'HolyBuds | Long Island Cannabis Dispensary & Weed Delivery',
