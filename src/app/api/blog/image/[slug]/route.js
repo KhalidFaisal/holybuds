@@ -56,3 +56,4 @@ export async function GET(request, { params }) {
     return new NextResponse('Internal error', { status: 500 });
   }
 }
+
