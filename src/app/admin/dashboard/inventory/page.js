@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { groupAndSortBoxItems, groupAndSortProducts, CategoryIcon } from '@/lib/inventorySorting';
+import { DEFAULT_SHEET_URL, DEFAULT_SHEET_TAB, COLUMN_MAPPING } from '@/lib/sheetInventoryImport';
 
 function InlineEditQuantity({ boxId, productId, initialQuantity, onUpdate }) {
   const [editValue, setEditValue] = useState(null);
@@ -165,6 +166,21 @@ export default function AdminInventory() {
   const [splitModalBox, setSplitModalBox] = useState(null);
   const [actionMenuBoxId, setActionMenuBoxId] = useState(null);
 
+  // Google Sheet Import State
+  const [isSheetModalOpen, setIsSheetModalOpen] = useState(false);
+  const [sheetUrl, setSheetUrl] = useState(DEFAULT_SHEET_URL);
+  const [sheetTab, setSheetTab] = useState(DEFAULT_SHEET_TAB);
+  const [sheetTargetBoxId, setSheetTargetBoxId] = useState('');
+  const [sheetColumnKey, setSheetColumnKey] = useState('BOX_1');
+  const [sheetLoading, setSheetLoading] = useState(false);
+  const [sheetApplying, setSheetApplying] = useState(false);
+  const [sheetError, setSheetError] = useState('');
+  const [sheetSuccessMsg, setSheetSuccessMsg] = useState('');
+  const [previewData, setPreviewData] = useState(null);
+  const [previewTab, setPreviewTab] = useState('MATCHED');
+  const [previewSearch, setPreviewSearch] = useState('');
+  const [showAdvancedConfig, setShowAdvancedConfig] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -247,27 +263,161 @@ export default function AdminInventory() {
     }
   };
 
+  const openSheetImport = (boxId = null) => {
+    setSheetError('');
+    setPreviewData(null);
+    setPreviewSearch('');
+    setPreviewTab('MATCHED');
+
+    let chosenBoxId = boxId;
+    if (!chosenBoxId && boxes.length > 0) {
+      const box1 = boxes.find(b => (b.name || '').includes('1')) || boxes[0];
+      chosenBoxId = box1.id;
+    }
+    setSheetTargetBoxId(chosenBoxId || '');
+
+    const targetBox = boxes.find(b => b.id === chosenBoxId);
+    if ((targetBox?.name || '').includes('2')) {
+      setSheetColumnKey('BOX_2');
+    } else if ((targetBox?.name || '').includes('3')) {
+      setSheetColumnKey('BOX_3');
+    } else if ((targetBox?.name || '').includes('4')) {
+      setSheetColumnKey('BOX_4');
+    } else {
+      setSheetColumnKey('BOX_1');
+    }
+
+    setIsSheetModalOpen(true);
+  };
+
+  const handleBoxSelect = (boxId) => {
+    setSheetTargetBoxId(boxId);
+    setPreviewData(null);
+    const selectedBox = boxes.find(b => b.id === boxId);
+    if ((selectedBox?.name || '').includes('2')) {
+      setSheetColumnKey('BOX_2');
+    } else if ((selectedBox?.name || '').includes('3')) {
+      setSheetColumnKey('BOX_3');
+    } else if ((selectedBox?.name || '').includes('4')) {
+      setSheetColumnKey('BOX_4');
+    } else if ((selectedBox?.name || '').includes('1')) {
+      setSheetColumnKey('BOX_1');
+    }
+  };
+
+  const fetchSheetPreview = async () => {
+    if (!sheetTargetBoxId) {
+      setSheetError('Please select a target box.');
+      return;
+    }
+    setSheetLoading(true);
+    setSheetError('');
+    setPreviewData(null);
+    try {
+      const res = await fetch('/api/admin/inventory/sheet-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'PREVIEW',
+          sheetUrl,
+          sheetTab,
+          boxId: sheetTargetBoxId,
+          columnKey: sheetColumnKey
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to fetch preview from sheet');
+      }
+      setPreviewData(data);
+    } catch (err) {
+      setSheetError(err.message);
+    } finally {
+      setSheetLoading(false);
+    }
+  };
+
+  const applySheetImport = async () => {
+    if (!previewData || !sheetTargetBoxId) return;
+    setSheetApplying(true);
+    setSheetError('');
+    try {
+      const itemsToSet = {};
+      (previewData.matched || []).forEach(item => {
+        itemsToSet[item.productId] = item.newQty;
+      });
+
+      const targetBox = boxes.find(b => b.id === sheetTargetBoxId);
+
+      const res = await fetch('/api/admin/inventory/sheet-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'APPLY',
+          boxId: sheetTargetBoxId,
+          boxName: targetBox?.name || 'Box',
+          columnKey: sheetColumnKey,
+          sheetUrl,
+          sheetTab,
+          itemsToSet
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to apply sheet import');
+      }
+
+      setSheetSuccessMsg(`Successfully imported counts from Google Sheet (${previewData.columnLabel || sheetColumnKey}) into ${targetBox?.name || 'Box'}! (${data.totalUnits} units across ${data.updatedCount} products)`);
+      setTimeout(() => setSheetSuccessMsg(''), 8000);
+      setIsSheetModalOpen(false);
+      setPreviewData(null);
+      fetchData(true);
+    } catch (err) {
+      setSheetError(err.message);
+    } finally {
+      setSheetApplying(false);
+    }
+  };
+
   if (loading) {
     return <div className="text-pc-muted animate-pulse">Loading Inventory...</div>;
   }
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Driver Inventory Boxes</h1>
           <p className="text-pc-muted">Track what is inside each physical box.</p>
         </div>
-        <button 
-          onClick={() => {
-            const name = prompt('Enter new box name (e.g. Box 1)');
-            createBox(name);
-          }}
-          className="btn-primary py-2 px-4"
-        >
-          + Add Box
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => openSheetImport()}
+            className="btn-secondary py-2 px-4 flex items-center gap-2 text-sm border-pc-green/40 hover:border-pc-green text-pc-green hover:bg-pc-green/10 transition-colors"
+          >
+            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.5V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+            </svg>
+            <span>Import from Sheet</span>
+          </button>
+          <button 
+            onClick={() => {
+              const name = prompt('Enter new box name (e.g. Box 1)');
+              createBox(name);
+            }}
+            className="btn-primary py-2 px-4 text-sm"
+          >
+            + Add Box
+          </button>
+        </div>
       </div>
+
+      {sheetSuccessMsg && (
+        <div className="p-4 rounded-xl border border-pc-green/50 bg-pc-green/10 text-pc-green text-sm font-semibold flex items-center justify-between animate-fade-in shadow-xs">
+          <span>{sheetSuccessMsg}</span>
+          <button onClick={() => setSheetSuccessMsg('')} className="text-white hover:text-pc-green text-xs font-bold underline cursor-pointer">Dismiss</button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {boxes.map(box => (
@@ -320,6 +470,15 @@ export default function AdminInventory() {
                           onClick={() => setActionMenuBoxId(null)} 
                         />
                         <div className="absolute right-0 mt-1 w-36 bg-pc-dark border border-pc-border rounded-xl shadow-2xl py-1 z-30">
+                          <button
+                            onClick={() => {
+                              setActionMenuBoxId(null);
+                              openSheetImport(box.id);
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs font-semibold text-pc-green hover:bg-white/5 flex items-center gap-2 cursor-pointer"
+                          >
+                            <span>↓</span> Import Sheet
+                          </button>
                           <button
                             onClick={() => {
                               setActionMenuBoxId(null);
@@ -826,6 +985,438 @@ export default function AdminInventory() {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Google Sheet Import Modal */}
+      {isSheetModalOpen && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-3 sm:p-4 backdrop-blur-sm animate-fade-in">
+          <div className="bg-pc-dark w-full max-w-4xl rounded-2xl p-5 sm:p-6 border border-pc-border shadow-2xl relative max-h-[92vh] flex flex-col text-left">
+            {/* Header */}
+            <div className="flex justify-between items-start mb-4 border-b border-pc-border pb-3">
+              <div>
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <span>Import Box Counts from Google Sheet</span>
+                </h2>
+                <p className="text-pc-muted text-xs mt-0.5">
+                  Exact name matching, skip wholesale &amp; accessories, and set blanks to 0.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsSheetModalOpen(false);
+                  setPreviewData(null);
+                }}
+                className="w-8 h-8 rounded-lg bg-pc-black border border-pc-border hover:bg-white/10 text-pc-muted hover:text-white flex items-center justify-center text-sm font-bold transition-colors cursor-pointer"
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Target Box & Column Selectors */}
+            <div className="bg-pc-black/60 border border-pc-border rounded-xl p-4 mb-4 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-pc-muted uppercase mb-1">
+                    Target Inventory Box
+                  </label>
+                  <select
+                    value={sheetTargetBoxId}
+                    onChange={e => handleBoxSelect(e.target.value)}
+                    className="w-full bg-pc-dark border border-pc-border rounded-lg px-3 py-2 text-white text-xs font-semibold focus:outline-none focus:border-pc-green"
+                  >
+                    {boxes.map(b => (
+                      <option key={b.id} value={b.id}>
+                        {b.name} {b.driver ? `(${b.driver.name})` : '(Unassigned)'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-pc-muted uppercase mb-1">
+                    Source Column
+                  </label>
+                  <select
+                    value={sheetColumnKey}
+                    onChange={e => {
+                      setSheetColumnKey(e.target.value);
+                      setPreviewData(null);
+                    }}
+                    className="w-full bg-pc-dark border border-pc-border rounded-lg px-3 py-2 text-white text-xs font-semibold focus:outline-none focus:border-pc-green"
+                  >
+                    {Object.entries(COLUMN_MAPPING).map(([key, col]) => (
+                      <option key={key} value={key}>
+                        {col.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-end">
+                  <button
+                    onClick={fetchSheetPreview}
+                    disabled={sheetLoading || !sheetTargetBoxId}
+                    className="w-full py-2 px-4 bg-pc-green text-black font-bold rounded-lg text-xs hover:bg-pc-green/90 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-xs"
+                  >
+                    {sheetLoading ? (
+                      <>
+                        <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                        <span>Fetching Sheet...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.5V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                        </svg>
+                        <span>{previewData ? 'Re-fetch Preview' : 'Fetch & Preview Counts'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Badges & Advanced Toggle */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-pc-border/40 text-[11px]">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                    Exact Name Match
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium">
+                    Skip Wholesale &amp; Accessories
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">
+                    Blanks = 0
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAdvancedConfig(!showAdvancedConfig)}
+                  className="text-pc-muted hover:text-white underline font-medium cursor-pointer"
+                >
+                  {showAdvancedConfig ? 'Hide Sheet Settings ▲' : 'Edit Sheet URL / Tab ▼'}
+                </button>
+              </div>
+
+              {/* Advanced Settings */}
+              {showAdvancedConfig && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-pc-border/30">
+                  <div>
+                    <label className="block text-[10px] font-bold text-pc-muted uppercase mb-1">
+                      Google Sheet URL
+                    </label>
+                    <input
+                      type="text"
+                      value={sheetUrl}
+                      onChange={e => {
+                        setSheetUrl(e.target.value);
+                        setPreviewData(null);
+                      }}
+                      className="w-full bg-pc-dark border border-pc-border rounded-lg px-2.5 py-1.5 text-white text-xs font-mono focus:outline-none focus:border-pc-green"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-pc-muted uppercase mb-1">
+                      Tab Name
+                    </label>
+                    <input
+                      type="text"
+                      value={sheetTab}
+                      onChange={e => {
+                        setSheetTab(e.target.value);
+                        setPreviewData(null);
+                      }}
+                      className="w-full bg-pc-dark border border-pc-border rounded-lg px-2.5 py-1.5 text-white text-xs font-mono focus:outline-none focus:border-pc-green"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Error Banner */}
+            {sheetError && (
+              <div className="mb-4 p-3 rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 text-xs flex items-center justify-between">
+                <span>{sheetError}</span>
+                <button onClick={() => setSheetError('')} className="underline text-[11px] font-bold ml-2">Dismiss</button>
+              </div>
+            )}
+
+            {/* Preview Section */}
+            {sheetLoading && !previewData && (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-pc-muted space-y-3">
+                <span className="w-8 h-8 border-2 border-pc-green border-t-transparent rounded-full animate-spin" />
+                <p className="text-xs font-medium">Fetching Google Sheet and comparing exact product names...</p>
+              </div>
+            )}
+
+            {!sheetLoading && !previewData && !sheetError && (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-pc-muted border border-dashed border-pc-border rounded-xl">
+                <svg className="w-10 h-10 text-pc-muted/50 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                </svg>
+                <p className="text-sm font-bold text-white mb-1">Ready to Preview</p>
+                <p className="text-xs max-w-md">
+                  Click &quot;Fetch &amp; Preview Counts&quot; above to inspect all exact matches, blanks, and excluded categories before updating this box.
+                </p>
+              </div>
+            )}
+
+            {previewData && (
+              <div className="flex-1 overflow-hidden flex flex-col space-y-3">
+                {/* Metric Summary Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs shrink-0">
+                  <div className="bg-pc-black border border-pc-border rounded-xl p-2.5">
+                    <span className="text-[10px] text-pc-muted uppercase font-bold block">Matched</span>
+                    <span className="text-lg font-black text-white">{previewData.summary.totalMatched}</span>
+                    <span className="text-[10px] text-pc-muted block">products</span>
+                  </div>
+                  <div className="bg-pc-black border border-pc-border rounded-xl p-2.5">
+                    <span className="text-[10px] text-pc-muted uppercase font-bold block">Total Units</span>
+                    <span className="text-lg font-black text-pc-green">{previewData.summary.totalUnits}</span>
+                    <span className="text-[10px] text-pc-muted block">to import</span>
+                  </div>
+                  <div className="bg-pc-black border border-pc-border rounded-xl p-2.5">
+                    <span className="text-[10px] text-pc-muted uppercase font-bold block">Zero / Blank</span>
+                    <span className="text-lg font-black text-amber-400">{previewData.summary.zeroCountItems}</span>
+                    <span className="text-[10px] text-pc-muted block">count as 0</span>
+                  </div>
+                  <div className="bg-pc-black border border-pc-border rounded-xl p-2.5">
+                    <span className="text-[10px] text-pc-muted uppercase font-bold block">Excluded</span>
+                    <span className="text-lg font-black text-purple-400">{previewData.summary.totalSkipped}</span>
+                    <span className="text-[10px] text-pc-muted block">wholesale &amp; acc</span>
+                  </div>
+                  <div className="bg-pc-black border border-pc-border rounded-xl p-2.5 col-span-2 sm:col-span-1">
+                    <span className="text-[10px] text-pc-muted uppercase font-bold block">Unmatched</span>
+                    <span className="text-lg font-black text-rose-400">{previewData.summary.totalUnmatched}</span>
+                    <span className="text-[10px] text-pc-muted block">no exact match</span>
+                  </div>
+                </div>
+
+                {/* Filter Tabs & Search Bar */}
+                <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1 bg-pc-black p-1 rounded-lg border border-pc-border text-xs overflow-x-auto">
+                    <button
+                      onClick={() => setPreviewTab('MATCHED')}
+                      className={`px-2.5 py-1 rounded font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                        previewTab === 'MATCHED' ? 'bg-pc-green text-black' : 'text-pc-muted hover:text-white'
+                      }`}
+                    >
+                      All Matched ({previewData.matched.length})
+                    </button>
+                    <button
+                      onClick={() => setPreviewTab('CHANGES')}
+                      className={`px-2.5 py-1 rounded font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                        previewTab === 'CHANGES' ? 'bg-pc-green text-black' : 'text-pc-muted hover:text-white'
+                      }`}
+                    >
+                      Changes Only ({previewData.matched.filter(m => m.change !== 0).length})
+                    </button>
+                    <button
+                      onClick={() => setPreviewTab('UNMATCHED')}
+                      className={`px-2.5 py-1 rounded font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                        previewTab === 'UNMATCHED' ? 'bg-pc-green text-black' : 'text-pc-muted hover:text-white'
+                      }`}
+                    >
+                      Unmatched ({previewData.unmatched.length})
+                    </button>
+                    <button
+                      onClick={() => setPreviewTab('SKIPPED')}
+                      className={`px-2.5 py-1 rounded font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                        previewTab === 'SKIPPED' ? 'bg-pc-green text-black' : 'text-pc-muted hover:text-white'
+                      }`}
+                    >
+                      Excluded ({previewData.skipped.length})
+                    </button>
+                  </div>
+
+                  <input
+                    type="text"
+                    placeholder="Search by name..."
+                    value={previewSearch}
+                    onChange={e => setPreviewSearch(e.target.value)}
+                    className="bg-pc-black border border-pc-border rounded-lg px-3 py-1.5 text-white text-xs placeholder-pc-muted focus:outline-none focus:border-pc-green"
+                  />
+                </div>
+
+                {/* Table View */}
+                <div className="flex-1 overflow-y-auto border border-pc-border rounded-xl bg-pc-black/40 pr-1">
+                  {(previewTab === 'MATCHED' || previewTab === 'CHANGES') && (
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-white/5 sticky top-0 border-b border-pc-border text-pc-muted font-bold uppercase tracking-wider text-[10px]">
+                        <tr>
+                          <th className="p-2.5">Row</th>
+                          <th className="p-2.5">Sheet Product Name</th>
+                          <th className="p-2.5">Category</th>
+                          <th className="p-2.5 text-center">In Box Now</th>
+                          <th className="p-2.5 text-center">Sheet Qty</th>
+                          <th className="p-2.5 text-right">Delta</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-pc-border/40 font-mono">
+                        {previewData.matched
+                          .filter(item => {
+                            if (previewTab === 'CHANGES' && item.change === 0) return false;
+                            if (!previewSearch) return true;
+                            const q = previewSearch.toLowerCase();
+                            return item.sheetName.toLowerCase().includes(q) || item.productName.toLowerCase().includes(q);
+                          })
+                          .map((item, idx) => (
+                            <tr key={`${item.productId}-${idx}`} className="hover:bg-white/[0.03] transition-colors">
+                              <td className="p-2.5 text-pc-muted text-[11px]">{item.rowNumber}</td>
+                              <td className="p-2.5 font-sans font-bold text-white max-w-[240px] truncate" title={item.sheetName}>
+                                {item.sheetName}
+                              </td>
+                              <td className="p-2.5 font-sans">
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white/5 text-slate-300 border border-white/10 uppercase">
+                                  {item.category}
+                                </span>
+                              </td>
+                              <td className="p-2.5 text-center text-pc-muted">{item.currentQty}</td>
+                              <td className="p-2.5 text-center font-bold text-white">
+                                {item.newQty === 0 ? <span className="text-amber-400">0</span> : item.newQty}
+                              </td>
+                              <td className="p-2.5 text-right">
+                                {item.change > 0 && (
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    +{item.change}
+                                  </span>
+                                )}
+                                {item.change < 0 && (
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                    {item.change}
+                                  </span>
+                                )}
+                                {item.change === 0 && (
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-medium text-slate-500">
+                                    same
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  )}
+
+                  {previewTab === 'UNMATCHED' && (
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-white/5 sticky top-0 border-b border-pc-border text-pc-muted font-bold uppercase tracking-wider text-[10px]">
+                        <tr>
+                          <th className="p-2.5">Row</th>
+                          <th className="p-2.5">Sheet Product Name</th>
+                          <th className="p-2.5">Section</th>
+                          <th className="p-2.5 text-center">Sheet Qty</th>
+                          <th className="p-2.5 text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-pc-border/40 font-mono">
+                        {previewData.unmatched
+                          .filter(item => {
+                            if (!previewSearch) return true;
+                            return item.sheetName.toLowerCase().includes(previewSearch.toLowerCase());
+                          })
+                          .map((item, idx) => (
+                            <tr key={idx} className="hover:bg-white/[0.03]">
+                              <td className="p-2.5 text-pc-muted text-[11px]">{item.rowNumber}</td>
+                              <td className="p-2.5 font-sans font-bold text-white">{item.sheetName}</td>
+                              <td className="p-2.5 font-sans text-pc-muted">{item.section}</td>
+                              <td className="p-2.5 text-center font-bold text-white">{item.newQty}</td>
+                              <td className="p-2.5 text-right font-sans">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                  No Exact Match
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  )}
+
+                  {previewTab === 'SKIPPED' && (
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-white/5 sticky top-0 border-b border-pc-border text-pc-muted font-bold uppercase tracking-wider text-[10px]">
+                        <tr>
+                          <th className="p-2.5">Row</th>
+                          <th className="p-2.5">Sheet Row Item</th>
+                          <th className="p-2.5">Section</th>
+                          <th className="p-2.5 text-right">Exclusion Reason</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-pc-border/40 font-mono">
+                        {previewData.skipped
+                          .filter(item => {
+                            if (!previewSearch) return true;
+                            return item.sheetName.toLowerCase().includes(previewSearch.toLowerCase());
+                          })
+                          .map((item, idx) => (
+                            <tr key={idx} className="hover:bg-white/[0.03]">
+                              <td className="p-2.5 text-pc-muted text-[11px]">{item.rowNumber}</td>
+                              <td className="p-2.5 font-sans font-semibold text-slate-300">{item.sheetName}</td>
+                              <td className="p-2.5 font-sans text-pc-muted">{item.section}</td>
+                              <td className="p-2.5 text-right font-sans">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  item.reason === 'Wholesale'
+                                    ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                                    : item.reason === 'Accessories'
+                                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                    : 'bg-white/5 text-slate-400'
+                                }`}>
+                                  {item.reason}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Modal Footer */}
+            <div className="mt-4 pt-3 border-t border-pc-border flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0">
+              <div className="text-xs text-pc-muted">
+                {previewData ? (
+                  <span>
+                    Ready to set <strong className="text-white">{previewData.matched.length}</strong> items in{' '}
+                    <strong className="text-pc-green">{boxes.find(b => b.id === sheetTargetBoxId)?.name || 'target box'}</strong>.
+                  </span>
+                ) : (
+                  <span>Select box &amp; fetch preview to proceed.</span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSheetModalOpen(false);
+                    setPreviewData(null);
+                  }}
+                  className="flex-1 sm:flex-none py-2 px-4 rounded-lg bg-pc-black border border-pc-border text-white text-xs font-bold hover:bg-white/10 transition-colors cursor-pointer"
+                  disabled={sheetApplying}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={applySheetImport}
+                  disabled={!previewData || previewData.matched.length === 0 || sheetApplying || sheetLoading}
+                  className="flex-1 sm:flex-none py-2 px-5 rounded-lg bg-pc-green text-black text-xs font-bold hover:bg-pc-green/90 transition-all flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer shadow-xs"
+                >
+                  {sheetApplying ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                      <span>Applying Changes...</span>
+                    </>
+                  ) : (
+                    <span>Apply Import to {boxes.find(b => b.id === sheetTargetBoxId)?.name || 'Box'}</span>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
