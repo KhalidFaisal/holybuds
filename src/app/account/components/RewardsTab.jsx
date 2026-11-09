@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { LOYALTY_REWARDS, LOYALTY_TIERS, getTierInfo } from '@/lib/loyalty';
+import { LOYALTY_REWARDS, LOYALTY_TIERS, getTierInfo, getRewardCategoryRequirement } from '@/lib/loyalty';
 import { TierIcon } from './AccountHero';
 
 export default function RewardsTab({ customer, settings, isAdmin, isMaintenance }) {
@@ -389,6 +389,7 @@ export default function RewardsTab({ customer, settings, isAdmin, isMaintenance 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {sortedRewards.map(reward => {
             const isUnlocked = points >= reward.points;
+            const catReq = getRewardCategoryRequirement(reward);
 
             return (
               <div
@@ -400,7 +401,7 @@ export default function RewardsTab({ customer, settings, isAdmin, isMaintenance 
                 }`}
               >
                 <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span
                       className={`text-xs font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
                         isUnlocked
@@ -415,6 +416,9 @@ export default function RewardsTab({ customer, settings, isAdmin, isMaintenance 
                         {reward.tierName} Perk
                       </span>
                     )}
+                    <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                      {catReq.isCategorySpecific ? `Applies to: ${catReq.requiredCategoryLabel}` : 'Applies to: Any Order'}
+                    </span>
                   </div>
 
                   {isUnlocked ? (

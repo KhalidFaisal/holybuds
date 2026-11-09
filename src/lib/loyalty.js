@@ -111,7 +111,7 @@ export const LOYALTY_REWARDS = [
   { id: '3500_free', points: 3500, label: "Free Cart or Edible", type: "FREE_LOWEST", categories: ["vapes", "edibles"], tierNumber: 5, tierName: "Platinum Curator" },
   { id: '5000_any', points: 5000, label: "$35 Off Any Order", type: "FIXED", value: 35, tierNumber: 6, tierName: "Emerald Elite" },
   { id: '7500_any', points: 7500, label: "Free Premium Accessory or $50 Off", type: "FREE_LOWEST", categories: ["accessories"], maxValue: 50, tierNumber: 7, tierName: "Ruby Master" },
-  { id: '10000_free', points: 10000, label: "Free 1/2", type: "FREE_LOWEST", categories: ["flowers"], tierNumber: 8, tierName: "Diamond VIP" }
+  { id: '10000_free', points: 10000, label: "Free 1/2 oz Flower", type: "FREE_LOWEST", categories: ["flowers"], tierNumber: 8, tierName: "Diamond VIP" }
 ];
 
 export function getTierInfo(tierPoints = 0, totalOrders = 0) {
@@ -161,40 +161,151 @@ export function getTierInfo(tierPoints = 0, totalOrders = 0) {
   };
 }
 
-export function calcRewardDiscount(reward, items) {
-  if (!reward) return 0;
-  
+/**
+ * Checks if a cart item matches a category string or pattern.
+ * Handles singular/plural and casing (e.g. flower/flowers/FLOWER, vape/vapes/cart/carts, accessory/accessories).
+ */
+export function itemMatchesCategory(item, targetCategory) {
+  if (!item || !targetCategory) return false;
+
+  const itemCat = (item.category || '').toLowerCase();
+  const target = targetCategory.toLowerCase();
+
+  const getRoots = (catStr) => {
+    const s = catStr.trim().toLowerCase();
+    if (s.startsWith('accessor')) return ['accessor', 'accessories', 'accessory'];
+    if (s.startsWith('flower')) return ['flower', 'flowers'];
+    if (s.startsWith('edib')) return ['edib', 'edibles', 'edible'];
+    if (s.startsWith('vape') || s.includes('cart')) return ['vape', 'vapes', 'cart', 'carts'];
+    if (s.startsWith('pre-roll') || s.startsWith('preroll')) return ['pre-roll', 'preroll', 'roll'];
+    if (s.startsWith('wax') || s.startsWith('concentrat')) return ['wax', 'concentrat'];
+    return [s];
+  };
+
+  const targetRoots = getRoots(target);
+
+  for (const root of targetRoots) {
+    if (itemCat.includes(root)) return true;
+  }
+
+  if (item.categories) {
+    const catList = typeof item.categories === 'string'
+      ? item.categories.toLowerCase()
+      : JSON.stringify(item.categories).toLowerCase();
+    for (const root of targetRoots) {
+      if (catList.includes(root)) return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Returns whether a reward is category-specific, whether the cart meets the requirement,
+ * and user-facing labels / menu navigation slugs.
+ */
+export function getRewardCategoryRequirement(reward, cartItems = []) {
+  if (!reward) {
+    return {
+      isCategorySpecific: false,
+      isMet: true,
+      requiredCategoryLabel: '',
+      primaryCategorySlug: 'menu',
+      targetCategories: []
+    };
+  }
+
+  let targetCategories = [];
+  if (reward.categories && Array.isArray(reward.categories) && reward.categories.length > 0) {
+    targetCategories = reward.categories;
+  } else if (reward.category) {
+    targetCategories = [reward.category];
+  }
+
+  if (targetCategories.length === 0) {
+    return {
+      isCategorySpecific: false,
+      isMet: true,
+      requiredCategoryLabel: 'Any product',
+      primaryCategorySlug: '',
+      targetCategories: []
+    };
+  }
+
+  const hasMatchingItem = (cartItems || []).some((item) =>
+    targetCategories.some((cat) => itemMatchesCategory(item, cat))
+  );
+
+  const formatCatName = (cat) => {
+    const lower = cat.toLowerCase();
+    if (lower.startsWith('accessor')) return 'Accessories';
+    if (lower.startsWith('flower')) return 'Flowers';
+    if (lower.startsWith('edib')) return 'Edibles';
+    if (lower.startsWith('vape') || lower.includes('cart')) return 'Vapes / Carts';
+    return cat.charAt(0).toUpperCase() + cat.slice(1);
+  };
+
+  const getCategorySlug = (cat) => {
+    const lower = cat.toLowerCase();
+    if (lower.startsWith('accessor')) return 'accessories';
+    if (lower.startsWith('flower')) return 'flowers';
+    if (lower.startsWith('edib')) return 'edibles';
+    if (lower.startsWith('vape') || lower.includes('cart')) return 'vapes';
+    return cat;
+  };
+
+  const label = targetCategories.map(formatCatName).join(' or ');
+  const primarySlug = getCategorySlug(targetCategories[0]);
+
+  return {
+    isCategorySpecific: true,
+    isMet: hasMatchingItem,
+    requiredCategoryLabel: label,
+    primaryCategorySlug: primarySlug,
+    targetCategories
+  };
+}
+
+export function calcRewardDiscount(reward, items = []) {
+  if (!reward || !Array.isArray(items) || items.length === 0) return 0;
+
+  const req = getRewardCategoryRequirement(reward, items);
+
   if (reward.type === 'FIXED') {
-    if (reward.category) {
-      const hasCat = items.some(i => i.category && i.category.toUpperCase().includes(reward.category.toUpperCase()));
-      return hasCat ? reward.value : 0;
+    if (req.isCategorySpecific) {
+      return req.isMet ? reward.value : 0;
     }
     return reward.value;
   }
-  
+
   if (reward.type === 'PERCENT') {
-    if (reward.category) {
-      const catTotal = items.filter(i => i.category && i.category.toUpperCase().includes(reward.category.toUpperCase()))
-                            .reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    if (req.isCategorySpecific) {
+      const catTotal = items
+        .filter((i) => req.targetCategories.some((cat) => itemMatchesCategory(i, cat)))
+        .reduce((sum, i) => sum + (i.price * (i.quantity || 1)), 0);
       return catTotal * (reward.value / 100);
     }
-    const total = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    const total = items.reduce((sum, i) => sum + (i.price * (i.quantity || 1)), 0);
     return total * (reward.value / 100);
   }
 
   if (reward.type === 'FREE_LOWEST') {
+    if (!req.isMet) return 0;
+
     let eligibleItems = items;
-    if (reward.categories) {
-      eligibleItems = items.filter(i => i.category && reward.categories.some(c => i.category.toUpperCase().includes(c.toUpperCase())));
+    if (req.isCategorySpecific) {
+      eligibleItems = items.filter((i) =>
+        req.targetCategories.some((cat) => itemMatchesCategory(i, cat))
+      );
     }
     if (eligibleItems.length === 0) return 0;
-    
-    const lowest = eligibleItems.reduce((min, i) => i.price < min.price ? i : min, eligibleItems[0]);
+
+    const lowest = eligibleItems.reduce((min, i) => (i.price < min.price ? i : min), eligibleItems[0]);
     if (reward.maxValue && lowest.price > reward.maxValue) {
       return reward.maxValue;
     }
     return lowest.price;
   }
-  
+
   return 0;
 }

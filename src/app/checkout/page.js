@@ -6,7 +6,7 @@ import { useCart } from '@/components/CartProvider';
 import Navbar from '@/components/Navbar';
 import { CartProvider } from '@/components/CartProvider';
 import Link from 'next/link';
-import { LOYALTY_REWARDS, calcRewardDiscount } from '@/lib/loyalty';
+import { LOYALTY_REWARDS, calcRewardDiscount, getRewardCategoryRequirement } from '@/lib/loyalty';
 import { useSession } from 'next-auth/react';
 
 function CheckoutContent() {
@@ -317,7 +317,8 @@ function CheckoutContent() {
     }
   }, [isRewardsMaintenance, selectedReward]);
 
-  // If a reward is selected, calculate its discount
+  // If a reward is selected, calculate its category requirement and discount
+  const rewardRequirement = getRewardCategoryRequirement(selectedReward, items);
   const rewardDiscount = calcRewardDiscount(selectedReward, items);
   const minSpendRequired = referralData?.minSpend || 0;
   const meetsMinSpend = total >= minSpendRequired;
@@ -361,6 +362,12 @@ function CheckoutContent() {
       setError('Please select an Order Method (Pickup or Delivery)');
       // Scroll to top to see error
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (selectedReward && !rewardRequirement.isMet) {
+      setError(`To avail the "${selectedReward.label}" reward, please add a product from the ${rewardRequirement.requiredCategoryLabel} category to your cart, or unselect the reward.`);
+      window.scrollTo({ top: 350, behavior: 'smooth' });
       return;
     }
 
@@ -847,6 +854,7 @@ function CheckoutContent() {
                           {LOYALTY_REWARDS.map(reward => {
                             const canAfford = customerProfile.points >= reward.points;
                             const isSelected = selectedReward?.id === reward.id;
+                            const itemReq = getRewardCategoryRequirement(reward, items);
                             
                             return (
                               <div 
@@ -869,7 +877,18 @@ function CheckoutContent() {
                                     {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className={isSelected ? 'font-bold text-slate-900' : canAfford ? 'text-slate-800' : 'text-slate-400'}>{reward.label}</span>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className={isSelected ? 'font-bold text-slate-900' : canAfford ? 'text-slate-800' : 'text-slate-400'}>{reward.label}</span>
+                                      {itemReq.isCategorySpecific && (
+                                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                                          itemReq.isMet
+                                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                            : 'bg-amber-50 text-amber-800 border-amber-300'
+                                        }`}>
+                                          {itemReq.isMet ? `Eligible: ${itemReq.requiredCategoryLabel}` : `Requires: ${itemReq.requiredCategoryLabel}`}
+                                        </span>
+                                      )}
+                                    </div>
                                     <span className={`text-xs ${canAfford ? 'text-slate-500 font-medium' : 'text-slate-400'}`}>{reward.points} Pts</span>
                                   </div>
                                 </div>
@@ -880,6 +899,38 @@ function CheckoutContent() {
                             );
                           })}
                         </div>
+
+                        {/* Category Guidance Notice When Selected Reward Has Unmet Category Requirement */}
+                        {selectedReward && !rewardRequirement.isMet && (
+                          <div className="mt-4 p-4 rounded-xl border border-amber-500/50 bg-gradient-to-r from-amber-500/15 via-amber-50/70 to-amber-500/15 text-left animate-fade-in shadow-xs">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-500 text-black border border-amber-600">
+                                Action Required
+                              </span>
+                              <span className="text-xs font-bold text-amber-950">
+                                Qualifying Product Needed
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-800 leading-relaxed mb-3 font-normal">
+                              You selected <strong>&quot;{selectedReward.label}&quot;</strong>. To avail this offer, please add a product from the <strong className="text-amber-950 font-bold underline decoration-amber-400">{rewardRequirement.requiredCategoryLabel}</strong> category to your cart.
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2.5">
+                              <Link
+                                href={`/menu?category=${rewardRequirement.primaryCategorySlug}`}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pc-green text-black font-bold text-xs hover:bg-pc-green/90 transition-all shadow-xs"
+                              >
+                                Browse {rewardRequirement.requiredCategoryLabel} Menu →
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedReward(null)}
+                                className="text-xs text-slate-700 hover:text-slate-950 font-bold underline cursor-pointer"
+                              >
+                                Unselect Reward
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -1047,11 +1098,23 @@ function CheckoutContent() {
                     <span>-${effectiveGeneralDiscount.toFixed(2)}</span>
                   </div>
                 )}
-                {rewardDiscount > 0 && (
-                  <div className="flex justify-between text-pc-green">
-                    <span>Reward: {selectedReward?.label}</span>
-                    <span>-${rewardDiscount.toFixed(2)}</span>
-                  </div>
+                {selectedReward && (
+                  rewardDiscount > 0 ? (
+                    <div className="flex justify-between text-pc-green">
+                      <span>Reward: {selectedReward.label}</span>
+                      <span>-${rewardDiscount.toFixed(2)}</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-0.5 text-xs text-amber-800 bg-amber-500/15 border border-amber-500/30 rounded-lg p-2.5">
+                      <div className="flex justify-between font-bold">
+                        <span>Reward: {selectedReward.label}</span>
+                        <span>$0.00 applied</span>
+                      </div>
+                      <span className="text-[11px] text-amber-900 font-medium">
+                        Requires a product from the {rewardRequirement.requiredCategoryLabel} category
+                      </span>
+                    </div>
+                  )
                 )}
                 {appliedReferralDiscount > 0 && (
                   <div className="flex justify-between text-pc-green">

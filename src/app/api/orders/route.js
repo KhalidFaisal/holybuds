@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth';
 import { auth } from '@/auth';
 import webpush from 'web-push';
 import { getCustomerRetentionStatus, WINBACK_DISCOUNT_PERCENT, WINBACK_DISCOUNT_NAME } from '@/lib/retention';
+import { LOYALTY_REWARDS, calcRewardDiscount, getRewardCategoryRequirement } from '@/lib/loyalty';
 
 function generateOrderNumber() {
   const prefix = 'ELV';
@@ -151,46 +152,20 @@ export async function POST(request) {
     // Calculate Reward Discount Server Side
     let rewardDiscountAmount = 0;
     if (rewardUsed && pointsUsed > 0) {
-      // Define rewards map to match frontend
-      const REWARDS_MAP = {
-        '500_acc': { points: 500, label: "$5 Off Any Accessory", type: "FIXED", category: "ACCESSORY", value: 5 },
-        '1000_acc': { points: 1000, label: "10% Off Accessory Order", type: "PERCENT", category: "ACCESSORY", value: 10 },
-        '2000_any': { points: 2000, label: "$15 Off Any Order", type: "FIXED", value: 15 },
-        '3500_free': { points: 3500, label: "Free Cart or Edible", type: "FREE_LOWEST", categories: ["VAPE", "CART", "EDIBLE"] },
-        '5000_any': { points: 5000, label: "$35 Off Any Order", type: "FIXED", value: 35 },
-        '7500_any': { points: 7500, label: "Free Premium Accessory or $50 Off", type: "FIXED", value: 50 },
-        '10000_free': { points: 10000, label: "Free 1/2", type: "FREE_LOWEST", categories: ["FLOWER"] }
-      };
+      // Find matching reward definition by label or id
+      const rewardDef = LOYALTY_REWARDS.find(
+        r => r.label === rewardUsed || r.id === data.rewardId || (rewardUsed && r.label.toLowerCase().includes(rewardUsed.toLowerCase()))
+      );
 
-      // Find the reward by label
-      const rewardDef = Object.values(REWARDS_MAP).find(r => r.label === rewardUsed);
       if (rewardDef && pointsUsed === rewardDef.points) {
-        if (rewardDef.type === 'FIXED') {
-          if (rewardDef.category) {
-            const hasCat = itemsData.some(i => i.category.toUpperCase().includes(rewardDef.category));
-            rewardDiscountAmount = hasCat ? rewardDef.value : 0;
-          } else {
-            rewardDiscountAmount = rewardDef.value;
-          }
-        } else if (rewardDef.type === 'PERCENT') {
-          if (rewardDef.category) {
-            const catTotal = itemsData.filter(i => i.category.toUpperCase().includes(rewardDef.category))
-                                      .reduce((sum, i) => sum + (i.price * i.quantity), 0);
-            rewardDiscountAmount = catTotal * (rewardDef.value / 100);
-          } else {
-            const totalItems = itemsData.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-            rewardDiscountAmount = totalItems * (rewardDef.value / 100);
-          }
-        } else if (rewardDef.type === 'FREE_LOWEST') {
-          let eligibleItems = itemsData;
-          if (rewardDef.categories) {
-            eligibleItems = itemsData.filter(i => rewardDef.categories.some(c => i.category.toUpperCase().includes(c)));
-          }
-          if (eligibleItems.length > 0) {
-            const lowest = eligibleItems.reduce((min, item) => item.price < min.price ? item : min, eligibleItems[0]);
-            rewardDiscountAmount = lowest.price;
-          }
+        const req = getRewardCategoryRequirement(rewardDef, itemsData);
+        if (req.isCategorySpecific && !req.isMet) {
+          return NextResponse.json(
+            { error: `The selected reward "${rewardDef.label}" requires a product from the ${req.requiredCategoryLabel} category in your cart.` },
+            { status: 400 }
+          );
         }
+        rewardDiscountAmount = calcRewardDiscount(rewardDef, itemsData);
       }
     }
 
